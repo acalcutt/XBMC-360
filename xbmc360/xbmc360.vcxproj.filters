@@ -749,6 +749,9 @@
     <ClInclude Include="cores\DVDPlayer\DVDInputStreams\DVDInputStreamFile.h">
       <Filter>Header Files\cores\DVDPlayer\DVDInputStreams</Filter>
     </ClInclude>
+    <ClInclude Include="cores\DVDPlayer\DVDInputStreams\DVDInputStreamHLS.h">
+      <Filter>Header Files\cores\DVDPlayer\DVDInputStreams</Filter>
+    </ClInclude>
     <ClInclude Include="cores\DVDPlayer\DVDDemuxers\DVDDemux.h">
       <Filter>Header Files\cores\DVDPlayer\DVDDemuxers</Filter>
     </ClInclude>
@@ -1817,6 +1820,9 @@
       <Filter>Source Files\cores\DVDPlayer\DVDInputStreams</Filter>
     </ClCompile>
     <ClCompile Include="cores\DVDPlayer\DVDInputStreams\DVDInputStreamFile.cpp">
+      <Filter>Source Files\cores\DVDPlayer\DVDInputStreams</Filter>
+    </ClCompile>
+    <ClCompile Include="cores\DVDPlayer\DVDInputStreams\DVDInputStreamHLS.cpp">
       <Filter>Source Files\cores\DVDPlayer\DVDInputStreams</Filter>
     </ClCompile>
     <ClCompile Include="cores\DVDPlayer\DVDDemuxers\DVDDemux.cpp">

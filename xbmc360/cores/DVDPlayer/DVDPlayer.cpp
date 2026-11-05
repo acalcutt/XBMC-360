@@ -3513,9 +3513,14 @@ void CDVDPlayer::UpdatePlayState(double timeout)
 		CDVDInputStream::IDisplayTime* pDisplayTime = dynamic_cast<CDVDInputStream::IDisplayTime*>(m_pInputStream);
 		if (pDisplayTime)
 		{
-			state.time       = pDisplayTime->GetTime();
+			// An input that only knows its length (HLS) leaves the time to the clock
+			int time = pDisplayTime->GetTime();
+			if (time >= 0)
+			{
+				state.time     = time;
+				state.time_src = ETIMESOURCE_INPUT;
+			}
 			state.time_total = pDisplayTime->GetTotalTime();
-			state.time_src   = ETIMESOURCE_INPUT;
 		}
 
 		if (CDVDInputStream::IMenus* ptr = dynamic_cast<CDVDInputStream::IMenus*>(m_pInputStream))

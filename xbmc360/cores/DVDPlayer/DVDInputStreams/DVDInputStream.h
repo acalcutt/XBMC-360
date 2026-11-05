@@ -18,6 +18,7 @@ enum DVDStreamType
 	DVDSTREAM_TYPE_TV     = 6,
 	DVDSTREAM_TYPE_RTMP   = 7,
 	DVDSTREAM_TYPE_HTSP   = 8,
+	DVDSTREAM_TYPE_HLS    = 9,
 };
 
 #define SEEK_POSSIBLE 0x10 // flag used to check if protocol allows seeks

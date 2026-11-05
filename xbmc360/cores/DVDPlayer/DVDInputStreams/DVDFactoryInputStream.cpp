@@ -3,6 +3,7 @@
 #include "DVDInputStreamFile.h"
 #include "DVDInputStreamSMB.h"
 #include "DVDInputStreamNavigator.h"
+#include "DVDInputStreamHLS.h"
 #ifdef HAS_FILESYSTEM
 #include "DVDInputStreamHTSP.h"
 #endif
@@ -55,7 +56,10 @@ CDVDInputStream* CDVDFactoryInputStream::CreateInputStream(IDVDPlayer* pPlayer, 
 #if 1 // Marty
 	if(file.substr(0, 6) == "smb://")
 		return new CDVDInputStreamSMB();
-#endif 
+#endif
+
+	if(CDVDInputStreamHLS::IsHLS(file, content))
+		return new CDVDInputStreamHLS();
 
 	// Our file interface handles all these types of streams
 	return (new CDVDInputStreamFile());

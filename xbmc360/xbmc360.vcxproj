@@ -343,6 +343,7 @@
     <ClInclude Include="cores\DVDPlayer\DVDInputStreams\DVDFactoryInputStream.h" />
     <ClInclude Include="cores\DVDPlayer\DVDInputStreams\DVDInputStream.h" />
     <ClInclude Include="cores\DVDPlayer\DVDInputStreams\DVDInputStreamFile.h" />
+    <ClInclude Include="cores\DVDPlayer\DVDInputStreams\DVDInputStreamHLS.h" />
     <ClInclude Include="cores\DVDPlayer\DVDInputStreams\DVDInputStreamSMB.h" />
     <ClInclude Include="cores\DVDPlayer\DVDInputStreams\DVDInputStreamNavigator.h" />
     <ClInclude Include="cores\DVDPlayer\DVDInputStreams\DVDStateSerializer.h" />
@@ -707,6 +708,7 @@
     <ClCompile Include="cores\DVDPlayer\DVDInputStreams\DVDFactoryInputStream.cpp" />
     <ClCompile Include="cores\DVDPlayer\DVDInputStreams\DVDInputStream.cpp" />
     <ClCompile Include="cores\DVDPlayer\DVDInputStreams\DVDInputStreamFile.cpp" />
+    <ClCompile Include="cores\DVDPlayer\DVDInputStreams\DVDInputStreamHLS.cpp" />
     <ClCompile Include="cores\DVDPlayer\DVDInputStreams\DVDInputStreamSMB.cpp" />
     <ClCompile Include="cores\DVDPlayer\DVDInputStreams\DVDInputStreamNavigator.cpp" />
     <ClCompile Include="cores\DVDPlayer\DVDInputStreams\DVDStateSerializer.cpp" />
