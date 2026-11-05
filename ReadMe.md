@@ -4,6 +4,17 @@ This is a port of XBMC4XBOX to XBox 360 using the Microsoft XBox 360 SDK (not us
 
 This is a work in progress, still many features to bring over. Though getting more usable.
 
+### This fork: MediaRiffle
+This fork adds a dashboard look and a video source for MediaRiffle, a self-hosted media server:
+
+- **MediaRiffle skin** (`skins/MediaRiffle`): a home screen like MediaRiffle's web app (top bar with tabs, cards), on Confluence Lite. Choose it in Settings > Appearance > Skin.
+- **MediaRiffle in Videos** (`mediariffle://`): Continue watching and the server's show and movie libraries. The server transcodes what plays to H.264 at 720p and streams it as HLS; where each video stopped is saved back to the server.
+- **HLS playback**: `.m3u8` streams over HTTP play (the bundled FFmpeg has no HLS demuxer of its own).
+
+To link the console, set the server in Settings > Network > MediaRiffle (on the local network plain `http://host:port` works; from outside, HTTPS), select Account, and enter the code it shows at the server's `/link` in a browser where you're signed in.
+
+To install a build, copy `xbmc360\Release\xbmc360.xex` to the console as `default.xex`, with the `language`, `media`, `skins`, `system` and `web` folders beside it (not `settings.xml`, which holds the console's own settings).
+
 ### Current Status:
 - GUILib - Mostly ported now, still have some areas to finish
 - VideoPlayer/DVDPlayer
