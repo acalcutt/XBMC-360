@@ -863,6 +863,9 @@ void CFileItemList::Clear()
 
 	ClearItems();
 
+	// What the last listing said about itself (its sort methods, its content) isn't the next one's
+	m_sortDetails.clear();
+	m_content.Empty();
 	m_replaceListing = false;
 }
 
@@ -1150,6 +1153,15 @@ void CFileItemList::ClearSortState()
 {
 	m_sortMethod = SORT_METHOD_NONE;
 	m_sortOrder = SORT_ORDER_NONE;
+}
+
+void CFileItemList::AddSortMethod(SORT_METHOD sortMethod, int buttonLabel, const LABEL_MASKS &labelMasks)
+{
+	SORT_METHOD_DETAILS sort;
+	sort.m_sortMethod = sortMethod;
+	sort.m_buttonLabel = buttonLabel;
+	sort.m_labelMasks = labelMasks;
+	m_sortDetails.push_back(sort);
 }
 
 bool CFileItemList::Save(int windowID) //TODO

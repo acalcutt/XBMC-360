@@ -260,6 +260,8 @@ public:
 
 	bool GetReplaceListing() const { return m_replaceListing; };
 	const std::vector<SORT_METHOD_DETAILS> &GetSortDetails() const { return m_sortDetails; };
+	// The sort methods a listing offers (its directory knows best), instead of its window's own
+	void AddSortMethod(SORT_METHOD sortMethod, int buttonLabel, const LABEL_MASKS &labelMasks);
 
 	void FillInDefaultIcons();
 
