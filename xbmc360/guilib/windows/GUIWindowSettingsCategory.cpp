@@ -3,6 +3,8 @@
 #include "guilib\LocalizeStrings.h"
 #include "guilib\GUIMessage.h"
 #include "guilib\dialogs\GUIDialogKeyboard.h"
+#include "guilib\dialogs\GUIDialogYesNo.h"
+#include "network\MediaRiffle.h"
 #include "utils\Weather.h"
 #include "guilib\GUIUserMessages.h"
 #include "guilib\GUIWindowManager.h"
@@ -503,6 +505,12 @@ void CGUIWindowSettingsCategory::UpdateSettings()
 			CGUIButtonControl *pControl = (CGUIButtonControl *)GetControl(GetSetting(strSetting)->GetID());
 			pControl->SetLabel2(g_weatherManager.GetLocationName(pSetting->GetData()));
 		}
+		else if (strSetting.Equals("mediariffle.account"))
+		{
+			// Who it's linked as, on the server set above
+			CGUIButtonControl *pControl = (CGUIButtonControl *)GetControl(pSettingControl->GetID());
+			if (pControl) pControl->SetLabel2(g_mediaRiffle.IsLinked() ? g_mediaRiffle.GetUser() : g_localizeStrings.Get(33503));
+		}
 		else if (strSetting.Equals("musicplayer.crossfadealbumtracks"))
 		{
 			CGUIControl *pControl = (CGUIControl *)GetControl(pSettingControl->GetID());
@@ -628,6 +636,28 @@ void CGUIWindowSettingsCategory::OnClick(CBaseSettingControl *pSettingControl)
 			g_weatherManager.Refresh();
 		}
 	}
+	else if (strSetting.Equals("mediariffle.account"))
+	{
+		// Linked: unlink, once sure. Not: link (it asks for the server if there's none)
+		if (g_mediaRiffle.IsLinked())
+		{
+			CGUIDialogYesNo *dialog = (CGUIDialogYesNo *)g_windowManager.GetWindow(WINDOW_DIALOG_YES_NO);
+			if (dialog)
+			{
+				CStdString question;
+				question.Format(g_localizeStrings.Get(33504).c_str(), g_mediaRiffle.GetUser().c_str());
+				dialog->SetHeading(33500);
+				dialog->SetLine(0, question);
+				dialog->SetLine(1, g_localizeStrings.Get(33505));
+				dialog->SetLine(2, "");
+				dialog->DoModal();
+				if (dialog->IsConfirmed())
+					g_mediaRiffle.Unlink();
+			}
+		}
+		else
+			g_mediaRiffle.Link();
+	}
 
 	/* WIP HERE */
 
@@ -690,8 +720,15 @@ void CGUIWindowSettingsCategory::OnSettingChanged(CBaseSettingControl *pSettingC
 		}
 
 	}
+	else if (strSetting.Equals("mediariffle.server"))
+	{
+		// As typed, made an address: "media01:5080/" is http://media01:5080
+		CSettingString *pSettingString = (CSettingString *)pSettingControl->GetSetting();
+		pSettingString->SetData(CMediaRiffle::NormalizeServer(pSettingString->GetData()));
+		UpdateSettings();
+	}
 	else if (strSetting.Equals("lookandfeel.skintheme"))
-	{ 
+	{
 		// A new Theme was chosen
 		CSettingString *pSettingString = (CSettingString *)pSettingControl->GetSetting();
 		CGUISpinControlEx *pControl = (CGUISpinControlEx *)GetControl(pSettingControl->GetID());

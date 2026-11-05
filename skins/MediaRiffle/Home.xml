@@ -153,6 +153,11 @@
 				<visible>Container(9000).HasFocus(1)</visible>
 				<content>
 					<item>
+						<label>31981</label>
+						<label2>31982</label2>
+						<onclick>ActivateWindow(Videos,mediariffle://,return)</onclick>
+					</item>
+					<item>
 						<label>31966</label>
 						<label2>31967</label2>
 						<onclick>ActivateWindow(Videos)</onclick>
@@ -216,6 +221,11 @@
 						<label>31965</label>
 						<label2>31978</label2>
 						<onclick>ActivateWindow(Settings)</onclick>
+					</item>
+					<item>
+						<label>31981</label>
+						<label2>31983</label2>
+						<onclick>ActivateWindow(NetworkSettings)</onclick>
 					</item>
 					<item>
 						<label>31975</label>

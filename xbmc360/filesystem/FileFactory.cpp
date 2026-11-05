@@ -8,6 +8,7 @@
 #include "UPnPFile.h"
 #include "ZipFile.h"
 #include "SpecialProtocolFile.h"
+#include "MediaRiffleFile.h"
 
 using namespace XFILE;
 
@@ -42,6 +43,7 @@ IFile* CFileFactory::CreateLoader(const CURL& url)
 		if(strProtocol == "smb") return new CFileSMB();
 		if(strProtocol == "http" || strProtocol == "https") return new CCurlFile();
 		if(strProtocol == "upnp") return new CUPnPFile();
+		if(strProtocol == "mediariffle") return new CMediaRiffleFile();
 	}
 
 	CLog::Log(LOGWARNING, "%s - Unsupported protocol(%s) in %s", __FUNCTION__, strProtocol.c_str(), ""/*url.Get().c_str()*/ ); // TODO

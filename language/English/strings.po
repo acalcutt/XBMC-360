@@ -8683,7 +8683,83 @@ msgctxt "#33083"
 msgid "Enable custom script button"
 msgstr ""
 
-#empty strings from id 33084 to 34004
+#empty strings from id 33084 to 33499
+
+#MediaRiffle (network\MediaRiffle.cpp)
+
+msgctxt "#33500"
+msgid "MediaRiffle"
+msgstr ""
+
+msgctxt "#33501"
+msgid "Server address"
+msgstr ""
+
+msgctxt "#33502"
+msgid "Account"
+msgstr ""
+
+msgctxt "#33503"
+msgid "Not linked"
+msgstr ""
+
+msgctxt "#33504"
+msgid "Unlink this console from %s?"
+msgstr ""
+
+msgctxt "#33505"
+msgid "It can be linked again with a new code."
+msgstr ""
+
+msgctxt "#33510"
+msgid "Couldn't reach the MediaRiffle server."
+msgstr ""
+
+msgctxt "#33511"
+msgid "The server answered %ld."
+msgstr ""
+
+msgctxt "#33512"
+msgid "On a phone or computer signed in to MediaRiffle, go to"
+msgstr ""
+
+msgctxt "#33513"
+msgid "and enter the code %s"
+msgstr ""
+
+msgctxt "#33514"
+msgid "The code ran out before it was entered. Try again."
+msgstr ""
+
+msgctxt "#33515"
+msgid "Linked as %s."
+msgstr ""
+
+msgctxt "#33516"
+msgid "MediaRiffle is in Videos now."
+msgstr ""
+
+msgctxt "#33517"
+msgid "This console was unlinked. Link it again in Settings > Network > MediaRiffle."
+msgstr ""
+
+msgctxt "#33520"
+msgid "Continue watching"
+msgstr ""
+
+msgctxt "#33521"
+msgid "%d episodes"
+msgstr ""
+
+msgctxt "#33522"
+msgid "Season %d"
+msgstr ""
+
+msgctxt "#33523"
+msgid "%s, part %d"
+msgstr ""
+
+#empty strings from id 33524 to 34004
 
 msgctxt "#34005"
 msgid "Flac"

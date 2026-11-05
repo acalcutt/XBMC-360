@@ -47,6 +47,7 @@
 #endif
 #include "xbox/Network.h"
 #include "ZipDirectory.h"
+#include "MediaRiffleDirectory.h"
 //#include "RarDirectory.h" // TODO
 //#include "TuxBoxDirectory.h" // TODO
 //#include "HDHomeRunDirectory.h" // TODO
@@ -108,6 +109,7 @@ IDirectory* CFactoryDirectory::Create(const CStdString& strPath)
 //		if (strProtocol == "http" || strProtocol == "https") return new CHTTPDirectory();// TODO
 //		if (strProtocol == "dav" || strProtocol == "davs") return new CDAVDirectory();// TODO
 		if (strProtocol == "smb") return new CSMBDirectory();
+		if (strProtocol == "mediariffle") return new CMediaRiffleDirectory();
 #ifdef HAS_FILESYSTEM
 		if (strProtocol == "smb") return new CSMBDirectory();
 		if (strProtocol == "daap") return new CDAAPDirectory();

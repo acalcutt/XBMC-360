@@ -19,6 +19,7 @@
 #include "filesystem\File.h"
 #include "filesystem\CurlSessionPool.h"
 #include "filesystem\SpecialProtocol.h"
+#include "network\MediaRiffle.h"
 #include "ApplicationMessenger.h"
 #include "ButtonTranslator.h"
 #include "guilib\AudioContext.h"
@@ -319,6 +320,7 @@ bool CApplication::Initialize()
 void CApplication::StartServices()
 {
 	StartIdleThread();
+	g_mediaRiffle.Start();
 }
 
 void CApplication::StopServices()
@@ -334,6 +336,7 @@ void CApplication::StopServices()
 #ifdef HAS_UPNP
 	StopUPnP();
 #endif
+	g_mediaRiffle.Stop();
 	StopIdleThread();
 }
 
@@ -684,7 +687,11 @@ void CApplication::ProcessSlow()
 
 	// Store our file state for use on close()
 	UpdateFileState();
-	
+
+	// Where a MediaRiffle stream got to, for its server
+	if (IsPlaying())
+		g_mediaRiffle.OnPlaying(CurrentFile(), GetTime(), IsPaused());
+
 	// Check for any idle curl connections
 	g_curlSessionPool.CheckIdle();
 
@@ -1808,6 +1815,7 @@ void CApplication::OnPlayBackEnded()
 	g_pythonParser.OnPlayBackEnded();
 
 	SaveFileState();
+	g_mediaRiffle.OnStopped(true);
 
 	CGUIMessage msg(GUI_MSG_PLAYBACK_ENDED, 0, 0);
 	g_windowManager.SendThreadMessage(msg);
@@ -1852,6 +1860,7 @@ void CApplication::OnPlayBackStopped()
 	g_pythonParser.OnPlayBackStopped();
 
 	SaveFileState();
+	g_mediaRiffle.OnStopped(false);
 
 	CGUIMessage msg( GUI_MSG_PLAYBACK_STOPPED, 0, 0 );
 	g_windowManager.SendThreadMessage(msg);
@@ -1859,6 +1868,16 @@ void CApplication::OnPlayBackStopped()
 
 bool CApplication::PlayFile(const CFileItem& item, bool bRestart)
 {
+	// A MediaRiffle item plays as the stream its server makes of it
+	if (!bRestart && CMediaRiffle::IsMediaRiffle(item.GetPath()))
+	{
+		CFileItem stream;
+		if (!g_mediaRiffle.StartPlayback(item, stream))
+			return false;
+
+		return PlayFile(stream, false);
+	}
+
 	if (!bRestart)
 	{
 		m_iPlaySpeed = 1;

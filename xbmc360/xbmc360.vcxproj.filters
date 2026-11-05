@@ -737,7 +737,16 @@
     <ClInclude Include="filesystem\UPnPDirectory.h">
       <Filter>Header Files\filesystem</Filter>
     </ClInclude>
+    <ClInclude Include="filesystem\MediaRiffleDirectory.h">
+      <Filter>Header Files\filesystem</Filter>
+    </ClInclude>
+    <ClInclude Include="filesystem\MediaRiffleFile.h">
+      <Filter>Header Files\filesystem</Filter>
+    </ClInclude>
     <ClInclude Include="network\UPnP.h">
+      <Filter>Header Files\network</Filter>
+    </ClInclude>
+    <ClInclude Include="network\MediaRiffle.h">
       <Filter>Header Files\network</Filter>
     </ClInclude>
     <ClInclude Include="cores\DVDPlayer\DVDInputStreams\DVDInputStream.h">
@@ -1810,7 +1819,16 @@
     <ClCompile Include="filesystem\UPnPDirectory.cpp">
       <Filter>Source Files\filesystem</Filter>
     </ClCompile>
+    <ClCompile Include="filesystem\MediaRiffleDirectory.cpp">
+      <Filter>Source Files\filesystem</Filter>
+    </ClCompile>
+    <ClCompile Include="filesystem\MediaRiffleFile.cpp">
+      <Filter>Source Files\filesystem</Filter>
+    </ClCompile>
     <ClCompile Include="network\UPnP.cpp">
+      <Filter>Source Files\network</Filter>
+    </ClCompile>
+    <ClCompile Include="network\MediaRiffle.cpp">
       <Filter>Source Files\network</Filter>
     </ClCompile>
     <ClCompile Include="cores\DVDPlayer\DVDInputStreams\DVDInputStream.cpp">
