@@ -1,0 +1,283 @@
+<window id="0">
+	<!-- MediaRiffle's home: a top bar (name, tabs, time) like the web app's, and under it the focused tab's tiles.
+	     A tab opens its window; down goes to its tiles -->
+	<defaultcontrol always="true">9000</defaultcontrol>
+	<allowoverlay>no</allowoverlay>
+	<controls>
+		<include>CommonBackground</include>
+
+		<!-- Top bar -->
+		<control type="group">
+			<include>Window_OpenClose_Animation</include>
+			<control type="image">
+				<posx>0</posx>
+				<posy>0</posy>
+				<width>1280</width>
+				<height>104</height>
+				<texture>mr-fill.png</texture>
+				<colordiffuse>mr_surface</colordiffuse>
+			</control>
+			<control type="image">
+				<posx>0</posx>
+				<posy>104</posy>
+				<width>1280</width>
+				<height>1</height>
+				<texture>mr-fill.png</texture>
+				<colordiffuse>mr_border</colordiffuse>
+			</control>
+			<control type="label">
+				<description>Name</description>
+				<posx>64</posx>
+				<posy>36</posy>
+				<width>220</width>
+				<height>48</height>
+				<font>font28_title</font>
+				<textcolor>mr_text</textcolor>
+				<aligny>center</aligny>
+				<label>MediaRiffle</label>
+			</control>
+			<control type="list" id="9000">
+				<description>Tabs</description>
+				<posx>300</posx>
+				<posy>36</posy>
+				<width>720</width>
+				<height>48</height>
+				<onleft>9000</onleft>
+				<onright>9000</onright>
+				<ondown>9001</ondown>
+				<orientation>horizontal</orientation>
+				<scrolltime>200</scrolltime>
+				<itemlayout width="120" height="48">
+					<control type="label">
+						<posx>56</posx>
+						<posy>0</posy>
+						<width>112</width>
+						<height>48</height>
+						<font>font13_title</font>
+						<textcolor>mr_muted</textcolor>
+						<align>center</align>
+						<aligny>center</aligny>
+						<label>$INFO[ListItem.Label]</label>
+					</control>
+				</itemlayout>
+				<focusedlayout width="120" height="48">
+					<!-- The accent while the tabs have the focus; down in the tiles, the tab they belong to stays marked -->
+					<control type="image">
+						<posx>0</posx>
+						<posy>0</posy>
+						<width>112</width>
+						<height>48</height>
+						<texture border="16">mr-round.png</texture>
+						<colordiffuse>mr_accent</colordiffuse>
+						<visible>Control.HasFocus(9000)</visible>
+					</control>
+					<control type="image">
+						<posx>0</posx>
+						<posy>0</posy>
+						<width>112</width>
+						<height>48</height>
+						<texture border="16">mr-round.png</texture>
+						<colordiffuse>mr_border</colordiffuse>
+						<visible>!Control.HasFocus(9000)</visible>
+					</control>
+					<control type="label">
+						<posx>56</posx>
+						<posy>0</posy>
+						<width>112</width>
+						<height>48</height>
+						<font>font13_title</font>
+						<textcolor>white</textcolor>
+						<align>center</align>
+						<aligny>center</aligny>
+						<label>$INFO[ListItem.Label]</label>
+					</control>
+				</focusedlayout>
+				<content>
+					<item id="1">
+						<label>31960</label>
+						<onclick>ActivateWindow(Videos)</onclick>
+					</item>
+					<item id="2">
+						<label>31961</label>
+						<onclick>ActivateWindow(Programs)</onclick>
+					</item>
+					<item id="3">
+						<label>31962</label>
+						<onclick>ActivateWindow(Music)</onclick>
+					</item>
+					<item id="4">
+						<label>31963</label>
+						<onclick>ActivateWindow(Pictures)</onclick>
+					</item>
+					<item id="5">
+						<label>31964</label>
+						<onclick>ActivateWindow(FileManager)</onclick>
+					</item>
+					<item id="6">
+						<label>31965</label>
+						<onclick>ActivateWindow(Settings)</onclick>
+					</item>
+				</content>
+			</control>
+			<control type="label">
+				<description>Time</description>
+				<posx>64r</posx>
+				<posy>36</posy>
+				<width>160</width>
+				<height>48</height>
+				<font>font13_title</font>
+				<textcolor>mr_muted</textcolor>
+				<align>right</align>
+				<aligny>center</aligny>
+				<label>$INFO[System.Time]</label>
+			</control>
+		</control>
+
+		<!-- The focused tab: its name, and its tiles -->
+		<control type="group" id="9001">
+			<posx>0</posx>
+			<posy>144</posy>
+			<include>Window_OpenClose_Animation</include>
+			<control type="label">
+				<posx>64</posx>
+				<posy>0</posy>
+				<width>1152</width>
+				<height>48</height>
+				<font>font30_title</font>
+				<textcolor>mr_text</textcolor>
+				<aligny>center</aligny>
+				<label>$INFO[Container(9000).ListItem.Label]</label>
+			</control>
+			<control type="list" id="9101">
+				<include>HomeTileRow</include>
+				<visible>Container(9000).HasFocus(1)</visible>
+				<content>
+					<item>
+						<label>31966</label>
+						<label2>31967</label2>
+						<onclick>ActivateWindow(Videos)</onclick>
+					</item>
+				</content>
+			</control>
+			<control type="list" id="9102">
+				<include>HomeTileRow</include>
+				<visible>Container(9000).HasFocus(2)</visible>
+				<content>
+					<item>
+						<label>31968</label>
+						<label2>31969</label2>
+						<onclick>ActivateWindow(Programs)</onclick>
+					</item>
+					<item>
+						<label>31970</label>
+						<label2>31971</label2>
+						<onclick>ActivateWindow(Scripts)</onclick>
+					</item>
+				</content>
+			</control>
+			<control type="list" id="9103">
+				<include>HomeTileRow</include>
+				<visible>Container(9000).HasFocus(3)</visible>
+				<content>
+					<item>
+						<label>31972</label>
+						<label2>31967</label2>
+						<onclick>ActivateWindow(Music)</onclick>
+					</item>
+				</content>
+			</control>
+			<control type="list" id="9104">
+				<include>HomeTileRow</include>
+				<visible>Container(9000).HasFocus(4)</visible>
+				<content>
+					<item>
+						<label>31963</label>
+						<label2>31967</label2>
+						<onclick>ActivateWindow(Pictures)</onclick>
+					</item>
+				</content>
+			</control>
+			<control type="list" id="9105">
+				<include>HomeTileRow</include>
+				<visible>Container(9000).HasFocus(5)</visible>
+				<content>
+					<item>
+						<label>31973</label>
+						<label2>31974</label2>
+						<onclick>ActivateWindow(FileManager)</onclick>
+					</item>
+				</content>
+			</control>
+			<control type="list" id="9106">
+				<include>HomeTileRow</include>
+				<visible>Container(9000).HasFocus(6)</visible>
+				<content>
+					<item>
+						<label>31965</label>
+						<label2>31978</label2>
+						<onclick>ActivateWindow(Settings)</onclick>
+					</item>
+					<item>
+						<label>31975</label>
+						<label2>31976</label2>
+						<onclick>ActivateWindow(SystemInfo)</onclick>
+					</item>
+					<item>
+						<label>31980</label>
+						<label2>31977</label2>
+						<onclick>ActivateWindow(ShutdownMenu)</onclick>
+					</item>
+				</content>
+			</control>
+		</control>
+
+		<!-- Now playing: a card at the bottom while something plays -->
+		<control type="group">
+			<posx>64</posx>
+			<posy>568</posy>
+			<width>1152</width>
+			<height>100</height>
+			<visible>Player.HasMedia</visible>
+			<include>VisibleFadeEffect</include>
+			<include>Window_OpenClose_Animation</include>
+			<control type="image">
+				<posx>0</posx>
+				<posy>0</posy>
+				<width>1152</width>
+				<height>100</height>
+				<texture border="16">mr-card.png</texture>
+			</control>
+			<control type="label">
+				<posx>24</posx>
+				<posy>16</posy>
+				<width>900</width>
+				<height>28</height>
+				<font>font12</font>
+				<textcolor>mr_muted</textcolor>
+				<aligny>center</aligny>
+				<label>31979</label>
+			</control>
+			<control type="label">
+				<posx>24</posx>
+				<posy>46</posy>
+				<width>900</width>
+				<height>36</height>
+				<font>font16</font>
+				<textcolor>mr_text</textcolor>
+				<aligny>center</aligny>
+				<label>$INFO[VideoPlayer.Title]$INFO[MusicPlayer.Artist,, - ]$INFO[MusicPlayer.Title]</label>
+			</control>
+			<control type="label">
+				<posx>24r</posx>
+				<posy>46</posy>
+				<width>200</width>
+				<height>36</height>
+				<font>font13</font>
+				<textcolor>mr_muted</textcolor>
+				<align>right</align>
+				<aligny>center</aligny>
+				<label>$INFO[Player.Time]$INFO[Player.Duration, / ]</label>
+			</control>
+		</control>
+	</controls>
+</window>

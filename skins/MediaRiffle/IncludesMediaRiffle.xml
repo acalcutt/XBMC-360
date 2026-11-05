@@ -1,0 +1,65 @@
+<includes>
+	<!-- The MediaRiffle look's own pieces. Shapes are white textures tinted with the palette in colors\defaults.xml
+	     (see tools\MediaRiffleSkin\make-textures.ps1); 1280x720, with the TV-safe margin of 64 by 36 -->
+
+	<!-- A home tile: a card with a name and a line under it (MediaRiffle's library cards). In a list's layouts,
+	     from the item's label and label2 -->
+	<include name="HomeTile">
+		<control type="image">
+			<posx>0</posx>
+			<posy>0</posy>
+			<width>272</width>
+			<height>110</height>
+			<texture border="16">mr-card.png</texture>
+		</control>
+		<control type="label">
+			<posx>20</posx>
+			<posy>22</posy>
+			<width>232</width>
+			<height>32</height>
+			<font>font13_title</font>
+			<textcolor>mr_text</textcolor>
+			<aligny>center</aligny>
+			<label>$INFO[ListItem.Label]</label>
+		</control>
+		<control type="label">
+			<posx>20</posx>
+			<posy>56</posy>
+			<width>232</width>
+			<height>28</height>
+			<font>font12</font>
+			<textcolor>mr_muted</textcolor>
+			<aligny>center</aligny>
+			<label>$INFO[ListItem.Label2]</label>
+		</control>
+	</include>
+	<!-- Over the focused tile, while the focus is in the tiles (not up in the tabs): the accent outline -->
+	<include name="HomeTileFocus">
+		<control type="image">
+			<posx>0</posx>
+			<posy>0</posy>
+			<width>272</width>
+			<height>110</height>
+			<texture border="16">mr-round-outline.png</texture>
+			<colordiffuse>mr_accent</colordiffuse>
+			<visible>!Control.HasFocus(9000)</visible>
+		</control>
+	</include>
+	<!-- What a row of home tiles shares -->
+	<include name="HomeTileRow">
+		<posx>64</posx>
+		<posy>76</posy>
+		<width>1152</width>
+		<height>110</height>
+		<onup>9000</onup>
+		<orientation>horizontal</orientation>
+		<scrolltime>200</scrolltime>
+		<itemlayout width="288" height="110">
+			<include>HomeTile</include>
+		</itemlayout>
+		<focusedlayout width="288" height="110">
+			<include>HomeTile</include>
+			<include>HomeTileFocus</include>
+		</focusedlayout>
+	</include>
+</includes>

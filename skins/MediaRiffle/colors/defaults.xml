@@ -1,0 +1,19 @@
+<colors>
+	<!-- MediaRiffle's dark theme (its web app's site.css), for the skin's own windows -->
+	<color name="mr_bg">FF111114</color>
+	<color name="mr_surface">FF1C1C21</color>
+	<color name="mr_text">FFF2F2F5</color>
+	<color name="mr_muted">FFA1A1AA</color>
+	<color name="mr_accent">FF4B9EF5</color>
+	<color name="mr_border">FF33333A</color>
+	<color name="mr_ok">FF2E7D32</color>
+	<color name="mr_danger">FFC62828</color>
+	<!-- Confluence Lite's names, which the windows not restyled yet use: its blue is MediaRiffle's accent -->
+	<color name="white">FFFFFFFF</color>
+	<color name="grey">FFA1A1AA</color>
+	<color name="grey2">FFA1A1AA</color>
+	<color name="grey3">FF505058</color>
+	<color name="black">FF000000</color>
+	<color name="blue">FF4B9EF5</color>
+	<color name="selected">FF4B9EF5</color>
+</colors>
