@@ -4229,7 +4229,28 @@ msgctxt "#13180"
 msgid "Use the console's keyboard"
 msgstr ""
 
-#empty strings from id 13181 to 13199
+#. System info: diagnostics for a bug report, saved to a USB drive (utils\Diagnostics.cpp)
+msgctxt "#13181"
+msgid "Save diagnostics to USB"
+msgstr ""
+
+msgctxt "#13182"
+msgid "Diagnostics"
+msgstr ""
+
+msgctxt "#13183"
+msgid "Saved to %s"
+msgstr ""
+
+msgctxt "#13184"
+msgid "Plug in a USB drive to save them to."
+msgstr ""
+
+msgctxt "#13185"
+msgid "Couldn't write to %s"
+msgstr ""
+
+#empty strings from id 13186 to 13199
 
 msgctxt "#13200"
 msgid "Profiles"

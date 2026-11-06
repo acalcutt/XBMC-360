@@ -629,6 +629,7 @@
     <ClInclude Include="utils\JpegIO.h" />
     <ClInclude Include="utils\minilzo.h" />
     <ClInclude Include="utils\SystemInfo.h" />
+    <ClInclude Include="utils\Diagnostics.h" />
     <ClInclude Include="utils\Job.h" />
     <ClInclude Include="utils\JobManager.h" />
     <ClInclude Include="utils\LabelFormatter.h" />
@@ -1071,6 +1072,7 @@
     <ClCompile Include="utils\JpegIO.cpp" />
     <ClCompile Include="utils\minilzo.cpp" />
     <ClCompile Include="utils\SystemInfo.cpp" />
+    <ClCompile Include="utils\Diagnostics.cpp" />
     <ClCompile Include="utils\JobManager.cpp" />
     <ClCompile Include="utils\LabelFormatter.cpp" />
     <ClCompile Include="utils\AsyncFileCopy.cpp" />

@@ -6,6 +6,7 @@
 #include "guilib\GUIMessage.h"
 #include "Application.h"
 #include "filesystem\Drive.h"
+#include "utils\Diagnostics.h"
 #include "utils\StringUtils.h"
 
 #define STORAGE_UPDATE_EVERY 5000
@@ -35,6 +36,11 @@ bool CGUIWindowSystemInfo::OnMessage(CGUIMessage& message)
 		break;
 		case GUI_MSG_CLICKED:
 		{
+			if (message.GetSenderId() == CONTROL_BT_DIAGNOSTICS)
+			{
+				CDiagnostics::SaveToUsb();
+				return true;
+			}
 			iControl = message.GetSenderId();
 		}
 		break;

@@ -118,6 +118,15 @@ CStdString CMediaRiffle::GetUser(const CStdString& server) const
 	return it == m_links.end() ? "" : it->second.user;
 }
 
+CStdString CMediaRiffle::Describe() const
+{
+	CSingleLock lock(m_section);
+	CStdString lines;
+	for (std::map<CStdString, Account>::const_iterator it = m_links.begin(); it != m_links.end(); ++it)
+		lines += it->first + ": " + it->second.user + "\r\n";
+	return lines.IsEmpty() ? CStdString("Not linked to a server\r\n") : lines;
+}
+
 CStdString CMediaRiffle::TokenFor(const CStdString& server) const
 {
 	CSingleLock lock(m_section);

@@ -1199,6 +1199,9 @@
     <ClInclude Include="utils\SystemInfo.h">
       <Filter>Header Files\utils</Filter>
     </ClInclude>
+    <ClInclude Include="utils\Diagnostics.h">
+      <Filter>Header Files\utils</Filter>
+    </ClInclude>
     <ClInclude Include="utils\Weather.h">
       <Filter>Header Files\utils</Filter>
     </ClInclude>
@@ -2261,6 +2264,9 @@
       <Filter>Source Files\utils</Filter>
     </ClCompile>
     <ClCompile Include="utils\SystemInfo.cpp">
+      <Filter>Source Files\utils</Filter>
+    </ClCompile>
+    <ClCompile Include="utils\Diagnostics.cpp">
       <Filter>Source Files\utils</Filter>
     </ClCompile>
     <ClCompile Include="utils\Weather.cpp">

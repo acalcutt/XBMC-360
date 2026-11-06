@@ -40,6 +40,8 @@ public:
 	// Linked to an account on a server; the account's name
 	bool IsLinked(const CStdString& server) const;
 	CStdString GetUser(const CStdString& server) const;
+	// The servers this console is linked to, and as whom: a line each, without the tokens (diagnostics)
+	CStdString Describe() const;
 
 	// Links this console to an account on the server: shows the code to enter at <server>/link, and waits for it. On
 	// the GUI thread. True once linked.

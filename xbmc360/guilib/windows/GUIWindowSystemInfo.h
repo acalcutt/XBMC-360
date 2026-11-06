@@ -12,6 +12,7 @@
 #define CONTROL_BT_NETWORK  96
 #define CONTROL_BT_VIDEO    97
 #define CONTROL_BT_HARDWARE 98
+#define CONTROL_BT_DIAGNOSTICS 90 // not a page: saves diagnostics to a USB drive
 
 class CGUIWindowSystemInfo : public CGUIWindow
 {
