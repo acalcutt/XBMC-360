@@ -28,6 +28,10 @@ What it adds:
   comes from the extension, or the folder's name for ones that many systems use (a `.zip` in `Genesis`). A zipped
   game is unzipped onto the console before it starts; a zip with several games in it, or one in a folder that doesn't
   say its system, opens like a folder.
+- **Xbox 360 games and homebrew on a share**: playing one copies its folder to the console and starts it there, as
+  the console only starts games from its own drives. The copy stays, with any saves it keeps in its folder; playing
+  again copies only what's new. When a copy would leave under 2 GB, the games played longest ago lose their game files
+  (not their saves), and **System info > Games on the console** shows each copy's size, to free or remove it.
 - **HLS playback**: `.m3u8` streams over HTTP play (the bundled FFmpeg has no HLS demuxer of its own).
 - **Show all videos** in a folder and the folders below it as one list, **Shuffle** for any folder in Videos, the
   console's own keyboard for typing, controller shortcuts on the on-screen keyboard, filled-in System info pages, and
