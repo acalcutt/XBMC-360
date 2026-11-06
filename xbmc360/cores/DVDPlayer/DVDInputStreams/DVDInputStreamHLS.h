@@ -2,10 +2,11 @@
 #define H_DVDINPUTSTREAMHLS
 
 #include "DVDInputStream.h"
-#include "filesystem\File.h"
 #include "utils\CriticalSection.h"
 
 #include <vector>
+
+namespace XFILE { class CCurlFile; }
 
 // An HLS stream (an .m3u8 playlist over HTTP), read as one stream: its MPEG-TS segments one after the other, which
 // the FFmpeg demuxer takes like any transport stream (this FFmpeg is built without its own HLS demuxer and network
@@ -67,13 +68,17 @@ protected:
 	bool LoadPlaylist();
 	bool OpenSegment();
 	void CloseSegment();
+	void SetRequest(XFILE::CCurlFile* request);
 	bool Wait(int ms);
 
 	CCriticalSection m_section;
 	std::string m_playlistUrl;
 	Playlist m_playlist;
 	int m_current;              // the segment being read, by its number
-	XFILE::CFile* m_segment;
+	XFILE::CCurlFile* m_segment;
+	// The request under way (a playlist or a segment), for Abort to interrupt from the thread stopping the player:
+	// a server making a segment can take a while to answer. Set and cleared under m_section.
+	XFILE::CCurlFile* m_request;
 	bool m_eof;
 	volatile bool m_aborted;
 };

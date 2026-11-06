@@ -1,5 +1,6 @@
 #include "DVDInputStreamHLS.h"
 #include "filesystem\CurlFile.h"
+#include "URL.h"
 #include "utils\Log.h"
 #include "utils\SingleLock.h"
 #include "utils\StringUtils.h"
@@ -15,6 +16,7 @@ CDVDInputStreamHLS::CDVDInputStreamHLS() : CDVDInputStream(DVDSTREAM_TYPE_HLS)
 {
 	m_current = 0;
 	m_segment = NULL;
+	m_request = NULL;
 	m_eof = true;
 	m_aborted = false;
 }
@@ -88,9 +90,21 @@ void CDVDInputStreamHLS::Close()
 	m_eof = true;
 }
 
+// From the thread stopping the player, while this one may be waiting on the server
 void CDVDInputStreamHLS::Abort()
 {
+	CSingleLock lock(m_section);
 	m_aborted = true;
+	if (m_request)
+		m_request->Interrupt();
+}
+
+void CDVDInputStreamHLS::SetRequest(CCurlFile* request)
+{
+	CSingleLock lock(m_section);
+	m_request = request;
+	if (m_request && m_aborted)
+		m_request->Interrupt();
 }
 
 int CDVDInputStreamHLS::Read(BYTE* buf, int buf_size)
@@ -130,6 +144,7 @@ bool CDVDInputStreamHLS::IsEOF()
 
 bool CDVDInputStreamHLS::SeekTime(int ms)
 {
+	CloseSegment();
 	CSingleLock lock(m_section);
 
 	if (m_playlist.segments.empty())
@@ -141,7 +156,6 @@ bool CDVDInputStreamHLS::SeekTime(int ms)
 	while (index + 1 < m_playlist.segments.size() && m_playlist.segments[index + 1].start <= seconds)
 		index++;
 
-	CloseSegment();
 	m_current = m_playlist.sequence + (int)index;
 	m_eof = false;
 	CLog::Log(LOGDEBUG, "%s - %.1f s: segment %d (from %.1f s)", __FUNCTION__, seconds, m_current, m_playlist.segments[index].start);
@@ -174,9 +188,13 @@ bool CDVDInputStreamHLS::LoadPlaylist()
 	CCurlFile http;
 	http.SetTimeout(10);
 	CStdString text;
-	if (!http.Get(m_playlistUrl, text))
+	SetRequest(&http);
+	bool fetched = http.Get(m_playlistUrl, text);
+	SetRequest(NULL);
+	if (!fetched)
 	{
-		CLog::Log(LOGERROR, "%s - couldn't fetch %s", __FUNCTION__, m_playlistUrl.c_str());
+		if (!m_aborted)
+			CLog::Log(LOGERROR, "%s - couldn't fetch %s", __FUNCTION__, m_playlistUrl.c_str());
 		return false;
 	}
 
@@ -215,14 +233,17 @@ bool CDVDInputStreamHLS::OpenSegment()
 	if (m_current < m_playlist.sequence)
 		m_current = m_playlist.sequence;
 
-	const Segment& segment = m_playlist.segments[m_current - m_playlist.sequence];
+	const std::string url = m_playlist.segments[m_current - m_playlist.sequence].url;
 	for (int tries = 0; tries < HLS_SEGMENT_TRIES && !m_aborted; tries++)
 	{
-		m_segment = new CFile();
-		if (m_segment->Open(segment.url, READ_TRUNCATED | READ_BITRATE | READ_CHUNKED))
+		// Read straight from CCurlFile (no cache in between), so Abort can interrupt it
+		m_segment = new CCurlFile();
+		SetRequest(m_segment);
+		if (m_segment->Open(CURL(url)) && !m_aborted)
 			return true;
 
-		CLog::Log(LOGWARNING, "%s - couldn't open %s (try %d)", __FUNCTION__, segment.url.c_str(), tries + 1);
+		if (!m_aborted)
+			CLog::Log(LOGWARNING, "%s - couldn't open %s (try %d)", __FUNCTION__, url.c_str(), tries + 1);
 		CloseSegment();
 	}
 	return false;
@@ -230,11 +251,19 @@ bool CDVDInputStreamHLS::OpenSegment()
 
 void CDVDInputStreamHLS::CloseSegment()
 {
-	if (m_segment)
+	CCurlFile* segment;
 	{
-		m_segment->Close();
-		delete m_segment;
+		CSingleLock lock(m_section);
+		segment = m_segment;
 		m_segment = NULL;
+		if (m_request == segment)
+			m_request = NULL;
+	}
+
+	if (segment)
+	{
+		segment->Close();
+		delete segment;
 	}
 }
 

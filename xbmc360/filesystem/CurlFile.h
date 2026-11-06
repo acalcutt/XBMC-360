@@ -92,6 +92,8 @@ public:
     bool ReadData(CStdString& strHTML);
 
     void Cancel();
+    // As Cancel, without waiting: an Open or Read on another thread gives up soon after
+    void Interrupt()                                           { m_state->m_cancelled = true; }
     void SetUserAgent(CStdString sUserAgent)                   { m_userAgent = sUserAgent; }
     void SetTimeout(int connecttimeout)                        { m_connecttimeout = connecttimeout; }
 
