@@ -132,7 +132,6 @@ bool CApplication::Create()
 	CSpecialProtocol::SetTempPath("D:\\cache");
 	CSpecialProtocol::SetMasterProfilePath(g_settings.GetUserDataFolder());
 	CSpecialProtocol::SetProfilePath(g_settings.GetUserDataFolder());
-	CSpecialProtocol::LogPaths();
 
 	// Check logpath
 	CStdString strLogFile, strLogFileOld;
@@ -140,13 +139,15 @@ bool CApplication::Create()
 	strLogFile.Format("%sxbmc.log", g_settings.m_logFolder);
 	strLogFileOld.Format("%sxbmc.old.log", g_settings.m_logFolder);
 
-	// Rotate the log (xbmc.log -> xbmc.old.log)
+	// Rotate the log (xbmc.log -> xbmc.old.log), before anything is logged: the
+	// log keeps its file open once written to, and an open file can't be renamed
 	::DeleteFile(strLogFileOld.c_str());
 	::MoveFile(strLogFile.c_str(), strLogFileOld.c_str());
 
 	CLog::Log(LOGNOTICE, "-----------------------------------------------------------------------");
 	CLog::Log(LOGNOTICE, "Starting %s.  Built on %s", APP_NAME, __DATE__);
 	CLog::Log(LOGNOTICE, "-----------------------------------------------------------------------");
+	CSpecialProtocol::LogPaths();
 
 	// rand() (shuffling a playlist, among others) differs from one start to the next
 	FILETIME now;
