@@ -22,14 +22,17 @@ public:
 	static int WindowFor(const CStdString& type);
 	static CStdString TypeName(const CStdString& type);
 
+	// Adding a source, as described above. Given a kind (from a media window's Add source), only the places that kind
+	// can be on are offered, and what's on it isn't asked. True once one's added.
+	static bool ShowAndAddSource(const CStdString& type = "");
+
 private:
 	void Refresh();
-	void OnAdd();
 	void OnSource(int item);
-	bool AddServer(bool mediaRiffle);
-	bool ChooseType(bool allowGames, CStdString& type);
-	void AddSource(const CStdString& type, const CStdString& name, const CStdString& path, bool allowWrite);
-	CMediaSource* Find(const CStdString& type, const CStdString& name, const CStdString& path);
+	static bool AddServer(bool mediaRiffle);
+	static bool ChooseType(bool allowGames, CStdString& type);
+	static void AddSource(const CStdString& type, const CStdString& name, const CStdString& path, bool allowWrite);
+	static CMediaSource* Find(const CStdString& type, const CStdString& name, const CStdString& path);
 
 	CFileItemList* m_items;
 };

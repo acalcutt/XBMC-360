@@ -5,6 +5,7 @@
 #include "guilib\GUIButtonControl.h"
 #include "GUIDialogMediaSource.h"
 #include "GUIDialogYesNo.h"
+#include "guilib\windows\GUIWindowSources.h"
 #include "network\MediaRiffle.h"
 
 #define BACKGROUND_IMAGE       999
@@ -253,7 +254,8 @@ bool CGUIDialogContextMenu::OnContextButton(const CStdString &type, const CFileI
 		else if (!g_settings.GetCurrentProfile().canWriteSources() && !g_passwordManager.IsProfileLockUnlocked())
 			return false;
 */
-		return CGUIDialogMediaSource::ShowAndAddMediaSource(type);
+		// The same steps as Settings > Sources, knowing what kind it is
+		return CGUIWindowSources::ShowAndAddSource(type);
 	}
 
 #ifdef _HAS_DVDROM

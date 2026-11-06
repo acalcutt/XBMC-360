@@ -95,7 +95,10 @@ bool CGUIWindowSources::OnMessage(CGUIMessage& message)
 
 				// The first is Add a source
 				if (item == 0)
-					OnAdd();
+				{
+					if (ShowAndAddSource())
+						Refresh();
+				}
 				else if (item > 0 && item < m_items->Size())
 					OnSource(item);
 				return true;
@@ -144,44 +147,60 @@ void CGUIWindowSources::Refresh()
 	}
 }
 
-void CGUIWindowSources::OnAdd()
+// The places a source can be
+enum Place { PLACE_MEDIARIFFLE, PLACE_JELLYFIN, PLACE_SHARE, PLACE_CONSOLE };
+
+bool CGUIWindowSources::ShowAndAddSource(const CStdString& type)
 {
-	CGUIDialogSelect* select = (CGUIDialogSelect*)g_windowManager.GetWindow(WINDOW_DIALOG_SELECT);
-	if (!select)
-		return;
-
-	select->Reset();
-	select->SetHeading(13234);
-	select->Add(g_localizeStrings.Get(33530));
-	select->Add(g_localizeStrings.Get(33541));
-	select->Add(g_localizeStrings.Get(13192));
-	select->Add(g_localizeStrings.Get(13193));
-	select->DoModal();
-
-	int where = select->GetSelectedLabel();
-	if (where == 0 || where == 1)
+	// Where it is: a server holds videos, and games start from the console's own drives
+	std::vector<Place> places;
+	if (type.IsEmpty() || type.Equals("video"))
 	{
-		AddServer(where == 0);
-		return;
+		places.push_back(PLACE_MEDIARIFFLE);
+		places.push_back(PLACE_JELLYFIN);
 	}
-	if (where != 2 && where != 3)
-		return;
+	if (!type.Equals("programs"))
+		places.push_back(PLACE_SHARE);
+	places.push_back(PLACE_CONSOLE);
+
+	Place place = places[0];
+	if (places.size() > 1)
+	{
+		CGUIDialogSelect* select = (CGUIDialogSelect*)g_windowManager.GetWindow(WINDOW_DIALOG_SELECT);
+		if (!select)
+			return false;
+
+		const int labels[] = { 33530, 33541, 13192, 13193 };
+		select->Reset();
+		select->SetHeading(13234);
+		for (unsigned int i = 0; i < places.size(); i++)
+			select->Add(g_localizeStrings.Get(labels[places[i]]));
+		select->DoModal();
+
+		int chosen = select->GetSelectedLabel();
+		if (chosen < 0 || chosen >= (int)places.size())
+			return false;
+		place = places[chosen];
+	}
+
+	if (place == PLACE_MEDIARIFFLE || place == PLACE_JELLYFIN)
+		return AddServer(place == PLACE_MEDIARIFFLE);
 
 	CStdString path;
-	if (where == 2)
+	if (place == PLACE_SHARE)
 	{
 		// A Windows share: its server, folder and sign-in, until it opens or they give up
 		path = "smb://";
 		for (;;)
 		{
 			if (!CGUIDialogNetworkSetup::ShowAndGetNetworkAddress(path, true) || CURL(path).GetHostName().IsEmpty())
-				return;
+				return false;
 
 			CFileItemList items;
 			if (CDirectory::GetDirectory(path, items, "", false))
 				break;
 			if (!CGUIDialogYesNo::ShowAndGetInput(13192, 13194, 13195, 0))
-				return;
+				return false;
 		}
 	}
 	else
@@ -189,22 +208,22 @@ void CGUIWindowSources::OnAdd()
 		VECSOURCES drives;
 		g_mediaManager.GetLocalDrives(drives);
 		if (!CGUIDialogFileBrowser::ShowAndGetDirectory(drives, g_localizeStrings.Get(13193), path))
-			return;
+			return false;
 	}
 
-	// Games start from the console's own drives, not from a share
-	CStdString type;
-	if (!ChooseType(where == 3, type))
-		return;
+	CStdString kind = type;
+	if (kind.IsEmpty() && !ChooseType(place == PLACE_CONSOLE, kind))
+		return false;
 
 	CStdString name = CURL(path).GetWithoutUserDetails();
 	URIUtils::RemoveSlashAtEnd(name);
 	name = URIUtils::GetFileName(name);
 	if (!CGUIDialogKeyboard::ShowAndGetInput(name, g_localizeStrings.Get(13199), false))
-		return;
+		return false;
 
 	bool allowWrite = CMediaSource::CanWriteTo(path) && CGUIDialogYesNo::ShowAndGetInput(13196, 13197, 0, 0);
-	AddSource(type, name, path, allowWrite);
+	AddSource(kind, name, path, allowWrite);
+	return true;
 }
 
 // A MediaRiffle or Jellyfin server: its address, then linking (with a code) or signing in straight away. It's a source
@@ -270,8 +289,6 @@ void CGUIWindowSources::AddSource(const CStdString& type, const CStdString& name
 	source.FromNameAndPaths(type, unique, paths);
 	source.m_allowWrite = allowWrite;
 	g_settings.AddShare(type, source);
-
-	Refresh();
 }
 
 // A source of a kind by its name, and its path when that's given
