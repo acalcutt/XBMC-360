@@ -34,6 +34,7 @@ The first version of 360 Riffle, from [XBMC-360](https://github.com/brentdc-nz/X
 - **Videos**: Show all videos in a folder and its folders as one list, Shuffle a folder, play HLS (`.m3u8`) streams,
   and skip to the previous or next video with LB and RB.
 - **Update from USB** in System info installs a new build without the softmod's installer.
+- **Releases** on GitLab, each with a zip to unzip at the top of a USB drive for Update from USB.
 - **Save diagnostics to USB** in System info (never passwords or tokens), and filled-in System info pages.
 - **Typing** with the console's own keyboard, and controller shortcuts on the on-screen keyboard.
 

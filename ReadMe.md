@@ -64,7 +64,8 @@ the top of the drive), without going through the softmod's installer.
 
 The version is `APP_VERSION` in [xbmc360/CompileInfo.h](xbmc360/CompileInfo.h), shown in System info and at the top
 of the log. [CHANGELOG.md](CHANGELOG.md) says what each version brings, with what's changed since the last one under
-`master`.
+`master`. GitLab CI builds every change and makes a release of each version, with a zip to unzip on a USB drive for
+Update from USB: see [docs/releases.md](docs/releases.md).
 
 ## From XBMC-360
 
