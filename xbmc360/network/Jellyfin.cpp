@@ -54,15 +54,17 @@ bool CJellyfin::IsJellyfin(const CStdString& path)
 	return path.Left(11).Equals("jellyfin://") || path.Left(12).Equals("jellyfins://");
 }
 
-// jellyfin://media01:8096/series/3/ is on http://media01:8096; jellyfins:// is HTTPS
+// jellyfin://media01:8096/series/3/ is on http://media01:8096; jellyfins:// is HTTPS, and so are ports 443 and 8920
+// (Jellyfin's own HTTPS port) whichever it says
 CStdString CJellyfin::ServerOf(const CStdString& path)
 {
 	CURL url(path);
 	if (!IsJellyfin(path) || url.GetHostName().IsEmpty())
 		return "";
 
+	bool secure = url.GetProtocol().Equals("jellyfins") || (url.HasPort() && (url.GetPort() == 443 || url.GetPort() == 8920));
 	CStdString server;
-	server.Format("%s://%s", url.GetProtocol().Equals("jellyfins") ? "https" : "http", url.GetHostName().c_str());
+	server.Format("%s://%s", secure ? "https" : "http", url.GetHostName().c_str());
 	if (url.HasPort())
 		server.AppendFormat(":%d", url.GetPort());
 	server.ToLower();

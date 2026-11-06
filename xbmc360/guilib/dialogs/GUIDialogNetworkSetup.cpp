@@ -333,6 +333,10 @@ CStdString CGUIDialogNetworkSetup::ConstructPath() const
 		if (host.IsEmpty())
 			return "";
 
+		// The HTTPS ports are HTTPS, whichever was picked
+		if (atoi(port.c_str()) == 443 || (IsJellyfin() && atoi(port.c_str()) == 8920))
+			secure = true;
+
 		if (IsJellyfin())
 			url.SetProtocol(secure ? "jellyfins" : "jellyfin");
 		else

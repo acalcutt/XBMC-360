@@ -75,15 +75,17 @@ bool CMediaRiffle::IsMediaRiffle(const CStdString& path)
 	return path.Left(14).Equals("mediariffle://") || path.Left(15).Equals("mediariffles://");
 }
 
-// mediariffle://media01:5080/shows/3/ is on http://media01:5080; mediariffles:// is HTTPS
+// mediariffle://media01:5080/shows/3/ is on http://media01:5080; mediariffles:// is HTTPS, and so is port 443 whichever
+// it says (a source saved as mediariffle://host:443/ spoke HTTP to an HTTPS port and got nothing back)
 CStdString CMediaRiffle::ServerOf(const CStdString& path)
 {
 	CURL url(path);
 	if (!IsMediaRiffle(path) || url.GetHostName().IsEmpty())
 		return "";
 
+	bool secure = url.GetProtocol().Equals("mediariffles") || (url.HasPort() && url.GetPort() == 443);
 	CStdString server;
-	server.Format("%s://%s", url.GetProtocol().Equals("mediariffles") ? "https" : "http", url.GetHostName().c_str());
+	server.Format("%s://%s", secure ? "https" : "http", url.GetHostName().c_str());
 	if (url.HasPort())
 		server.AppendFormat(":%d", url.GetPort());
 	server.ToLower();
