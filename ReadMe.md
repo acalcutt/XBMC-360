@@ -7,19 +7,30 @@ classes) so its changes can still be merged in.
 
 What it adds:
 
-- **The 360 Riffle skin** (`skins/360 Riffle`): a home screen like MediaRiffle's web app (top bar with tabs, cards), on
-  Confluence Lite.
+- **The 360 Riffle skin** (`skins/360 Riffle`): a home screen like MediaRiffle's web app (top bar with tabs, cards),
+  on Confluence Lite. Videos, Games, Music and Pictures show your sources as tiles; with a disc in, a Disc tab plays
+  it, copies its files to a folder, saves an ISO image of it or ejects it.
+- **Settings > Sources**: every source in one place, added by saying where it is (a MediaRiffle or Jellyfin server, a
+  Windows share, a folder on the console) and then only what that needs. A share or folder can allow saving, for disc
+  copies and diagnostics.
 - **MediaRiffle servers as sources** (`mediariffle://host:port/`, or `mediariffles://` over HTTPS): Continue watching,
-  categories, your lists and the show and movie libraries, with Play all and Shuffle. The server transcodes what plays
-  to H.264 at 720p and streams it as HLS; where each video stopped is saved back to the server.
+  categories, your lists and the show and movie libraries, with Play all and Shuffle, and Hide (with a Hidden folder to
+  show things again). The server transcodes what plays to H.264 at 720p and streams it as HLS; where each video stopped
+  is saved back to the server.
+- **Jellyfin servers as sources** (`jellyfin://host:port/`, or `jellyfins://`; Emby's API too): Continue watching, Next
+  up and the video libraries, streamed the same way.
+- **Network shares** that can be written to, and signed in to with a domain account (`DOMAIN\name` or
+  `name@domain`), with file sizes and dates in their listings.
 - **HLS playback**: `.m3u8` streams over HTTP play (the bundled FFmpeg has no HLS demuxer of its own).
-- **Shuffle** for any folder in Videos, the console's own keyboard for typing, controller shortcuts on the on-screen
-  keyboard, and filled-in System info pages.
+- **Show all videos** in a folder and the folders below it as one list, **Shuffle** for any folder in Videos, the
+  console's own keyboard for typing, controller shortcuts on the on-screen keyboard, filled-in System info pages, and
+  **Save diagnostics to USB** there (system details and the logs, never passwords or tokens).
 
-To add a MediaRiffle server, in Videos choose Add source > Browse > Add network location, pick **MediaRiffle server**
-(or **MediaRiffle server (HTTPS)** from outside the local network), and give its address and port; the home screen's
-MediaRiffle tile asks for one too when there's none. The first time the source is opened, the console shows a code to
-enter at the server's `/link` in a browser where you're signed in. To sign out, open the source's context menu.
+To add a MediaRiffle or Jellyfin server, choose Settings > Sources > Add a source, pick the kind of server and give
+its address (as `https://…` or with port 443 for HTTPS). The console then links to it straight away: MediaRiffle shows
+a code to enter at the server's `/link` in a browser where you're signed in, and Jellyfin a Quick Connect code to enter
+in your Jellyfin profile (or asks for a name and password where Quick Connect is off). Sources can be changed, removed
+or signed out of on the same page.
 
 To install a build, copy `xbmc360\Release\xbmc360.xex` to the console as `default.xex` (in
 `Hdd1:\PeerPressure\360riffle` with the Peer Pressure softmod), with the `language`, `media`, `scripts`, `system` and
