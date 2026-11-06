@@ -8792,7 +8792,9 @@ msgctxt "#33528"
 msgid "%d items"
 msgstr ""
 
-#empty strings from id 33529 to 33529
+msgctxt "#33529"
+msgid "Play all"
+msgstr ""
 
 #. Add network location: the protocols
 msgctxt "#33530"

@@ -12,6 +12,7 @@
 #include "Application.h"
 #include "FileItem.h"
 #include "MediaSource.h"
+#include "PlayListPlayer.h"
 #include "Settings.h"
 #include "URL.h"
 #include "filesystem\SpecialProtocol.h"
@@ -27,6 +28,7 @@
 #include "utils\SingleLock.h"
 #include "utils\StringUtils.h"
 #include "utils\SystemInfo.h"
+#include "video\VideoInfoTag.h"
 
 CMediaRiffle g_mediaRiffle;
 
@@ -445,6 +447,82 @@ bool CMediaRiffle::StartPlayback(const CFileItem& item, CFileItem& stream)
 
 	CLog::Log(LOGNOTICE, "MediaRiffle: playing file %d, %s (%s), from %.0f s", fileId, mode.c_str(),
 		answer["reason"].asString().c_str(), m_playing.offset + seekTo);
+	return true;
+}
+
+bool CMediaRiffle::IsQueue(const CStdString& path)
+{
+	if (ServerOf(path).IsEmpty())
+		return false;
+
+	CStdString rest = CURL(path).GetFileName();
+	return rest.Left(6).Equals("queue/") || rest.Left(8).Equals("shuffle/");
+}
+
+bool CMediaRiffle::PlayQueue(const CFileItem& item)
+{
+	CStdString server = ServerOf(item.GetPath());
+	CStdString source = SourceOf(item.GetPath());
+	CStdStringArray parts;
+	CStdString rest = CURL(item.GetPath()).GetFileName();
+	rest.TrimRight("/");
+	CStringUtils::SplitString(rest, "/", parts);
+	if (server.IsEmpty() || parts.size() < 3)
+		return false;
+
+	CStdString what = parts[1];
+	if (!what.Equals("library") && !what.Equals("show") && !what.Equals("tag") && !what.Equals("list"))
+		return false;
+
+	if (!IsLinked(server) && !Link(server))
+		return false;
+
+	// The value is URL-encoded already (a tag or a list's name, as its folder's path has it)
+	bool shuffle = parts[0].Equals("shuffle");
+	CStdString query;
+	query.Format("/api/queue?%s=%s&shuffle=%s", what.c_str(), parts[2].c_str(), shuffle ? "true" : "false");
+
+	long status = 0;
+	CVariant answer;
+	if (!Call(server, "GET", query, NULL, status, answer, 30))
+	{
+		ShowUnreachable(server);
+		return false;
+	}
+	if (status != 200)
+	{
+		ShowError(ErrorOf(answer, status));
+		return false;
+	}
+
+	// Its videos (music has its own place)
+	CFileItemList videos;
+	for (unsigned int i = 0; i < answer.size(); i++)
+	{
+		if (answer[i]["audio"].asBoolean())
+			continue;
+
+		CStdString title = answer[i]["title"].asString();
+		CStdString path;
+		path.Format("%splay/%d", source.c_str(), (int)answer[i]["id"].asInteger());
+
+		CFileItemPtr video(new CFileItem(title));
+		video->SetPath(path);
+		video->SetMimeType("video/mp2t");
+		video->SetLabelPreformated(true);
+		video->GetVideoInfoTag()->m_strTitle = title;
+		videos.Add(video);
+	}
+	if (videos.IsEmpty())
+		return false;
+
+	CLog::Log(LOGNOTICE, "MediaRiffle: playing %d videos in a row (%s %s%s)", videos.Size(), what.c_str(), parts[2].c_str(),
+		shuffle ? ", shuffled" : "");
+	g_playlistPlayer.ClearPlaylist(PLAYLIST_VIDEO);
+	g_playlistPlayer.Reset();
+	g_playlistPlayer.Add(PLAYLIST_VIDEO, videos);
+	g_playlistPlayer.SetCurrentPlaylist(PLAYLIST_VIDEO);
+	g_playlistPlayer.Play();
 	return true;
 }
 

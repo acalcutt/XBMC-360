@@ -56,6 +56,11 @@ public:
 
 	// Playing: a mediariffle:// item to play, and the stream it plays as (POST /api/play)
 	bool StartPlayback(const CFileItem& item, CFileItem& stream);
+	// Play all and Shuffle: <source>queue/<what>/<value> or <source>shuffle/<what>/<value>, for a library, a show, a
+	// category (tag) or a list. What the server lists to play in a row (/api/queue) becomes the video playlist, each
+	// video a stream asked for when its turn comes.
+	static bool IsQueue(const CStdString& path);
+	bool PlayQueue(const CFileItem& item);
 	// From the application while something plays (every frame), and when it stops or ends
 	void OnPlaying(const CStdString& currentFile, double seconds, bool paused);
 	void OnStopped(bool ended);

@@ -149,6 +149,25 @@ void CMediaRiffleDirectory::AddFolder(const CStdString& label, const CStdString&
 	items.Add(item);
 }
 
+// Play all and Shuffle, at the top: what a library, a show, a category (tag) or a list has, played in a row. Actions,
+// not videos, so playing the folder leaves them out.
+void CMediaRiffleDirectory::AddQueueItems(const CStdString& what, const CStdString& value, CFileItemList &items)
+{
+	const char* modes[] = { "queue", "shuffle" };
+	const int labels[] = { 33529, 191 }; // Play all, Shuffle
+	for (int i = 0; i < 2; i++)
+	{
+		CFileItemPtr item(new CFileItem(g_localizeStrings.Get(labels[i])));
+		item->SetPath(m_source + modes[i] + "/" + what + "/" + value);
+		item->m_bIsFolder = false;
+		item->SetMimeType("video/mp2t");
+		item->SetLabelPreformated(true);
+		item->SetSpecialSort(SORT_ON_TOP);
+		item->SetCanQueue(false);
+		items.Add(item);
+	}
+}
+
 void CMediaRiffleDirectory::AddRoot(CFileItemList &items)
 {
 	AddFolder(g_localizeStrings.Get(33520), "continue/", items);
@@ -222,9 +241,11 @@ bool CMediaRiffleDirectory::AddTags(const CStdString& kind, CFileItemList &items
 bool CMediaRiffleDirectory::AddTagged(const CStdString& kind, const CStdString& tag, CFileItemList &items)
 {
 	CVariant tagged;
-	if (!Get(CStdString(kind.Equals("category") ? "/api/tags/" : "/api/lists/") + tag, tagged))
+	bool category = kind.Equals("category");
+	if (!Get(CStdString(category ? "/api/tags/" : "/api/lists/") + tag, tagged))
 		return false;
 
+	AddQueueItems(category ? "tag" : "list", tag, items);
 	AddShowTiles(tagged["shows"], items);
 	AddMovieTiles(tagged["movies"], items);
 	return true;
@@ -236,6 +257,7 @@ bool CMediaRiffleDirectory::AddShows(const CStdString& library, CFileItemList &i
 	if (!Get("/api/libraries/" + library + "/shows", shows))
 		return false;
 
+	AddQueueItems("library", library, items);
 	AddShowTiles(shows, items);
 	items.SetContent("tvshows");
 	return true;
@@ -270,6 +292,10 @@ bool CMediaRiffleDirectory::AddShow(const CStdString& show, const CStdString& se
 	CVariant details;
 	if (!Get("/api/shows/" + show, details))
 		return false;
+
+	// The whole show, in season order or shuffled
+	if (season.IsEmpty())
+		AddQueueItems("show", show, items);
 
 	const CVariant& seasons = details["seasons"];
 	if (season.IsEmpty() && seasons.size() > 1)
@@ -331,6 +357,7 @@ bool CMediaRiffleDirectory::AddMovies(const CStdString& library, CFileItemList &
 	if (!Get("/api/libraries/" + library + "/movies", movies))
 		return false;
 
+	AddQueueItems("library", library, items);
 	AddMovieTiles(movies, items);
 	items.SetContent("movies");
 	return true;

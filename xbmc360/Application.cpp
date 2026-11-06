@@ -1868,7 +1868,10 @@ void CApplication::OnPlayBackStopped()
 
 bool CApplication::PlayFile(const CFileItem& item, bool bRestart)
 {
-	// A MediaRiffle item plays as the stream its server makes of it
+	// A MediaRiffle item plays as the stream its server makes of it; its Play all and Shuffle, as a playlist of them
+	if (!bRestart && CMediaRiffle::IsQueue(item.GetPath()))
+		return g_mediaRiffle.PlayQueue(item);
+
 	if (!bRestart && CMediaRiffle::IsMediaRiffle(item.GetPath()))
 	{
 		CFileItem stream;
