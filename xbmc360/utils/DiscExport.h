@@ -6,12 +6,13 @@
 
 class CGUIDialogProgress;
 
-// Keeps what's on the disc in the drive: its files copied to a folder on
-// the console's drives or a network share
+// Keeps what's on the disc in the drive: its files copied to a folder, or
+// an image of the whole disc, on the console's drives or a network share
 class CDiscExport : public IFileCallback
 {
 public:
 	static void CopyFiles();
+	static void SaveImage();
 
 	virtual bool OnFileCallback(void* pContext, int ipercent, float avgSpeed);
 
@@ -21,7 +22,7 @@ private:
 	static bool ChooseDestination(const CDiscDrive::Info& disc, int iHeading, CStdString& strFolder, CStdString& strName);
 	static CStdString MakeSafeName(const CStdString& strName);
 	static __int64 MeasureFolder(const CStdString& strFolder);
-	static void ShowResult(int iHeading, int iLine, const CStdString& strPath);
+	static void ShowResult(int iHeading, int iLine, const CStdString& strDetail);
 
 	void StartProgress(int iHeading, __int64 iTotal);
 	bool ShowProgress(__int64 iDone, const CStdString& strLine);

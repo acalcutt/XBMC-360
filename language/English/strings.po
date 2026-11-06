@@ -4324,13 +4324,17 @@ msgctxt "#13218"
 msgid "Copy disc to a folder"
 msgstr ""
 
-#empty string with id 13219
+msgctxt "#13219"
+msgid "Save disc as an ISO image"
+msgstr ""
 
 msgctxt "#13220"
 msgid "Copying the disc"
 msgstr ""
 
-#empty string with id 13221
+msgctxt "#13221"
+msgid "Saving the disc image"
+msgstr ""
 
 msgctxt "#13222"
 msgid "Name for the copy"
@@ -4348,13 +4352,27 @@ msgctxt "#13225"
 msgid "Stopped. What was copied is in %s"
 msgstr ""
 
-#empty string with id 13226
+msgctxt "#13226"
+msgid "Stopped. The unfinished image was removed."
+msgstr ""
 
 msgctxt "#13227"
 msgid "%s of %s"
 msgstr ""
 
-#empty strings from id 13228 to 13248
+msgctxt "#13228"
+msgid "A %s image needs a network share: the console's drives take files up to 4 GB."
+msgstr ""
+
+msgctxt "#13229"
+msgid "Couldn't read the disc. The log has the details."
+msgstr ""
+
+msgctxt "#13230"
+msgid "There's already a file with that name. Replace it?"
+msgstr ""
+
+#empty strings from id 13231 to 13248
 
 msgctxt "#13249"
 msgid "Search for subtitles in RARs"
