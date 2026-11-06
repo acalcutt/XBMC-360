@@ -20,7 +20,9 @@ public:
 	virtual bool OnBack(int actionID);
 	virtual void OnInitWindow();
 
-	static bool ShowAndGetNetworkAddress(CStdString &path);
+	// path starts it off (its protocol, server, port…). With fixedKind, only protocols of the same kind are offered:
+	// a share, a MediaRiffle server or a Jellyfin server, each with its HTTPS form.
+	static bool ShowAndGetNetworkAddress(CStdString &path, bool fixedKind = false);
 
 	CStdString ConstructPath() const;
 	void SetPath(const CStdString &path);
@@ -46,6 +48,7 @@ protected:
 	CStdString m_port;
 
 	bool m_confirmed;
+	bool m_fixedKind;
 };
 
 #endif //CGUIDIALOGNETWORKSETUP_H

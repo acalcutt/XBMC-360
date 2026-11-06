@@ -25,6 +25,7 @@ CGUIDialogNetworkSetup::CGUIDialogNetworkSetup(void)
 {
 	m_protocol = NET_PROTOCOL_SMB;
 	m_confirmed = false;
+	m_fixedKind = false;
 }
 
 CGUIDialogNetworkSetup::~CGUIDialogNetworkSetup()
@@ -78,12 +79,13 @@ bool CGUIDialogNetworkSetup::OnMessage(CGUIMessage& message)
 
 // Show CGUIDialogNetworkSetup dialog and prompt for a new network address.
 // return True if the network address is valid, false otherwise.
-bool CGUIDialogNetworkSetup::ShowAndGetNetworkAddress(CStdString &path)
+bool CGUIDialogNetworkSetup::ShowAndGetNetworkAddress(CStdString &path, bool fixedKind)
 {
 	CGUIDialogNetworkSetup *dialog = (CGUIDialogNetworkSetup *)g_windowManager.GetWindow(WINDOW_DIALOG_NETWORK_SETUP);
 	if (!dialog) return false;
-	
+
 	dialog->Initialize();
+	dialog->m_fixedKind = fixedKind;
 	dialog->SetPath(path);
 	dialog->DoModal();
 	path = dialog->ConstructPath();
@@ -109,12 +111,24 @@ void CGUIDialogNetworkSetup::OnInitWindow()
 	if (!pSpin)
 		return;
 
+	// Asked for one kind of place (Settings > Sources), only that kind's protocols
+	bool share = !m_fixedKind || m_protocol == NET_PROTOCOL_SMB;
+	bool mediaRiffle = !m_fixedKind || IsMediaRiffle();
+	bool jellyfin = !m_fixedKind || IsJellyfin();
+
 	pSpin->Clear();
-	pSpin->AddLabel(g_localizeStrings.Get(20171), NET_PROTOCOL_SMB);
-	pSpin->AddLabel(g_localizeStrings.Get(33530), NET_PROTOCOL_MEDIARIFFLE);
-	pSpin->AddLabel(g_localizeStrings.Get(33531), NET_PROTOCOL_MEDIARIFFLES);
-	pSpin->AddLabel(g_localizeStrings.Get(33541), NET_PROTOCOL_JELLYFIN);
-	pSpin->AddLabel(g_localizeStrings.Get(33542), NET_PROTOCOL_JELLYFINS);
+	if (share)
+		pSpin->AddLabel(g_localizeStrings.Get(20171), NET_PROTOCOL_SMB);
+	if (mediaRiffle)
+	{
+		pSpin->AddLabel(g_localizeStrings.Get(33530), NET_PROTOCOL_MEDIARIFFLE);
+		pSpin->AddLabel(g_localizeStrings.Get(33531), NET_PROTOCOL_MEDIARIFFLES);
+	}
+	if (jellyfin)
+	{
+		pSpin->AddLabel(g_localizeStrings.Get(33541), NET_PROTOCOL_JELLYFIN);
+		pSpin->AddLabel(g_localizeStrings.Get(33542), NET_PROTOCOL_JELLYFINS);
+	}
 	// TODO: Add more!
 
 	pSpin->SetValue(m_protocol);
@@ -292,28 +306,40 @@ CStdString CGUIDialogNetworkSetup::ConstructPath() const
 		url.SetProtocol("smb");
 	// TODO - Add the other protocols
 
-	// MediaRiffle and Jellyfin: mediariffle://host:port/ or jellyfin://host:port/, from the address however it was typed
-	// ("http://media01:5080/" too)
+	// MediaRiffle and Jellyfin: mediariffle://host:port/ or jellyfin://host:port/, from the address however it was typed.
+	// An address typed as https://… is HTTPS whichever was picked, on the HTTPS port unless another was set; and a
+	// port typed in it ("media01:5080") is the one used.
 	if (IsMediaServer())
 	{
+		bool secure = m_protocol == NET_PROTOCOL_MEDIARIFFLES || m_protocol == NET_PROTOCOL_JELLYFINS;
+		CStdString port = m_port;
 		CStdString host = m_server;
 		host.Trim();
+		if (host.Left(8).Equals("https://") && !secure)
+		{
+			secure = true;
+			if (port.Equals(DefaultPort()))
+				port = IsJellyfin() ? "8920" : "443";
+		}
 		if (host.Find("://") >= 0)
 			host = host.Mid(host.Find("://") + 3);
 		if (host.Find("/") >= 0)
 			host = host.Left(host.Find("/"));
 		if (host.Find(":") >= 0)
+		{
+			port = host.Mid(host.Find(":") + 1);
 			host = host.Left(host.Find(":"));
+		}
 		if (host.IsEmpty())
 			return "";
 
 		if (IsJellyfin())
-			url.SetProtocol(m_protocol == NET_PROTOCOL_JELLYFINS ? "jellyfins" : "jellyfin");
+			url.SetProtocol(secure ? "jellyfins" : "jellyfin");
 		else
-			url.SetProtocol(m_protocol == NET_PROTOCOL_MEDIARIFFLES ? "mediariffles" : "mediariffle");
+			url.SetProtocol(secure ? "mediariffles" : "mediariffle");
 		url.SetHostName(host);
-		if (atoi(m_port.c_str()) > 0)
-			url.SetPort(atoi(m_port.c_str()));
+		if (atoi(port.c_str()) > 0)
+			url.SetPort(atoi(port.c_str()));
 
 		CStdString path = url.Get();
 		URIUtils::AddSlashAtEnd(path);
