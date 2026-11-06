@@ -109,8 +109,9 @@ bool CHDDirectory::Exists(const char* strPath)
 
 	DWORD attributes = GetFileAttributes(strReplaced.c_str());
 
-	// A missing path gives INVALID_FILE_ATTRIBUTES, which has every bit set
-	if (attributes != INVALID_FILE_ATTRIBUTES && (FILE_ATTRIBUTE_DIRECTORY & attributes))
+	// A missing path gives 0xFFFFFFFF (INVALID_FILE_ATTRIBUTES, which the XDK
+	// doesn't define), and that has every bit set
+	if (attributes != 0xFFFFFFFF && (FILE_ATTRIBUTE_DIRECTORY & attributes))
 		return true;
 		
 	return false;
