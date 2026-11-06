@@ -18,7 +18,8 @@ namespace XFILE
 //   <source>series/<show>/           its seasons (or, with only one, its episodes)
 //   <source>series/<show>/<season>/  that season's episodes
 //   <source>folder/<folder>/         what's in any other library or folder (home videos, collections)
-// What plays is <source>play/<item>.
+// What plays is <source>play/<item>. A library, a show, a season and a folder start with Play all and Shuffle
+// (<source>queue/<id> and <source>shuffle/<id>, Jellyfin::PlayQueue).
 class CJellyfinDirectory : public IDirectory
 {
 public:
@@ -38,6 +39,7 @@ private:
 	bool AddSeries(const CStdString& series, const CStdString& season, CFileItemList &items);
 	void AddItem(const CVariant& item, CFileItemList &items, bool withShow);
 	void AddFolder(const CStdString& label, const CStdString& path, CFileItemList &items);
+	void AddQueueItems(const CStdString& parent, CFileItemList &items);
 	CStdString Image(const CVariant& item) const;
 
 	// The server listed, its source (which the paths in it start with), and the user signed in there

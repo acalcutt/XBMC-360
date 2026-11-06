@@ -1900,7 +1900,10 @@ bool CApplication::PlayFile(const CFileItem& item, bool bRestart)
 		return PlayFile(stream, false);
 	}
 
-	// A Jellyfin item, likewise: the HLS stream its server makes of it
+	// A Jellyfin item, likewise: the HLS stream its server makes of it; and its Play all and Shuffle, a playlist of them
+	if (!bRestart && CJellyfin::IsQueue(item.GetPath()))
+		return g_jellyfin.PlayQueue(item);
+
 	if (!bRestart && CJellyfin::IsJellyfin(item.GetPath()))
 	{
 		CFileItem stream;

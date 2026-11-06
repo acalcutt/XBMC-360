@@ -59,6 +59,10 @@ public:
 	// From the application while something plays (every frame), and when it stops or ends
 	void OnPlaying(const CStdString& currentFile, double seconds, bool paused);
 	void OnStopped(bool ended);
+	// Play all and Shuffle: <source>queue/<folder> or <source>shuffle/<folder>, for a library, a show or a folder.
+	// Its videos, and those in its folders, become the video playlist, each played as above when its turn comes.
+	static bool IsQueue(const CStdString& path);
+	bool PlayQueue(const CFileItem& item);
 
 	// Errors, in a dialog: the server couldn't be reached (and libcurl's reason), or what it answered
 	void ShowUnreachable(const CStdString& server);

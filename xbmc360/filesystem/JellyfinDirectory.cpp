@@ -58,17 +58,22 @@ bool CJellyfinDirectory::GetDirectory(const CStdString& strPath, CFileItemList &
 	if (kind.Equals("movies"))
 	{
 		items.SetContent("movies");
+		AddQueueItems(id, items);
 		return AddUserItems("parentId=" + id + "&recursive=true&includeItemTypes=Movie&sortBy=SortName", items);
 	}
 	if (kind.Equals("shows"))
 	{
 		items.SetContent("tvshows");
+		AddQueueItems(id, items);
 		return AddUserItems("parentId=" + id + "&recursive=true&includeItemTypes=Series&sortBy=SortName", items);
 	}
 	if (kind.Equals("series"))
 		return AddSeries(id, parts.size() > 2 ? parts[2] : "", items);
 	if (kind.Equals("folder"))
+	{
+		AddQueueItems(id, items);
 		return AddUserItems("parentId=" + id + "&sortBy=SortName", items);
+	}
 
 	CLog::Log(LOGWARNING, "%s - unknown path %s", __FUNCTION__, strPath.c_str());
 	return false;
@@ -96,6 +101,25 @@ void CJellyfinDirectory::AddFolder(const CStdString& label, const CStdString& pa
 	item->m_bIsFolder = true;
 	item->SetLabelPreformated(true);
 	items.Add(item);
+}
+
+// Play all and Shuffle, at the top: what a library, a show, a season or a folder has, played in a row. Actions, not
+// videos, so playing the folder leaves them out.
+void CJellyfinDirectory::AddQueueItems(const CStdString& parent, CFileItemList &items)
+{
+	const char* modes[] = { "queue", "shuffle" };
+	const int labels[] = { 33529, 191 }; // Play all, Shuffle
+	for (int i = 0; i < 2; i++)
+	{
+		CFileItemPtr item(new CFileItem(g_localizeStrings.Get(labels[i])));
+		item->SetPath(m_source + modes[i] + "/" + parent);
+		item->m_bIsFolder = false;
+		item->SetMimeType("video/mp2t");
+		item->SetLabelPreformated(true);
+		item->SetSpecialSort(SORT_ON_TOP);
+		item->SetCanQueue(false);
+		items.Add(item);
+	}
 }
 
 // Continue watching, Next up, then the user's video libraries (music, pictures, books and live TV have other places)
@@ -157,6 +181,9 @@ bool CJellyfinDirectory::AddUserItems(const CStdString& query, CFileItemList &it
 bool CJellyfinDirectory::AddSeries(const CStdString& series, const CStdString& season, CFileItemList &items)
 {
 	CStdString episodes = "/Shows/" + series + "/Episodes?userId=" + m_userId;
+
+	// The whole show, or the season, in order or shuffled
+	AddQueueItems(season.IsEmpty() ? series : season, items);
 
 	if (season.IsEmpty())
 	{

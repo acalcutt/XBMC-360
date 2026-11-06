@@ -5,6 +5,7 @@
 #include "Application.h"
 #include "CompileInfo.h"
 #include "FileItem.h"
+#include "PlayListPlayer.h"
 #include "URL.h"
 #include "filesystem\SpecialProtocol.h"
 #include "guilib\GUIWindowManager.h"
@@ -18,6 +19,7 @@
 #include "utils\Log.h"
 #include "utils\SingleLock.h"
 #include "utils\StringUtils.h"
+#include "video\VideoInfoTag.h"
 
 CJellyfin g_jellyfin;
 
@@ -495,6 +497,79 @@ bool CJellyfin::StartPlayback(const CFileItem& item, CFileItem& stream)
 	}
 
 	CLog::Log(LOGNOTICE, "Jellyfin: playing %s from %.0f s", id.c_str(), resume);
+	return true;
+}
+
+bool CJellyfin::IsQueue(const CStdString& path)
+{
+	if (ServerOf(path).IsEmpty())
+		return false;
+
+	CStdString rest = CURL(path).GetFileName();
+	return rest.Left(6).Equals("queue/") || rest.Left(8).Equals("shuffle/");
+}
+
+bool CJellyfin::PlayQueue(const CFileItem& item)
+{
+	CStdString server = ServerOf(item.GetPath());
+	CStdString source = SourceOf(item.GetPath());
+	CStdStringArray parts;
+	CStdString rest = CURL(item.GetPath()).GetFileName();
+	rest.TrimRight("/");
+	CStringUtils::SplitString(rest, "/", parts);
+	if (server.IsEmpty() || parts.size() < 2)
+		return false;
+
+	if (!IsSignedIn(server) && !SignIn(server))
+		return false;
+
+	// In episode order (movies have none, so they go by name), or in the server's random order; enough for an evening
+	bool shuffle = parts[0].Equals("shuffle");
+	CStdString userId = GetUserId(server);
+	CStdString query;
+	query.Format("parentId=%s&recursive=true&includeItemTypes=Movie,Episode,Video,MusicVideo&sortBy=%s&limit=500",
+		parts[1].c_str(), shuffle ? "Random" : "ParentIndexNumber,IndexNumber,SortName");
+
+	long status = 0;
+	CVariant answer;
+	if (!Call(server, "GET", "/Items?userId=" + userId + "&" + query, NULL, status, answer, 30))
+	{
+		ShowUnreachable(server);
+		return false;
+	}
+	if (status == 404)
+		Call(server, "GET", "/Users/" + userId + "/Items?" + query, NULL, status, answer, 30);
+	if (status != 200)
+	{
+		ShowError(ErrorOf(answer, status));
+		return false;
+	}
+
+	CFileItemList videos;
+	const CVariant& list = answer["Items"];
+	for (unsigned int i = 0; i < list.size(); i++)
+	{
+		const CVariant& entry = list[i];
+		CStdString title = entry["Name"].asString();
+		if (!entry["SeriesName"].isNull())
+			title = CStdString(entry["SeriesName"].asString()) + " - " + title;
+
+		CFileItemPtr video(new CFileItem(title));
+		video->SetPath(source + "play/" + CStdString(entry["Id"].asString()));
+		video->SetMimeType("video/mp2t");
+		video->SetLabelPreformated(true);
+		video->GetVideoInfoTag()->m_strTitle = title;
+		videos.Add(video);
+	}
+	if (videos.IsEmpty())
+		return false;
+
+	CLog::Log(LOGNOTICE, "Jellyfin: playing %d videos in a row from %s%s", videos.Size(), parts[1].c_str(), shuffle ? ", shuffled" : "");
+	g_playlistPlayer.ClearPlaylist(PLAYLIST_VIDEO);
+	g_playlistPlayer.Reset();
+	g_playlistPlayer.Add(PLAYLIST_VIDEO, videos);
+	g_playlistPlayer.SetCurrentPlaylist(PLAYLIST_VIDEO);
+	g_playlistPlayer.Play();
 	return true;
 }
 
