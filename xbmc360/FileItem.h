@@ -69,6 +69,9 @@ public:
 	bool SortsOnTop() const { return m_specialSort == SORT_ON_TOP; }
 	bool SortsOnBottom() const { return m_specialSort == SORT_ON_BOTTOM; }
 	void SetSpecialSort(SPECIAL_SORT sort) { m_specialSort = sort; }
+	// Whether adding a folder to a playlist takes this item along (not an action, such as "Play all")
+	bool CanQueue() const { return m_bCanQueue; }
+	void SetCanQueue(bool bYesNo) { m_bCanQueue = bYesNo; }
 	bool IsVirtualDirectoryRoot() const;
 	bool IsReadOnly() const;
 	bool IsRemovable() const;
@@ -184,6 +187,7 @@ public:
 	bool m_bIsParentFolder;
 	bool m_bLabelPreformated;
 	SPECIAL_SORT m_specialSort;
+	bool m_bCanQueue;
 
 	CStdString m_mimetype;
 	MUSIC_INFO::CMusicInfoTag* m_musicInfoTag;

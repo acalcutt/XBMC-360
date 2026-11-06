@@ -126,6 +126,7 @@ const CFileItem& CFileItem::operator=(const CFileItem& item)
 	m_bIsParentFolder = item.m_bIsParentFolder;
 	m_bIsShareOrDrive = item.m_bIsShareOrDrive;
 	m_specialSort = item.m_specialSort;
+	m_bCanQueue = item.m_bCanQueue;
 	m_dateTime = item.m_dateTime;
 	m_dwSize = item.m_dwSize;
 
@@ -193,7 +194,7 @@ void CFileItem::Reset() // TODO
 //	m_strLockCode = "";
 //	m_iBadPwdCount = 0;
 //	m_iHasLock = 0;
-//	m_bCanQueue=true;
+	m_bCanQueue = true;
 	m_mimetype = "";
 	delete m_musicInfoTag;
 	m_musicInfoTag = NULL;

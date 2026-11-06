@@ -216,8 +216,8 @@ void CGUIWindowVideoBase::OnQueueItem(int iItem)
 
 	//  Allow queuing of unqueueable items
 	//  when we try to queue them directly
-//	if (!item->CanQueue()) // TODO: CanQueue not ported
-//		item->SetCanQueue(true);
+	if (!item->CanQueue())
+		item->SetCanQueue(true);
 
 	CFileItemList queuedItems;
 	AddItemToPlayList(item, queuedItems);
@@ -235,8 +235,8 @@ void CGUIWindowVideoBase::OnQueueItem(int iItem)
 
 void CGUIWindowVideoBase::AddItemToPlayList(const CFileItemPtr &pItem, CFileItemList &queuedItems)
 {
-//	if (!pItem->CanQueue() || pItem->IsRAR() || pItem->IsZIP() || pItem->IsParentFolder()) // TODO: CanQueue/IsRAR/IsZIP not ported
-	if (pItem->IsParentFolder())
+//	if (!pItem->CanQueue() || pItem->IsRAR() || pItem->IsZIP() || pItem->IsParentFolder()) // TODO: IsRAR/IsZIP not ported
+	if (!pItem->CanQueue() || pItem->IsParentFolder())
 		return;
 
 	if (pItem->m_bIsFolder)
@@ -318,8 +318,8 @@ void CGUIWindowVideoBase::PlayItem(int iItem)
 
 		//  Allow queuing of unqueueable items
 		//  when we try to queue them directly
-//		if (!item->CanQueue()) // TODO: CanQueue not ported
-//			item->SetCanQueue(true);
+		if (!item->CanQueue())
+			item->SetCanQueue(true);
 
 		// skip ".."
 		if (item->IsParentFolder())
