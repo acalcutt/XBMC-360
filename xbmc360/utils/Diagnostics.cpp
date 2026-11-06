@@ -178,10 +178,11 @@ bool CDiagnostics::SaveToUsb()
 		report.Close();
 	}
 
-	// The logs: this run's, and the run before (each start moves xbmc.log to xbmc.old.log)
-	const char* logs[] = { "xbmc.log", "xbmc.old.log" };
+	// The logs: this run's, and the run before (each start moves xbmc.log to xbmc.old.log). On a USB drive the
+	// console saved xbmc.old.log as a second xbmc.log, so the copy has a name with one dot
+	const char* logs[][2] = { { "xbmc.log", "xbmc.log" }, { "xbmc.old.log", "xbmc-old.log" } };
 	for (int i = 0; i < 2; i++)
-		CopyLog(g_settings.m_logFolder + logs[i], folder + "\\" + logs[i]);
+		CopyLog(g_settings.m_logFolder + logs[i][0], folder + "\\" + logs[i][1]);
 
 	CLog::Log(saved ? LOGNOTICE : LOGERROR, "Diagnostics: %s %s", saved ? "saved to" : "couldn't be saved to", folder.c_str());
 
