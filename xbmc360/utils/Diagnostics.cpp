@@ -11,6 +11,7 @@
 #include "guilib\GUIWindowManager.h"
 #include "guilib\LocalizeStrings.h"
 #include "guilib\dialogs\GUIDialogOK.h"
+#include "network\Jellyfin.h"
 #include "network\MediaRiffle.h"
 #include "utils\Log.h"
 #include "utils\StringUtils.h"
@@ -126,6 +127,8 @@ CStdString CDiagnostics::SystemReport()
 
 	report += "\r\nMediaRiffle\r\n";
 	report += g_mediaRiffle.Describe();
+	report += "\r\nJellyfin\r\n";
+	report += g_jellyfin.Describe();
 	return report;
 }
 
