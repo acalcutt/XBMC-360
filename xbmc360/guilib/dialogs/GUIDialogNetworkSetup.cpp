@@ -258,11 +258,16 @@ void CGUIDialogNetworkSetup::UpdateButtons()
 //	CONTROL_ENABLE_ON_CONDITION(CONTROL_PASSWORD, m_protocol != NET_PROTOCOL_DAAP && m_protocol != NET_PROTOCOL_UPNP); // TODO
 	SendMessage(GUI_MSG_SET_TYPE, CONTROL_PASSWORD, CGUIEditControl::INPUT_TYPE_PASSWORD, 12326);
 
-	// MediaRiffle and Jellyfin: the server's address and port only; the console signs in when it's first opened
-	CONTROL_ENABLE_ON_CONDITION(CONTROL_REMOTE_PATH, !IsMediaServer());
-	CONTROL_ENABLE_ON_CONDITION(CONTROL_USERNAME, !IsMediaServer());
-	CONTROL_ENABLE_ON_CONDITION(CONTROL_PASSWORD, !IsMediaServer());
-	CONTROL_ENABLE_ON_CONDITION(CONTROL_SERVER_BROWSE, !IsMediaServer());
+	// MediaRiffle and Jellyfin: the server's address and port only, so the rest isn't shown at all (greyed out, a
+	// user name and password still looked asked for). The console links or signs in when it's first opened.
+	int forShares[] = { CONTROL_REMOTE_PATH, CONTROL_USERNAME, CONTROL_PASSWORD, CONTROL_SERVER_BROWSE };
+	for (unsigned int i = 0; i < sizeof(forShares) / sizeof(forShares[0]); i++)
+	{
+		if (IsMediaServer())
+			SET_CONTROL_HIDDEN(forShares[i]);
+		else
+			SET_CONTROL_VISIBLE(forShares[i]);
+	}
 
 	// TODO: FIX BETTER DAAP SUPPORT
 	// Server browse should be disabled if we are in DAAP, FTP, HTTP, HTTPS, RSS, TUXBOX, DAV or DAVS
