@@ -3,6 +3,8 @@
 ## master
 ### ✨ Features and improvements
 - _...Add new stuff here..._
+- **Home**: A on a tab goes down to its tiles, as Down does, instead of opening a list of its own (on the Disc tab,
+  instead of starting the disc).
 
 ### 🐞 Bug fixes
 - _...Add new stuff here..._

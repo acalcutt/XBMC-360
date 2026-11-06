@@ -92,35 +92,36 @@
 						<label>$INFO[ListItem.Label]</label>
 					</control>
 				</focusedlayout>
+				<!-- A on a tab goes down to its tiles, as down does: the tiles are what the tab has -->
 				<content>
 					<item id="7">
 						<label>13238</label>
-						<onclick>PlayDisc</onclick>
+						<onclick>SetFocus(9001)</onclick>
 						<visible>System.HasDisc</visible>
 					</item>
 					<item id="1">
 						<label>31960</label>
-						<onclick>ActivateWindow(Videos)</onclick>
+						<onclick>SetFocus(9001)</onclick>
 					</item>
 					<item id="2">
 						<label>31961</label>
-						<onclick>ActivateWindow(Programs)</onclick>
+						<onclick>SetFocus(9001)</onclick>
 					</item>
 					<item id="3">
 						<label>31962</label>
-						<onclick>ActivateWindow(Music)</onclick>
+						<onclick>SetFocus(9001)</onclick>
 					</item>
 					<item id="4">
 						<label>31963</label>
-						<onclick>ActivateWindow(Pictures)</onclick>
+						<onclick>SetFocus(9001)</onclick>
 					</item>
 					<item id="5">
 						<label>31964</label>
-						<onclick>ActivateWindow(FileManager)</onclick>
+						<onclick>SetFocus(9001)</onclick>
 					</item>
 					<item id="6">
 						<label>31965</label>
-						<onclick>ActivateWindow(Settings)</onclick>
+						<onclick>SetFocus(9001)</onclick>
 					</item>
 				</content>
 			</control>
