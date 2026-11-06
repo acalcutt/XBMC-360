@@ -11,7 +11,6 @@
 #include "MediaRiffle.h"
 #include "Application.h"
 #include "FileItem.h"
-#include "GUISettings.h"
 #include "MediaSource.h"
 #include "Settings.h"
 #include "URL.h"
@@ -20,13 +19,13 @@
 #include "guilib\Key.h"
 #include "guilib\LocalizeStrings.h"
 #include "guilib\XMLUtils.h"
-#include "guilib\dialogs\GUIDialogKeyboard.h"
 #include "guilib\dialogs\GUIDialogOK.h"
 #include "guilib\dialogs\GUIDialogProgress.h"
 #include "guilib\tinyxml\tinyxml.h"
 #include "utils\JSONVariantParser.h"
 #include "utils\Log.h"
 #include "utils\SingleLock.h"
+#include "utils\StringUtils.h"
 #include "utils\SystemInfo.h"
 
 CMediaRiffle g_mediaRiffle;
@@ -34,8 +33,7 @@ CMediaRiffle g_mediaRiffle;
 // CCurlFile's: marks each socket libcurl opens so XNet lets it talk to a PC (without it, connecting fails)
 extern "C" int xbmc_curl_sockopt_cb(void* clientp, curl_socket_t curlfd, curlsocktype purpose);
 
-#define LINK_FILE     "special://profile/mediariffle.xml"
-#define SOURCE_PATH    "mediariffle://"
+#define LINK_FILE      "special://profile/mediariffle.xml"
 // How the console asks for its streams: H.264 (no HEVC decoder here) at 720p, which it decodes in time
 #define PLAY_QUALITY   "720"
 // How often to save where something got to, and to tell the server a paused stream is still wanted
@@ -56,9 +54,12 @@ void CMediaRiffle::Start()
 	// it's first used; this is counted, so the two don't clash)
 	curl_global_init(CURL_GLOBAL_ALL);
 
-	LoadLink();
+	LoadLinks();
 	Create();
-	CLog::Log(LOGNOTICE, "MediaRiffle: %s", IsLinked() ? ("linked to " + GetServer() + " as " + GetUser()).c_str() : "not linked");
+
+	CSingleLock lock(m_section);
+	for (std::map<CStdString, Account>::const_iterator it = m_links.begin(); it != m_links.end(); ++it)
+		CLog::Log(LOGNOTICE, "MediaRiffle: linked to %s as %s", it->first.c_str(), it->second.user.c_str());
 }
 
 void CMediaRiffle::Stop()
@@ -69,57 +70,72 @@ void CMediaRiffle::Stop()
 	curl_global_cleanup();
 }
 
-CStdString CMediaRiffle::GetServer() const
+bool CMediaRiffle::IsMediaRiffle(const CStdString& path)
 {
-	return NormalizeServer(g_guiSettings.GetString("mediariffle.server"));
+	return path.Left(14).Equals("mediariffle://") || path.Left(15).Equals("mediariffles://");
 }
 
-// http:// when no scheme is given, and no trailing slash: "media01:5080/" is "http://media01:5080"
-CStdString CMediaRiffle::NormalizeServer(const CStdString& typed)
+// mediariffle://media01:5080/shows/3/ is on http://media01:5080; mediariffles:// is HTTPS
+CStdString CMediaRiffle::ServerOf(const CStdString& path)
 {
-	CStdString server(typed);
-	server.Trim();
-	if (server.IsEmpty() || server.Equals("http://") || server.Equals("https://"))
+	CURL url(path);
+	if (!IsMediaRiffle(path) || url.GetHostName().IsEmpty())
 		return "";
 
-	if (server.Find("://") < 0)
-		server = "http://" + server;
-
-	while (server.Right(1) == "/")
-		server = server.Left(server.GetLength() - 1);
-
+	CStdString server;
+	server.Format("%s://%s", url.GetProtocol().Equals("mediariffles") ? "https" : "http", url.GetHostName().c_str());
+	if (url.HasPort())
+		server.AppendFormat(":%d", url.GetPort());
+	server.ToLower();
 	return server;
 }
 
-// Linked, to the server set now (a token is only good on the server that gave it)
-bool CMediaRiffle::IsLinked() const
+CStdString CMediaRiffle::SourceOf(const CStdString& path)
 {
-	CSingleLock lock(m_section);
-	return !m_token.IsEmpty() && m_linkServer.Equals(GetServer());
+	CURL url(path);
+	if (!IsMediaRiffle(path) || url.GetHostName().IsEmpty())
+		return "";
+
+	CStdString source;
+	source.Format("%s://%s", url.GetProtocol().c_str(), url.GetHostName().c_str());
+	if (url.HasPort())
+		source.AppendFormat(":%d", url.GetPort());
+	source.ToLower();
+	return source + "/";
 }
 
-CStdString CMediaRiffle::GetUser() const
+bool CMediaRiffle::IsLinked(const CStdString& server) const
 {
-	CSingleLock lock(m_section);
-	return IsLinked() ? m_user : "";
+	return !TokenFor(server).IsEmpty();
 }
 
-bool CMediaRiffle::Link()
+CStdString CMediaRiffle::GetUser(const CStdString& server) const
 {
-	CStdString server = GetServer();
-	if (server.IsEmpty())
+	CSingleLock lock(m_section);
+	std::map<CStdString, Account>::const_iterator it = m_links.find(server);
+	return it == m_links.end() ? "" : it->second.user;
+}
+
+CStdString CMediaRiffle::TokenFor(const CStdString& server) const
+{
+	CSingleLock lock(m_section);
+	std::map<CStdString, Account>::const_iterator it = m_links.find(server);
+	return it == m_links.end() ? "" : it->second.token;
+}
+
+void CMediaRiffle::Forget(const CStdString& server)
+{
 	{
-		CStdString typed = "http://";
-		if (!CGUIDialogKeyboard::ShowAndGetInput(typed, g_localizeStrings.Get(33501), false))
-			return false;
-
-		server = NormalizeServer(typed);
-		if (server.IsEmpty())
-			return false;
-
-		g_guiSettings.SetString("mediariffle.server", server);
-		g_settings.Save();
+		CSingleLock lock(m_section);
+		m_links.erase(server);
 	}
+	SaveLinks();
+}
+
+bool CMediaRiffle::Link(const CStdString& server)
+{
+	if (server.IsEmpty())
+		return false;
 
 	if (!g_application.getNetwork().IsAvailable())
 	{
@@ -201,9 +217,9 @@ bool CMediaRiffle::Link()
 		if (status == 200 && !answer["token"].asString().empty())
 		{
 			CSingleLock lock(m_section);
-			m_linkServer = server;
-			m_token = answer["token"].asString();
-			m_user = answer["user"].asString();
+			Account& account = m_links[server];
+			account.token = answer["token"].asString();
+			account.user = answer["user"].asString();
 			linked = true;
 		}
 		else
@@ -219,49 +235,30 @@ bool CMediaRiffle::Link()
 		return false;
 	}
 
-	SaveLink();
-	AddSource();
-	CLog::Log(LOGNOTICE, "MediaRiffle: linked to %s as %s", server.c_str(), GetUser().c_str());
+	SaveLinks();
+	CLog::Log(LOGNOTICE, "MediaRiffle: linked to %s as %s", server.c_str(), GetUser(server).c_str());
 
 	CStdString as;
-	as.Format(g_localizeStrings.Get(33515).c_str(), GetUser().c_str());
-	CGUIDialogOK* ok = (CGUIDialogOK*)g_windowManager.GetWindow(WINDOW_DIALOG_OK);
-	if (ok)
-	{
-		ok->SetHeading(33500);
-		ok->SetLine(0, as);
-		ok->SetLine(1, g_localizeStrings.Get(33516));
-		ok->SetLine(2, "");
-		ok->DoModal();
-	}
+	as.Format(g_localizeStrings.Get(33515).c_str(), GetUser(server).c_str());
+	ShowError(as, server);
 	return true;
 }
 
-void CMediaRiffle::Unlink()
+void CMediaRiffle::Unlink(const CStdString& server)
 {
 	// The server forgets the device (best effort: it may be unreachable, and the token is dropped here anyway)
-	if (IsLinked())
-		Queue("DELETE", "/api/device", NULL);
+	if (IsLinked(server))
+		Queue(server, "DELETE", "/api/device", NULL);
 
-	{
-		CSingleLock lock(m_section);
-		m_token.Empty();
-		m_user.Empty();
-		m_linkServer.Empty();
-	}
-	SaveLink();
-	CLog::Log(LOGNOTICE, "MediaRiffle: unlinked");
+	Forget(server);
+	CLog::Log(LOGNOTICE, "MediaRiffle: signed out of %s", server.c_str());
 }
 
-bool CMediaRiffle::Call(const CStdString& method, const CStdString& path, const CVariant* body, long& status, CVariant& answer, int timeout)
+bool CMediaRiffle::Call(const CStdString& server, const CStdString& method, const CStdString& path, const CVariant* body,
+	long& status, CVariant& answer, int timeout)
 {
-	CStdString server, token;
-	{
-		CSingleLock lock(m_section);
-		server = m_linkServer;
-		token = m_token;
-	}
-	if (!IsLinked())
+	CStdString token = TokenFor(server);
+	if (token.IsEmpty())
 		return false;
 
 	if (!CallServer(server, token, method, path, body, status, answer, timeout))
@@ -270,26 +267,16 @@ bool CMediaRiffle::Call(const CStdString& method, const CStdString& path, const 
 	// Unlinked on the server (from its Profile page, or a password change): link again
 	if (status == 401)
 	{
-		CLog::Log(LOGWARNING, "MediaRiffle: the server no longer knows this console's token");
-		{
-			CSingleLock lock(m_section);
-			m_token.Empty();
-			m_user.Empty();
-		}
-		SaveLink();
+		CLog::Log(LOGWARNING, "MediaRiffle: %s no longer knows this console's token", server.c_str());
+		Forget(server);
 	}
 	return true;
 }
 
-bool CMediaRiffle::Fetch(const CStdString& path, std::string& data, long& status)
+bool CMediaRiffle::Fetch(const CStdString& server, const CStdString& path, std::string& data, long& status)
 {
-	CStdString server, token;
-	{
-		CSingleLock lock(m_section);
-		server = m_linkServer;
-		token = m_token;
-	}
-	if (!IsLinked())
+	CStdString token = TokenFor(server);
+	if (token.IsEmpty())
 		return false;
 
 	return Request(server, token, "GET", path, NULL, status, data, 30);
@@ -376,28 +363,29 @@ bool CMediaRiffle::Request(const CStdString& server, const CStdString& token, co
 	return true;
 }
 
-bool CMediaRiffle::IsMediaRiffle(const CStdString& path)
-{
-	return path.Left(14).Equals(SOURCE_PATH);
-}
-
-// mediariffle://play/<file> (or mediariffle://movie/<movie>, its first part): a stream of it, from where it stopped
+// <source>play/<file> (or <source>movie/<movie>, its first part): a stream of it, from where it stopped
 bool CMediaRiffle::StartPlayback(const CFileItem& item, CFileItem& stream)
 {
-	CURL url(item.GetPath());
-	CStdString kind = url.GetHostName();
-	CStdString id = url.GetFileName();
-	id.TrimRight("/");
+	CStdString server = ServerOf(item.GetPath());
+	CStdStringArray parts;
+	CStdString rest = CURL(item.GetPath()).GetFileName();
+	rest.TrimRight("/");
+	CStringUtils::SplitString(rest, "/", parts);
+	if (server.IsEmpty() || parts.size() < 2)
+		return false;
+
+	CStdString kind = parts[0];
+	CStdString id = parts[1];
 	int fileId = atoi(id.c_str());
 
-	if (!IsLinked() && !Link())
+	if (!IsLinked(server) && !Link(server))
 		return false;
 
 	long status = 0;
 	CVariant answer;
 	if (kind.Equals("movie"))
 	{
-		if (!Call("GET", "/api/movies/" + id, NULL, status, answer) || status != 200 || answer["parts"].size() == 0)
+		if (!Call(server, "GET", "/api/movies/" + id, NULL, status, answer) || status != 200 || answer["parts"].size() == 0)
 		{
 			ShowError(ErrorOf(answer, status));
 			return false;
@@ -412,9 +400,9 @@ bool CMediaRiffle::StartPlayback(const CFileItem& item, CFileItem& stream)
 	play["hevc"] = false;
 
 	// Transcoding has to start before it answers
-	if (!Call("POST", "/api/play", &play, status, answer, 90))
+	if (!Call(server, "POST", "/api/play", &play, status, answer, 90))
 	{
-		ShowUnreachable(GetServer());
+		ShowUnreachable(server);
 		return false;
 	}
 	if (status != 200)
@@ -429,7 +417,7 @@ bool CMediaRiffle::StartPlayback(const CFileItem& item, CFileItem& stream)
 	double seekTo = answer["seekTo"].asDouble();
 
 	stream = item;
-	stream.SetPath(GetServer() + CStdString(answer["url"].asString()));
+	stream.SetPath(server + CStdString(answer["url"].asString()));
 	stream.SetMimeType(mode.Equals("Direct") ? CStdString(answer["contentType"].asString()) : "video/mp2t");
 	// The whole file (adaptive, or sent as it is) starts where it stopped by seeking; a remuxed one starts there
 	stream.m_lStartOffset = (long)(seekTo * 75.0);
@@ -440,6 +428,7 @@ bool CMediaRiffle::StartPlayback(const CFileItem& item, CFileItem& stream)
 	{
 		CSingleLock lock(m_section);
 		m_playing = Playing();
+		m_playing.server = server;
 		m_playing.fileId = fileId;
 		m_playing.sessionId = answer["sessionId"].asString();
 		m_playing.stream = stream.GetPath();
@@ -474,14 +463,14 @@ void CMediaRiffle::OnPlaying(const CStdString& currentFile, double seconds, bool
 		CVariant progress(CVariant::VariantTypeObject);
 		progress["fileId"] = m_playing.fileId;
 		progress["position"] = m_playing.offset + seconds;
-		Queue("POST", "/api/progress", &progress);
+		Queue(m_playing.server, "POST", "/api/progress", &progress);
 	}
 
 	// Paused: nothing is fetched, so the server is told it's still wanted
 	if (paused && now - m_playing.lastAlive >= ALIVE_EVERY)
 	{
 		m_playing.lastAlive = now;
-		Queue("GET", "/stream/" + m_playing.sessionId + "/alive", NULL);
+		Queue(m_playing.server, "GET", "/stream/" + m_playing.sessionId + "/alive", NULL);
 	}
 	else if (!paused)
 		m_playing.lastAlive = now;
@@ -498,28 +487,27 @@ void CMediaRiffle::OnStopped(bool ended)
 	progress["position"] = m_playing.offset + m_playing.seconds;
 	if (ended)
 		progress["finished"] = true;
-	Queue("POST", "/api/progress", &progress);
-	Queue("DELETE", "/api/play/" + m_playing.sessionId, NULL);
+	Queue(m_playing.server, "POST", "/api/progress", &progress);
+	Queue(m_playing.server, "DELETE", "/api/play/" + m_playing.sessionId, NULL);
 
 	m_playing = Playing();
 }
 
-// Sent with the link as it is now (an unlink's DELETE still carries the token it's dropping)
-void CMediaRiffle::Queue(const CStdString& method, const CStdString& path, const CVariant* body)
+// Sent with the link as it is now (a sign-out's DELETE still carries the token it's dropping)
+void CMediaRiffle::Queue(const CStdString& server, const CStdString& method, const CStdString& path, const CVariant* body)
 {
 	Report report;
+	report.server = server;
+	report.token = TokenFor(server);
 	report.method = method;
 	report.path = path;
 	report.hasBody = body != NULL;
 	if (body)
 		report.body = *body;
-
-	CSingleLock lock(m_section);
-	if (m_token.IsEmpty())
+	if (report.token.IsEmpty())
 		return;
 
-	report.server = m_linkServer;
-	report.token = m_token;
+	CSingleLock lock(m_section);
 	m_reports.push_back(report);
 	m_wake.Set();
 }
@@ -549,7 +537,8 @@ void CMediaRiffle::Process()
 	}
 }
 
-void CMediaRiffle::LoadLink()
+// <mediariffle><link><server/><token/><user/></link>…</mediariffle>, a link for each server
+void CMediaRiffle::LoadLinks()
 {
 	TiXmlDocument doc;
 	if (!doc.LoadFile(_P(LINK_FILE)))
@@ -559,13 +548,61 @@ void CMediaRiffle::LoadLink()
 	if (!root || strcmp(root->Value(), "mediariffle") != 0)
 		return;
 
-	CSingleLock lock(m_section);
-	XMLUtils::GetString(root, "server", m_linkServer);
-	XMLUtils::GetString(root, "token", m_token);
-	XMLUtils::GetString(root, "user", m_user);
+	{
+		CSingleLock lock(m_section);
+		for (TiXmlElement* link = root->FirstChildElement("link"); link; link = link->NextSiblingElement("link"))
+		{
+			CStdString server;
+			Account account;
+			XMLUtils::GetString(link, "server", server);
+			XMLUtils::GetString(link, "token", account.token);
+			XMLUtils::GetString(link, "user", account.user);
+			server.ToLower();
+			if (!server.IsEmpty() && !account.token.IsEmpty())
+				m_links[server] = account;
+		}
+	}
+
+	// The first version's file had the one server, whose source was mediariffle://: the link is kept, and the source
+	// moved to that server
+	CStdString server, token, user;
+	XMLUtils::GetString(root, "server", server);
+	XMLUtils::GetString(root, "token", token);
+	XMLUtils::GetString(root, "user", user);
+	server.ToLower();
+	if (server.IsEmpty() || token.IsEmpty())
+		return;
+
+	{
+		CSingleLock lock(m_section);
+		m_links[server].token = token;
+		m_links[server].user = user;
+	}
+	SaveLinks();
+
+	CStdString source;
+	if (server.Left(8).Equals("https://"))
+		source = "mediariffles://" + server.Mid(8) + "/";
+	else if (server.Left(7).Equals("http://"))
+		source = "mediariffle://" + server.Mid(7) + "/";
+
+	VECSOURCES* sources = g_settings.GetSourcesFromType("video");
+	for (unsigned int i = 0; sources && !source.IsEmpty() && i < sources->size(); i++)
+	{
+		if (!(*sources)[i].strPath.Equals("mediariffle://"))
+			continue;
+
+		CMediaSource moved = (*sources)[i];
+		moved.strPath = source;
+		moved.vecPaths.clear();
+		moved.vecPaths.push_back(source);
+		g_settings.UpdateShare("video", moved.strName, moved);
+		CLog::Log(LOGNOTICE, "MediaRiffle: the %s source is now %s", moved.strName.c_str(), source.c_str());
+		break;
+	}
 }
 
-void CMediaRiffle::SaveLink()
+void CMediaRiffle::SaveLinks()
 {
 	TiXmlDocument doc;
 	TiXmlElement element("mediariffle");
@@ -575,33 +612,19 @@ void CMediaRiffle::SaveLink()
 
 	{
 		CSingleLock lock(m_section);
-		XMLUtils::SetString(root, "server", m_linkServer);
-		XMLUtils::SetString(root, "token", m_token);
-		XMLUtils::SetString(root, "user", m_user);
+		for (std::map<CStdString, Account>::const_iterator it = m_links.begin(); it != m_links.end(); ++it)
+		{
+			TiXmlElement linkElement("link");
+			TiXmlNode* link = root->InsertEndChild(linkElement);
+			if (!link)
+				continue;
+			XMLUtils::SetString(link, "server", it->first);
+			XMLUtils::SetString(link, "token", it->second.token);
+			XMLUtils::SetString(link, "user", it->second.user);
+		}
 	}
 	if (!doc.SaveFile(_P(LINK_FILE)))
 		CLog::Log(LOGERROR, "MediaRiffle: couldn't save %s", LINK_FILE);
-}
-
-// Videos gets a MediaRiffle source, once
-void CMediaRiffle::AddSource()
-{
-	VECSOURCES* sources = g_settings.GetSourcesFromType("video");
-	if (!sources)
-		return;
-
-	for (IVECSOURCES it = sources->begin(); it != sources->end(); ++it)
-	{
-		if (it->strPath.Equals(SOURCE_PATH))
-			return;
-	}
-
-	CMediaSource source;
-	source.strName = "MediaRiffle";
-	source.strPath = SOURCE_PATH;
-	source.m_iDriveType = CMediaSource::SOURCE_TYPE_REMOTE;
-	source.vecPaths.push_back(source.strPath);
-	g_settings.AddShare("video", source);
 }
 
 void CMediaRiffle::ShowError(const CStdString& line1, const CStdString& line2, const CStdString& line3)

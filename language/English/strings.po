@@ -8713,24 +8713,18 @@ msgctxt "#33500"
 msgid "MediaRiffle"
 msgstr ""
 
-msgctxt "#33501"
-msgid "Server address"
-msgstr ""
-
-msgctxt "#33502"
-msgid "Account"
-msgstr ""
-
-msgctxt "#33503"
-msgid "Not linked"
-msgstr ""
+#empty strings from id 33501 to 33503
 
 msgctxt "#33504"
-msgid "Unlink this console from %s?"
+msgid "Sign this console out of MediaRiffle as %s?"
 msgstr ""
 
 msgctxt "#33505"
-msgid "It can be linked again with a new code."
+msgid "Opening the source again links it with a new code."
+msgstr ""
+
+msgctxt "#33506"
+msgid "Sign out of MediaRiffle"
 msgstr ""
 
 msgctxt "#33510"
@@ -8757,12 +8751,10 @@ msgctxt "#33515"
 msgid "Linked as %s."
 msgstr ""
 
-msgctxt "#33516"
-msgid "MediaRiffle is in Videos now."
-msgstr ""
+#empty strings from id 33516 to 33516
 
 msgctxt "#33517"
-msgid "This console was unlinked. Link it again in Settings > Network > MediaRiffle."
+msgid "This console was signed out. Open the source again to link it."
 msgstr ""
 
 msgctxt "#33520"
@@ -8781,7 +8773,18 @@ msgctxt "#33523"
 msgid "%s, part %d"
 msgstr ""
 
-#empty strings from id 33524 to 34004
+#empty strings from id 33524 to 33529
+
+#. Add network location: the protocols
+msgctxt "#33530"
+msgid "MediaRiffle server"
+msgstr ""
+
+msgctxt "#33531"
+msgid "MediaRiffle server (HTTPS)"
+msgstr ""
+
+#empty strings from id 33532 to 34004
 
 msgctxt "#34005"
 msgid "Flac"

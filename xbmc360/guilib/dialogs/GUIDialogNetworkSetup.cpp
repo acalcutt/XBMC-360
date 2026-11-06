@@ -111,10 +111,25 @@ void CGUIDialogNetworkSetup::OnInitWindow()
 
 	pSpin->Clear();
 	pSpin->AddLabel(g_localizeStrings.Get(20171), NET_PROTOCOL_SMB);
+	pSpin->AddLabel(g_localizeStrings.Get(33530), NET_PROTOCOL_MEDIARIFFLE);
+	pSpin->AddLabel(g_localizeStrings.Get(33531), NET_PROTOCOL_MEDIARIFFLES);
 	// TODO: Add more!
 
 	pSpin->SetValue(m_protocol);
-	OnProtocolChange();
+
+	// A path being edited keeps its port; a new one starts with the protocol's
+	if (m_port.IsEmpty() || m_port.Equals("0"))
+		m_port = DefaultPort();
+	UpdateButtons();
+}
+
+CStdString CGUIDialogNetworkSetup::DefaultPort() const
+{
+	if (m_protocol == NET_PROTOCOL_MEDIARIFFLE)
+		return "5080";
+	if (m_protocol == NET_PROTOCOL_MEDIARIFFLES)
+		return "443";
+	return "445";
 }
 
 void CGUIDialogNetworkSetup::OnServerBrowse()
@@ -165,12 +180,9 @@ void CGUIDialogNetworkSetup::OnProtocolChange()
 		return;
 	
 	m_protocol = (NET_PROTOCOL)pSpin->GetValue();
-	
+
 	// Set defaults for the port
-	if (m_protocol == NET_PROTOCOL_SMB)
-		m_port = "445";
-	
-	// TODO - Add for the other protocols!
+	m_port = DefaultPort();
 
 	UpdateButtons();
 }
@@ -240,6 +252,12 @@ void CGUIDialogNetworkSetup::UpdateButtons()
 //	CONTROL_ENABLE_ON_CONDITION(CONTROL_PASSWORD, m_protocol != NET_PROTOCOL_DAAP && m_protocol != NET_PROTOCOL_UPNP); // TODO
 	SendMessage(GUI_MSG_SET_TYPE, CONTROL_PASSWORD, CGUIEditControl::INPUT_TYPE_PASSWORD, 12326);
 
+	// MediaRiffle: the server's address and port only; the console signs in with a code when it's first opened
+	CONTROL_ENABLE_ON_CONDITION(CONTROL_REMOTE_PATH, !IsMediaRiffle());
+	CONTROL_ENABLE_ON_CONDITION(CONTROL_USERNAME, !IsMediaRiffle());
+	CONTROL_ENABLE_ON_CONDITION(CONTROL_PASSWORD, !IsMediaRiffle());
+	CONTROL_ENABLE_ON_CONDITION(CONTROL_SERVER_BROWSE, !IsMediaRiffle());
+
 	// TODO: FIX BETTER DAAP SUPPORT
 	// Server browse should be disabled if we are in DAAP, FTP, HTTP, HTTPS, RSS, TUXBOX, DAV or DAVS
 /*	CONTROL_ENABLE_ON_CONDITION(CONTROL_SERVER_BROWSE, !m_server.IsEmpty() || !(m_protocol == NET_PROTOCOL_FTP || // TODO
@@ -261,7 +279,31 @@ CStdString CGUIDialogNetworkSetup::ConstructPath() const
 	if (m_protocol == NET_PROTOCOL_SMB)
 		url.SetProtocol("smb");
 	// TODO - Add the other protocols
-	
+
+	// MediaRiffle: mediariffle://host:port/, from the address however it was typed ("http://media01:5080/" too)
+	if (IsMediaRiffle())
+	{
+		CStdString host = m_server;
+		host.Trim();
+		if (host.Find("://") >= 0)
+			host = host.Mid(host.Find("://") + 3);
+		if (host.Find("/") >= 0)
+			host = host.Left(host.Find("/"));
+		if (host.Find(":") >= 0)
+			host = host.Left(host.Find(":"));
+		if (host.IsEmpty())
+			return "";
+
+		url.SetProtocol(m_protocol == NET_PROTOCOL_MEDIARIFFLES ? "mediariffles" : "mediariffle");
+		url.SetHostName(host);
+		if (atoi(m_port.c_str()) > 0)
+			url.SetPort(atoi(m_port.c_str()));
+
+		CStdString path = url.Get();
+		URIUtils::AddSlashAtEnd(path);
+		return path;
+	}
+
 	if (!m_username.IsEmpty())
 	{
 		url.SetUserName(m_username);
@@ -290,6 +332,10 @@ void CGUIDialogNetworkSetup::SetPath(const CStdString &path)
 	
 	if (protocol == "smb")
 		m_protocol = NET_PROTOCOL_SMB;
+	else if (protocol == "mediariffle")
+		m_protocol = NET_PROTOCOL_MEDIARIFFLE;
+	else if (protocol == "mediariffles")
+		m_protocol = NET_PROTOCOL_MEDIARIFFLES;
 	// TODO: Add other protocols back as we support them!
 	else
 		m_protocol = NET_PROTOCOL_SMB; // Default to SMB

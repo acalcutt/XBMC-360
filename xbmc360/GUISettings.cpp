@@ -243,11 +243,6 @@ void CGUISettings::Initialize()
 	AddString(7, "services.webserverpassword", 733, "", EDIT_CONTROL_HIDDEN_INPUT, true, 733);
 #endif
 
-	// A MediaRiffle server, and the account this console is linked to there (network\MediaRiffle.h)
-	AddCategory(6, "mediariffle", 33500);
-	AddString(1, "mediariffle.server", 33501, "", EDIT_CONTROL_INPUT, true, 33501);
-	AddString(2, "mediariffle.account", 33502, "", BUTTON_CONTROL_STANDARD);
-
 	// Appearance settings
 	AddGroup(7, 480);
 	AddCategory(7,"lookandfeel", 166);

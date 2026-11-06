@@ -8,8 +8,8 @@
 namespace XFILE
 {
 
-// A MediaRiffle picture, mediariffle://image/<kind>/<id> (its /api/images/<kind>/<id>, fetched with the console's
-// token): whole, into memory, for the thumbnail cache to read
+// A MediaRiffle picture, <source>image/<kind>/<id> (the server's /api/images/<kind>/<id>, fetched with the console's
+// token there): whole, into memory, for the thumbnail cache to read
 class CMediaRiffleFile : public IFile
 {
 public:

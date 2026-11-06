@@ -21,24 +21,25 @@ bool CMediaRiffleFile::Open(const CURL& url)
 {
 	Close();
 
-	if (!url.GetHostName().Equals("image"))
+	if (!Exists(url))
 		return false;
 
 	long status = 0;
-	CStdString path = "/api/images/" + url.GetFileName() + url.GetOptions();
-	if (!g_mediaRiffle.Fetch(path, m_data, status) || status != 200 || m_data.empty())
+	CStdString server = CMediaRiffle::ServerOf(url.Get());
+	CStdString path = "/api/images/" + url.GetFileName().Mid(6) + url.GetOptions();
+	if (!g_mediaRiffle.Fetch(server, path, m_data, status) || status != 200 || m_data.empty())
 	{
-		CLog::Log(LOGDEBUG, "%s - no picture at %s (%ld)", __FUNCTION__, path.c_str(), status);
+		CLog::Log(LOGDEBUG, "%s - no picture at %s%s (%ld)", __FUNCTION__, server.c_str(), path.c_str(), status);
 		m_data.clear();
 		return false;
 	}
 	return true;
 }
 
-// Whether it's there is only known by fetching it: Open says
+// <source>image/<kind>/<id>. Whether it's there is only known by fetching it: Open says
 bool CMediaRiffleFile::Exists(const CURL& url)
 {
-	return url.GetHostName().Equals("image");
+	return url.GetFileName().Left(6).Equals("image/") && !url.GetHostName().IsEmpty();
 }
 
 int CMediaRiffleFile::Stat(const CURL& url, struct __stat64* buffer)

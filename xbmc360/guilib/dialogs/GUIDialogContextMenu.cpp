@@ -5,6 +5,7 @@
 #include "guilib\GUIButtonControl.h"
 #include "GUIDialogMediaSource.h"
 #include "GUIDialogYesNo.h"
+#include "network\MediaRiffle.h"
 
 #define BACKGROUND_IMAGE       999
 #define BACKGROUND_BOTTOM      998
@@ -321,6 +322,28 @@ bool CGUIDialogContextMenu::OnContextButton(const CStdString &type, const CFileI
 			}
 			break;
 
+		case CONTEXT_BUTTON_MEDIARIFFLE_SIGN_OUT:
+		{
+			// Once sure: the server forgets this console, which can be linked again by opening the source
+			CStdString server = CMediaRiffle::ServerOf(share->strPath);
+			CGUIDialogYesNo *dialog = (CGUIDialogYesNo *)g_windowManager.GetWindow(WINDOW_DIALOG_YES_NO);
+			if (!dialog)
+				return false;
+
+			CStdString question;
+			question.Format(g_localizeStrings.Get(33504).c_str(), g_mediaRiffle.GetUser(server).c_str());
+			dialog->SetHeading(33500);
+			dialog->SetLine(0, question);
+			dialog->SetLine(1, server);
+			dialog->SetLine(2, g_localizeStrings.Get(33505));
+			dialog->DoModal();
+			if (!dialog->IsConfirmed())
+				return false;
+
+			g_mediaRiffle.Unlink(server);
+			return true;
+		}
+
 		// TODO - More to be added!
 
 		default:
@@ -357,6 +380,10 @@ void CGUIDialogContextMenu::GetContextButtons(const CStdString &type, const CFil
 			
 			if (!share->m_ignore)
 				buttons.Add(CONTEXT_BUTTON_REMOVE_SOURCE, 522); // Remove Source
+
+			// A MediaRiffle server this console is linked to
+			if (g_mediaRiffle.IsLinked(CMediaRiffle::ServerOf(share->strPath)))
+				buttons.Add(CONTEXT_BUTTON_MEDIARIFFLE_SIGN_OUT, 33506); // Sign out of MediaRiffle
 
 //			buttons.Add(CONTEXT_BUTTON_SET_THUMB, 20019); // TODO
 		}

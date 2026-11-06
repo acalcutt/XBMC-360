@@ -1,7 +1,10 @@
 #include "MediaRiffleDirectory.h"
 #include "FileItem.h"
+#include "MediaSource.h"
+#include "Settings.h"
 #include "URL.h"
 #include "guilib\LocalizeStrings.h"
+#include "guilib\dialogs\GUIDialogNetworkSetup.h"
 #include "network\MediaRiffle.h"
 #include "utils\Log.h"
 #include "utils\StringUtils.h"
@@ -27,61 +30,114 @@ CMediaRiffleDirectory::~CMediaRiffleDirectory(void)
 
 bool CMediaRiffleDirectory::GetDirectory(const CStdString& strPath, CFileItemList &items)
 {
+	m_server = CMediaRiffle::ServerOf(strPath);
+	m_source = CMediaRiffle::SourceOf(strPath);
+	if (m_server.IsEmpty())
+		return GetSources(items);
+
 	// Not linked yet: link now, when there's someone to ask
-	if (!g_mediaRiffle.IsLinked() && (!m_allowPrompting || !g_mediaRiffle.Link()))
+	if (!g_mediaRiffle.IsLinked(m_server) && (!m_allowPrompting || !g_mediaRiffle.Link(m_server)))
 		return false;
 
 	AddSortMethods(items);
 
-	CURL url(strPath);
-	CStdString kind = url.GetHostName();
 	CStdStringArray parts;
-	CStdString rest = url.GetFileName();
+	CStdString rest = CURL(strPath).GetFileName();
 	rest.TrimRight("/");
 	if (!rest.IsEmpty())
 		CStringUtils::SplitString(rest, "/", parts);
 
-	if (kind.IsEmpty())
-	{
-		AddRoot(items);
-		return true;
-	}
+	// The source, or a folder above the listings (shows/, from a library's path): the libraries
+	CStdString kind = parts.empty() ? "" : parts[0];
 	if (kind.Equals("continue"))
 	{
 		AddContinue(items);
 		return true;
 	}
-	if (parts.empty())
-		return false;
+	if (parts.size() < 2)
+	{
+		AddRoot(items);
+		return true;
+	}
 
 	if (kind.Equals("shows"))
-		return AddShows(parts[0], items);
+		return AddShows(parts[1], items);
 	if (kind.Equals("show"))
-		return AddShow(parts[0], parts.size() > 1 ? parts[1] : "", items);
+		return AddShow(parts[1], parts.size() > 2 ? parts[2] : "", items);
 	if (kind.Equals("movies"))
-		return AddMovies(parts[0], items);
+		return AddMovies(parts[1], items);
 	if (kind.Equals("movie"))
-		return AddMovie(parts[0], items);
+		return AddMovie(parts[1], items);
 
 	CLog::Log(LOGWARNING, "%s - unknown path %s", __FUNCTION__, strPath.c_str());
 	return false;
 }
 
+// mediariffle://: the MediaRiffle sources in Videos. With one, it's listed straight away; with none, a server is asked
+// for and added.
+bool CMediaRiffleDirectory::GetSources(CFileItemList &items)
+{
+	VECSOURCES* sources = g_settings.GetSourcesFromType("video");
+	VECSOURCES riffle;
+	for (unsigned int i = 0; sources && i < sources->size(); i++)
+	{
+		if (!CMediaRiffle::ServerOf((*sources)[i].strPath).IsEmpty())
+			riffle.push_back((*sources)[i]);
+	}
+
+	if (riffle.empty())
+	{
+		CStdString path = "mediariffle://";
+		if (!m_allowPrompting || !CGUIDialogNetworkSetup::ShowAndGetNetworkAddress(path) || CMediaRiffle::SourceOf(path).IsEmpty())
+			return false;
+
+		CMediaSource source;
+		source.strName = "MediaRiffle";
+		source.strPath = CMediaRiffle::SourceOf(path);
+		source.vecPaths.push_back(source.strPath);
+		source.m_iDriveType = CMediaSource::SOURCE_TYPE_REMOTE;
+		g_settings.AddShare("video", source);
+		riffle.push_back(source);
+	}
+
+	if (riffle.size() == 1)
+		return GetDirectory(riffle[0].strPath, items);
+
+	for (unsigned int i = 0; i < riffle.size(); i++)
+	{
+		CFileItemPtr item(new CFileItem(riffle[i].strName));
+		item->SetPath(riffle[i].strPath);
+		item->m_bIsFolder = true;
+		item->SetLabelPreformated(true);
+		items.Add(item);
+	}
+	return true;
+}
+
 bool CMediaRiffleDirectory::Get(const CStdString& path, CVariant& answer)
 {
 	long status = 0;
-	if (!g_mediaRiffle.Call("GET", path, NULL, status, answer) || status != 200)
+	if (!g_mediaRiffle.Call(m_server, "GET", path, NULL, status, answer) || status != 200)
 	{
-		CLog::Log(LOGERROR, "%s - %s: %ld", __FUNCTION__, path.c_str(), status);
+		CLog::Log(LOGERROR, "%s - %s%s: %ld", __FUNCTION__, m_server.c_str(), path.c_str(), status);
 		return false;
 	}
 	return true;
 }
 
+// A picture the server names /api/images/<kind>/<id>?v=…, as <source>image/<kind>/<id>?v=… (MediaRiffleFile)
+CStdString CMediaRiffleDirectory::Image(const CVariant& image) const
+{
+	CStdString path = image.asString();
+	if (path.Left(12) != "/api/images/")
+		return "";
+	return m_source + "image/" + path.Mid(12);
+}
+
 void CMediaRiffleDirectory::AddRoot(CFileItemList &items)
 {
 	CFileItemPtr resume(new CFileItem(g_localizeStrings.Get(33520)));
-	resume->SetPath("mediariffle://continue/");
+	resume->SetPath(m_source + "continue/");
 	resume->m_bIsFolder = true;
 	resume->SetLabelPreformated(true);
 	items.Add(resume);
@@ -99,7 +155,7 @@ void CMediaRiffleDirectory::AddRoot(CFileItemList &items)
 			continue;
 
 		CStdString path;
-		path.Format("mediariffle://%s/%d/", kind.ToLower().c_str(), (int)library["id"].asInteger());
+		path.Format("%s%s/%d/", m_source.c_str(), kind.ToLower().c_str(), (int)library["id"].asInteger());
 		CFileItemPtr item(new CFileItem(CStdString(library["name"].asString())));
 		item->SetPath(path);
 		item->m_bIsFolder = true;
@@ -140,7 +196,7 @@ bool CMediaRiffleDirectory::AddShows(const CStdString& library, CFileItemList &i
 			continue;
 
 		CStdString path, episodes;
-		path.Format("mediariffle://show/%d/", (int)show["id"].asInteger());
+		path.Format("%sshow/%d/", m_source.c_str(), (int)show["id"].asInteger());
 		episodes.Format(g_localizeStrings.Get(33521).c_str(), (int)show["episodes"].asInteger());
 
 		CFileItemPtr item(new CFileItem(CStdString(show["title"].asString())));
@@ -148,7 +204,7 @@ bool CMediaRiffleDirectory::AddShows(const CStdString& library, CFileItemList &i
 		item->m_bIsFolder = true;
 		item->SetLabel2(episodes);
 		item->SetLabelPreformated(true);
-		item->SetThumbnailImage("mediariffle://image" + CStdString(show["image"].asString()).Mid(11));
+		item->SetThumbnailImage(Image(show["image"]));
 		items.Add(item);
 	}
 	items.SetContent("tvshows");
@@ -177,12 +233,12 @@ bool CMediaRiffleDirectory::AddShow(const CStdString& show, const CStdString& se
 				label = series + " - " + label;
 
 			CStdString path;
-			path.Format("mediariffle://show/%s/%d/", show.c_str(), (int)s["id"].asInteger());
+			path.Format("%sshow/%s/%d/", m_source.c_str(), show.c_str(), (int)s["id"].asInteger());
 			CFileItemPtr item(new CFileItem(label));
 			item->SetPath(path);
 			item->m_bIsFolder = true;
 			item->SetLabelPreformated(true);
-			item->SetThumbnailImage("mediariffle://image" + CStdString(details["image"].asString()).Mid(11));
+			item->SetThumbnailImage(Image(details["image"]));
 			items.Add(item);
 		}
 		items.SetContent("seasons");
@@ -239,13 +295,13 @@ bool CMediaRiffleDirectory::AddMovies(const CStdString& library, CFileItemList &
 		// In parts: a folder of them. Else the movie plays (its one part, found when it starts)
 		bool inParts = movie["parts"].asInteger() > 1;
 		CStdString path;
-		path.Format(inParts ? "mediariffle://movie/%d/" : "mediariffle://movie/%d", (int)movie["id"].asInteger());
+		path.Format(inParts ? "%smovie/%d/" : "%smovie/%d", m_source.c_str(), (int)movie["id"].asInteger());
 
 		CFileItemPtr item(new CFileItem(label));
 		item->SetPath(path);
 		item->m_bIsFolder = inParts;
 		item->SetLabelPreformated(true);
-		item->SetThumbnailImage("mediariffle://image" + CStdString(movie["image"].asString()).Mid(11));
+		item->SetThumbnailImage(Image(movie["image"]));
 		if (!inParts)
 			item->SetMimeType("video/mp2t");
 		items.Add(item);
@@ -278,7 +334,7 @@ void CMediaRiffleDirectory::AddFile(const CVariant& file, const CStdString& labe
 		return;
 
 	CStdString path;
-	path.Format("mediariffle://play/%d", (int)file["id"].asInteger());
+	path.Format("%splay/%d", m_source.c_str(), (int)file["id"].asInteger());
 
 	CFileItemPtr item(new CFileItem(label));
 	item->SetPath(path);
@@ -286,7 +342,7 @@ void CMediaRiffleDirectory::AddFile(const CVariant& file, const CStdString& labe
 	item->SetMimeType("video/mp2t");
 	item->SetLabelPreformated(true);
 	item->SetLabel2(CStringUtils::SecondsToTimeString((long)file["duration"].asDouble()));
-	item->SetThumbnailImage("mediariffle://image" + CStdString(file["image"].asString()).Mid(11));
+	item->SetThumbnailImage(Image(file["image"]));
 
 	CVideoInfoTag* tag = item->GetVideoInfoTag();
 	tag->m_strTitle = label;
