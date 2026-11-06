@@ -39,7 +39,7 @@ private:
 	static bool AskShare(CStdString& path);
 	static bool AskFolder(CStdString& path);
 	static bool AskName(CStdString& name);
-	static bool ChooseType(bool allowGames, CStdString& type);
+	static bool ChooseType(CStdString& type);
 	static void AddSource(const CStdString& type, const CStdString& name, const CStdString& path, bool allowWrite);
 	static CStdString UniqueName(const CStdString& type, const CStdString& name, const CStdString& except);
 	static CMediaSource* Find(const CStdString& type, const CStdString& name, const CStdString& path);

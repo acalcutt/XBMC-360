@@ -152,15 +152,15 @@ enum Place { PLACE_MEDIARIFFLE, PLACE_JELLYFIN, PLACE_SHARE, PLACE_CONSOLE };
 
 bool CGUIWindowSources::ShowAndAddSource(const CStdString& type)
 {
-	// Where it is: a server holds videos, and games start from the console's own drives
+	// Where it is: a server holds videos. Games can be on a share too: an
+	// emulator's game is copied to the console to be played
 	std::vector<Place> places;
 	if (type.IsEmpty() || type.Equals("video"))
 	{
 		places.push_back(PLACE_MEDIARIFFLE);
 		places.push_back(PLACE_JELLYFIN);
 	}
-	if (!type.Equals("programs"))
-		places.push_back(PLACE_SHARE);
+	places.push_back(PLACE_SHARE);
 	places.push_back(PLACE_CONSOLE);
 
 	Place place = places[0];
@@ -199,7 +199,7 @@ bool CGUIWindowSources::ShowAndAddSource(const CStdString& type)
 		return false;
 
 	CStdString kind = type;
-	if (kind.IsEmpty() && !ChooseType(place == PLACE_CONSOLE, kind))
+	if (kind.IsEmpty() && !ChooseType(kind))
 		return false;
 
 	CStdString name = CURL(path).GetWithoutUserDetails();
@@ -318,14 +318,14 @@ bool CGUIWindowSources::ShowAndEditSource(const CStdString& type, const CMediaSo
 	return g_settings.UpdateShare(type, source.strName, changed);
 }
 
-bool CGUIWindowSources::ChooseType(bool allowGames, CStdString& type)
+bool CGUIWindowSources::ChooseType(CStdString& type)
 {
 	CGUIDialogSelect* select = (CGUIDialogSelect*)g_windowManager.GetWindow(WINDOW_DIALOG_SELECT);
 	if (!select)
 		return false;
 
 	const char* types[] = { "video", "music", "pictures", "programs" };
-	unsigned int count = allowGames ? 4 : 3;
+	unsigned int count = sizeof(types) / sizeof(types[0]);
 
 	select->Reset();
 	select->SetHeading(13198);

@@ -3,6 +3,7 @@
 #include "utils\Util.h"
 #include "utils\XEXUtils.h"
 #include "guilib\dialogs\GUIDialogMediaSource.h"
+#include "guilib\dialogs\GUIDialogOK.h"
 #include "guilib\GUIWindowManager.h"
 #include "utils\URIUtils.h"
 #include "filesystem\File.h"
@@ -15,7 +16,6 @@ CGUIWindowPrograms::CGUIWindowPrograms(void)
 	: CGUIMediaWindow(WINDOW_PROGRAMS, "MyPrograms.xml")
 {
 	m_dlgProgress = NULL;
-	m_rootDir.AllowNonLocalSources(false); // No nonlocal shares for this window please
 }
 
 CGUIWindowPrograms::~CGUIWindowPrograms(void)
@@ -147,10 +147,12 @@ bool CGUIWindowPrograms::GetDirectory(const CStdString &strDirectory, CFileItemL
 			m_dlgProgress->Progress();
 		}
 
-		if (item->m_bIsFolder && !item->IsParentFolder()/* && !item->IsPlugin()*/)
+		if (item->m_bIsFolder && !item->IsParentFolder()/* && !item->IsPlugin()*/ && URIUtils::IsHD(item->GetPath()))
 		{
 			// Folder item - let's check for a default.xex (an Xbox 360 game or app,
-			// as copied from a disc) or default.xbe file, and flatten if we have one
+			// as copied from a disc) or default.xbe file, and flatten if we have one.
+			// Only on the console's drives: one on a share can't be started, and
+			// asking every folder there would slow the listing
 			CStdString defaultXEX, defaultXBE;
 			URIUtils::AddFileToFolder(item->GetPath(), "default.xex", defaultXEX);
 			URIUtils::AddFileToFolder(item->GetPath(), "default.xbe", defaultXBE);
@@ -438,6 +440,13 @@ bool CGUIWindowPrograms::OnPlayMedia(int iItem) // TODO - Get more info from the
 	if (CEmulators::GetSystem(pItem->GetPath()) >= 0)
 	{
 		CEmulators::Play(*pItem);
+		return true;
+	}
+
+	// The console only starts games from its own drives
+	if (!URIUtils::IsHD(pItem->GetPath()))
+	{
+		CGUIDialogOK::ShowAndGetInput(33560, 33566, 0, 0);
 		return true;
 	}
 
