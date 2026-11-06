@@ -26,6 +26,9 @@ public:
 	void SetHeading(const CStdString &heading);
 
 	static bool ShowAndGetDirectory(const VECSOURCES &shares, const CStdString &heading, CStdString &path, bool bWriteOnly=false);
+	// A folder to save to, in the places that can be written to: the console's hard drive and USB drives, and the
+	// sources set to allow saving
+	static bool ShowAndGetWritableDirectory(const CStdString &heading, CStdString &path);
 	static bool ShowAndGetFile(const VECSOURCES &shares, const CStdString &mask, const CStdString &heading, CStdString &path, bool useThumbs = false, bool useFileDirectories = false);
 	static bool ShowAndGetFile(const CStdString &directory, const CStdString &mask, const CStdString &heading, CStdString &path, bool useThumbs = false, bool useFileDirectories = false);
 	static bool ShowAndGetSource(CStdString &path, bool allowNetworkShares, VECSOURCES* additionalShare = NULL, const CStdString& strType="");

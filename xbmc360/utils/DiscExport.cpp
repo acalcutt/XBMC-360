@@ -1,8 +1,5 @@
 #include "DiscExport.h"
 #include "FileItem.h"
-#include "MediaManager.h"
-#include "MediaSource.h"
-#include "Settings.h"
 #include "URL.h"
 #include "filesystem\Directory.h"
 #include "guilib\GUIWindowManager.h"
@@ -296,24 +293,7 @@ void CDiscExport::SaveImage()
 // hard drive and USB drives, and sources set to allow saving
 bool CDiscExport::ChooseDestination(const CDiscDrive::Info& disc, int iHeading, CStdString& strFolder, CStdString& strName)
 {
-	VECSOURCES shares;
-	g_mediaManager.GetLocalDrives(shares);
-
-	const char* types[] = { "programs", "video", "music", "pictures", "files" };
-	for (unsigned int i = 0; i < sizeof(types) / sizeof(types[0]); i++)
-	{
-		VECSOURCES* pSources = g_settings.GetSourcesFromType(types[i]);
-		if (!pSources)
-			continue;
-
-		for (unsigned int j = 0; j < pSources->size(); j++)
-		{
-			if ((*pSources)[j].IsWritable())
-				AddOrReplace(shares, (*pSources)[j]);
-		}
-	}
-
-	if (!CGUIDialogFileBrowser::ShowAndGetDirectory(shares, g_localizeStrings.Get(iHeading), strFolder, true))
+	if (!CGUIDialogFileBrowser::ShowAndGetWritableDirectory(g_localizeStrings.Get(iHeading), strFolder))
 		return false;
 
 	strName = MakeSafeName(CDiscDrive::GetName(disc));

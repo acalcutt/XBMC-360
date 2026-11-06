@@ -656,6 +656,25 @@ bool CGUIDialogFileBrowser::ShowAndGetDirectory(const VECSOURCES &shares, const 
 	return ShowAndGetFile(shares, "/", heading, path);
 }
 
+bool CGUIDialogFileBrowser::ShowAndGetWritableDirectory(const CStdString &heading, CStdString &path)
+{
+	VECSOURCES places;
+	g_mediaManager.GetLocalDrives(places);
+
+	const char* types[] = { "programs", "video", "music", "pictures", "files" };
+	for (unsigned int i = 0; i < sizeof(types) / sizeof(types[0]); i++)
+	{
+		VECSOURCES* pSources = g_settings.GetSourcesFromType(types[i]);
+		for (unsigned int j = 0; pSources && j < pSources->size(); j++)
+		{
+			if ((*pSources)[j].IsWritable())
+				AddOrReplace(places, (*pSources)[j]);
+		}
+	}
+
+	return ShowAndGetDirectory(places, heading, path, true);
+}
+
 bool CGUIDialogFileBrowser::ShowAndGetFile(const VECSOURCES &shares, const CStdString &mask, const CStdString &heading, CStdString &path, bool useThumbs /* = false */, bool useFileDirectories /* = false */)
 {
 	CGUIDialogFileBrowser *browser = new CGUIDialogFileBrowser();
