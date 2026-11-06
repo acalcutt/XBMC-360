@@ -6,9 +6,7 @@
 #include "guilib\GUIWindowManager.h"
 #include "utils\URIUtils.h"
 #include "filesystem\File.h"
-#include "utils\DiscExport.h"
 #include "utils\TimeUtils.h"
-#include "xbox\DiscDrive.h"
 
 using namespace XFILE;
 
@@ -112,20 +110,6 @@ bool CGUIWindowPrograms::GetDirectory(const CStdString &strDirectory, CFileItemL
 	if (items.IsVirtualDirectoryRoot())
 	{
 		items.SetLabel("");
-
-		// The disc in the drive comes first
-		CDiscDrive::Info disc;
-		if (CDiscDrive::Detect(disc))
-		{
-			CFileItemPtr pItem(new CFileItem(CDiscDrive::GetTypeName(disc.type)));
-			pItem->SetPath(CDiscDrive::ROOT);
-			pItem->m_bIsFolder = false;
-			pItem->SetLabel2(CDiscDrive::GetName(disc));
-			pItem->SetIconImage("DefaultDVDRom.png");
-			pItem->SetProperty("disc", true);
-			pItem->SetProperty("disctype", (int)disc.type);
-			items.AddFront(pItem, 0);
-		}
 		return true;
 	}
 /*
@@ -269,18 +253,6 @@ void CGUIWindowPrograms::GetContextButtons(int itemNumber, CContextButtons &butt
 	
 	CFileItemPtr item = m_vecItems->Get(itemNumber);
 
-	// The disc in the drive has a menu of its own
-	if (item && item->GetPropertyBOOL("disc"))
-	{
-		if (item->GetPropertyInt("disctype") != CDiscDrive::DISC_DATA)
-			buttons.Add(CONTEXT_BUTTON_PLAY_DISC, 341); // Play disc
-
-		buttons.Add(CONTEXT_BUTTON_COPY_DISC, 13218); // Copy disc to a folder
-		buttons.Add(CONTEXT_BUTTON_SAVE_DISC_IMAGE, 13219); // Save disc as an ISO image
-		buttons.Add(CONTEXT_BUTTON_EJECT_DISC, 13391); // Eject/Load
-		return;
-	}
-
 	if (item && !item->GetPropertyBOOL("pluginreplacecontextitems"))
 	{
 		if ( m_vecItems->IsVirtualDirectoryRoot() )
@@ -421,23 +393,6 @@ bool CGUIWindowPrograms::OnContextButton(int itemNumber, CONTEXT_BUTTON button)
 		OnClick(itemNumber);
 		return true;
 
-		case CONTEXT_BUTTON_PLAY_DISC:
-		OnPlayMedia(itemNumber);
-		return true;
-
-		case CONTEXT_BUTTON_EJECT_DISC:
-		CDiscDrive::Eject();
-		Update("");
-		return true;
-
-		case CONTEXT_BUTTON_COPY_DISC:
-		CDiscExport::CopyFiles();
-		return true;
-
-		case CONTEXT_BUTTON_SAVE_DISC_IMAGE:
-		CDiscExport::SaveImage();
-		return true;
-
 /*		case CONTEXT_BUTTON_GAMESAVES: // TODO
 		{
 			CStdString strTitleID;
@@ -462,20 +417,6 @@ bool CGUIWindowPrograms::OnPlayMedia(int iItem) // TODO - Get more info from the
 {
 	if ( iItem < 0 || iItem >= (int)m_vecItems->Size() ) return false;
 	CFileItemPtr pItem = m_vecItems->Get(iItem);
-
-	if (pItem->GetPropertyBOOL("disc"))
-	{
-		// Look again: it may have been taken out since the list was made
-		CDiscDrive::Info disc;
-		if (!CDiscDrive::Detect(disc))
-			Update("");
-		else if (disc.type == CDiscDrive::DISC_DATA)
-			Update(CDiscDrive::ROOT);
-		else
-			CDiscDrive::Play(disc);
-
-		return true;
-	}
 
 	if (pItem->m_bIsFolder) return false;
 
