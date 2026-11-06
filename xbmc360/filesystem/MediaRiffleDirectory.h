@@ -20,6 +20,7 @@ namespace XFILE
 //   <source>show/<show>/           its seasons (or, with only one, its episodes)
 //   <source>show/<show>/<season>/  that season's episodes
 //   <source>movies/<library>/      its movies (one in parts is a folder of them: <source>movie/<movie>/)
+//   <source>hidden/                the shows, movies and episodes the user hid, newest first, to show again
 // What plays is <source>play/<file> or <source>movie/<movie>, a stream asked for when it starts. A library, a show, a
 // category and a list start with Play all and Shuffle (<source>queue/… and <source>shuffle/…, MediaRiffle::PlayQueue).
 //
@@ -43,6 +44,7 @@ private:
 	void AddFolder(const CStdString& label, const CStdString& path, CFileItemList &items, const CStdString& label2 = "");
 	void AddQueueItems(const CStdString& what, const CStdString& value, CFileItemList &items);
 	void AddContinue(CFileItemList &items);
+	bool AddHidden(CFileItemList &items);
 	bool AddTags(const CStdString& kind, CFileItemList &items);
 	bool AddTagged(const CStdString& kind, const CStdString& tag, CFileItemList &items);
 	void AddShowTiles(const CVariant& shows, CFileItemList &items);

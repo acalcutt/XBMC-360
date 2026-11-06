@@ -97,9 +97,9 @@ void CGUIWindowVideoBase::GetContextButtons(int itemNumber, CContextButtons &but
 //			if (item->IsSmartPlayList() || m_vecItems->IsSmartPlayList()) // TODO - SmartPlayList not ported
 //				buttons.Add(CONTEXT_BUTTON_EDIT_SMART_PLAYLIST, 586);
 
-			// A MediaRiffle show, movie or episode can be hidden
+			// A MediaRiffle show, movie or episode can be hidden, or in Hidden shown again
 			if (CMediaRiffle::CanHide(item->GetPath()))
-				buttons.Add(CONTEXT_BUTTON_MEDIARIFFLE_HIDE, 33533);
+				buttons.Add(CONTEXT_BUTTON_MEDIARIFFLE_HIDE, item->GetPropertyBOOL("mediariffle.hidden") ? 33534 : 33533);
 		}
 	}
 
@@ -180,8 +180,8 @@ bool CGUIWindowVideoBase::OnContextButton(int itemNumber, CONTEXT_BUTTON button)
 		return true;
 
 	case CONTEXT_BUTTON_MEDIARIFFLE_HIDE:
-		// Hidden, it's no longer listed here
-		if (g_mediaRiffle.SetHidden(item->GetPath(), true))
+		// Either way, it's no longer listed here
+		if (g_mediaRiffle.SetHidden(item->GetPath(), !item->GetPropertyBOOL("mediariffle.hidden")))
 		{
 			m_vecItems->RemoveDiscCache(GetID());
 			Update(m_vecItems->GetPath());

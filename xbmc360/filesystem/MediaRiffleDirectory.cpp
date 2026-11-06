@@ -56,6 +56,8 @@ bool CMediaRiffleDirectory::GetDirectory(const CStdString& strPath, CFileItemLis
 	}
 	if (kind.Equals("categories") || kind.Equals("lists"))
 		return AddTags(kind, items);
+	if (kind.Equals("hidden"))
+		return AddHidden(items);
 	if (parts.size() < 2)
 	{
 		AddRoot(items);
@@ -173,6 +175,7 @@ void CMediaRiffleDirectory::AddRoot(CFileItemList &items)
 	AddFolder(g_localizeStrings.Get(33520), "continue/", items);
 	AddFolder(g_localizeStrings.Get(33524), "categories/", items);
 	AddFolder(g_localizeStrings.Get(33525), "lists/", items);
+	AddFolder(g_localizeStrings.Get(33532), "hidden/", items);
 
 	// Its video libraries (music has its own place)
 	CVariant libraries;
@@ -213,6 +216,47 @@ void CMediaRiffleDirectory::AddContinue(CFileItemList &items)
 		AddFile(file, label, items);
 	}
 	items.SetContent("episodes");
+}
+
+// What the user hid (/api/hidden: { kind, id, title, detail }), newest first, each marked as hidden so its menu offers
+// to show it again. Music has its own place.
+bool CMediaRiffleDirectory::AddHidden(CFileItemList &items)
+{
+	CVariant hidden;
+	if (!Get("/api/hidden", hidden))
+		return false;
+
+	for (unsigned int i = 0; i < hidden.size(); i++)
+	{
+		const CVariant& entry = hidden[i];
+		CStdString kind = entry["kind"].asString();
+		int id = (int)entry["id"].asInteger();
+
+		CStdString path, image;
+		bool folder = kind.Equals("show");
+		if (folder)
+			path.Format("%sshow/%d/", m_source.c_str(), id);
+		else if (kind.Equals("movie"))
+			path.Format("%smovie/%d", m_source.c_str(), id);
+		else if (kind.Equals("file"))
+			path.Format("%splay/%d", m_source.c_str(), id);
+		else
+			continue;
+		image.Format("%simage/%s/%d", m_source.c_str(), kind.c_str(), id);
+
+		CFileItemPtr item(new CFileItem(CStdString(entry["title"].asString())));
+		item->SetPath(path);
+		item->m_bIsFolder = folder;
+		if (!folder)
+			item->SetMimeType("video/mp2t");
+		if (!entry["detail"].isNull())
+			item->SetLabel2(entry["detail"].asString());
+		item->SetLabelPreformated(true);
+		item->SetThumbnailImage(image);
+		item->SetProperty("mediariffle.hidden", true);
+		items.Add(item);
+	}
+	return true;
 }
 
 // The categories (/api/tags: { tag, files }) or the user's lists (/api/lists: { tag, items }), a folder each
