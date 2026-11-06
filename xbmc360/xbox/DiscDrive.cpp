@@ -7,6 +7,7 @@
 #include "utils\Log.h"
 #include "utils\Util.h"
 #include "xbox\IoSupport.h"
+#include "xbox\XBKernalExports.h"
 
 using namespace XFILE;
 
@@ -133,10 +134,18 @@ void CDiscDrive::Play(const Info& info)
 {
 	if (info.type == DISC_XBOX360_GAME || info.type == DISC_XBOX_GAME)
 	{
-		// The system starts what's in the drive, as its own dashboard does
-		CLog::Log(LOGNOTICE, "Starting the %s in the drive", GetTypeName(info.type).c_str());
+		// The game's own executable, by the drive's device name. Not the
+		// default app, which would start what's in the drive on a retail
+		// console: a softmod makes that its homebrew dashboard, which is us
+		const char* game = info.type == DISC_XBOX360_GAME ? "\\Device\\Cdrom0\\default.xex" : "\\Device\\Cdrom0\\default.xbe";
+		CLog::Log(LOGNOTICE, "Starting the %s in the drive, %s", GetTypeName(info.type).c_str(), game);
 		g_application.Stop();
-		XLaunchNewImage(XLAUNCH_KEYWORD_DEFAULT_APP, 0);
+		XLaunchNewImage(game, 0);
+
+		// Only back here when it couldn't be started, with 360 Riffle
+		// already stopped: start it again
+		CLog::Log(LOGERROR, "%s - couldn't start %s", __FUNCTION__, game);
+		XLaunchNewImage(GetLoadedImageName(), 0);
 	}
 	else if (info.type == DISC_DVD_VIDEO)
 	{
