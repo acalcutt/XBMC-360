@@ -30,8 +30,12 @@
 //#include "dialogs\GUIDialogPluginSettings.h"
 //#include "PluginSettings.h"
 #include "GUIWindowManager.h"
+#include "filesystem\Directory.h"
+#include "filesystem\File.h"
+#include "network\Jellyfin.h"
+#include "network\MediaRiffle.h"
+#include "playlists\PlayList.h"
 //#include "dialogs\GUIDialogOK.h"
-//#include "playlists\PlayList.h"
 //#include "FileSystem\FileDirectoryFactory.h"
 #include "GUIEditControl.h"
 //#include "dialogs\GUIDialogKeyboard.h"
@@ -775,6 +779,10 @@ bool CGUIMediaWindow::Update(const CStdString &strDirectory)
 		m_vecItems->Add(pItem);
 	}
 
+	// Shuffle and Shuffle with subfolders, in the windows that play what's in a folder
+	if (iWindow == WINDOW_MUSIC_FILES || iWindow == WINDOW_VIDEO_FILES || iWindow == WINDOW_PICTURES)
+		AddShuffleItems(*m_vecItems);
+
 	m_iLastControl = GetFocusedControlID();
 
 	// Ask the derived class if it wants to load additional info
@@ -882,6 +890,13 @@ bool CGUIMediaWindow::OnClick(int iItem)
 		return true;
 	}
 
+	// Shuffle, or Shuffle with subfolders
+	if (pItem->HasProperty("shuffle"))
+	{
+		OnShuffle(pItem->GetPropertyInt("shuffle") == 2);
+		return true;
+	}
+
 	if (!pItem->m_bIsFolder && pItem->IsFileFolder()) // TODO
 	{
 /*		XFILE::IFileDirectory *pFileDirectory = NULL;
@@ -980,7 +995,8 @@ bool CGUIMediaWindow::OnClick(int iItem)
 				{
 					CFileItemPtr item = m_vecItems->Get(i);
 
-					if (item->m_bIsFolder)
+					// Not folders, nor actions such as Shuffle
+					if (item->m_bIsFolder || !item->CanQueue())
 						continue;
 
 //					if (!item->IsPlayList() && !item->IsZIP() && !item->IsRAR()) // TODO BRENT
@@ -1020,6 +1036,148 @@ bool CGUIMediaWindow::OnClick(int iItem)
 		}
 	}
 	return false;
+}
+
+// Deep enough for any library, short of a folder that leads back into itself
+#define SHUFFLE_MAX_DEPTH 16
+#define SHUFFLE_MAX_FILES 5000
+
+void CGUIMediaWindow::AddShuffleItems(CFileItemList &items)
+{
+	// Not the sources, nor a media server's listing (which has Play all and Shuffle of its own) or a flat one
+	CStdString strPath = items.GetPath();
+	if (strPath.IsEmpty() || items.IsVirtualDirectoryRoot() || CMediaRiffle::IsMediaRiffle(strPath) ||
+		CJellyfin::IsJellyfin(strPath) || strPath.Left(7).Equals("flat://"))
+		return;
+
+	bool bFiles = false, bFolders = false;
+	for (int i = 0; i < items.Size(); i++)
+	{
+		if (items[i]->IsParentFolder())
+			continue;
+		if (items[i]->m_bIsFolder)
+			bFolders = true;
+		else if (!items[i]->IsPlayList())
+			bFiles = true;
+	}
+
+	// Actions, not files: at the top, after "..", and left out of what plays when a file is played
+	int iPosition = items.Size() > 0 && items[0]->IsParentFolder() ? 1 : 0;
+	const int labels[] = { 191, 33605 }; // Shuffle, Shuffle with subfolders
+	const bool shown[] = { bFiles, bFolders };
+	for (int i = 0; i < 2; i++)
+	{
+		if (!shown[i])
+			continue;
+
+		CFileItemPtr item(new CFileItem(g_localizeStrings.Get(labels[i])));
+		item->SetPath(i == 0 ? "shuffle://" : "shuffle://subfolders");
+		item->m_bIsFolder = false;
+		item->SetProperty("shuffle", i + 1);
+		item->SetLabelPreformated(true);
+		item->SetSpecialSort(SORT_ON_TOP);
+		item->SetCanQueue(false);
+		item->SetIconImage("OSDRandomOnNF.png");
+		items.AddFront(item, iPosition++);
+	}
+}
+
+void CGUIMediaWindow::OnShuffle(bool bSubfolders)
+{
+	CFileItemList files;
+	if (GetShuffleFiles(bSubfolders, files))
+		PlayShuffled(files);
+}
+
+bool CGUIMediaWindow::GetShuffleFiles(bool bSubfolders, CFileItemList &files)
+{
+	// Looking through the folders, on a share, can take a while
+	CGUIDialogProgress* progress = NULL;
+	if (bSubfolders)
+	{
+		progress = (CGUIDialogProgress*)g_windowManager.GetWindow(WINDOW_DIALOG_PROGRESS);
+		if (progress)
+		{
+			progress->SetHeading(191);
+			progress->SetLine(0, 33606);
+			progress->SetLine(1, "");
+			progress->SetLine(2, "");
+			progress->StartModal();
+			progress->ShowProgressBar(false);
+			progress->SetCanCancel(true);
+			progress->Progress();
+		}
+	}
+
+	bool bDone = AddShuffleFiles(*m_vecItems, bSubfolders, files, 0, progress);
+	if (progress)
+		progress->Close();
+	return bDone;
+}
+
+// A listing's files and, with bSubfolders, those in its folders and theirs, read as this window reads them. In Videos a
+// DVD's VIDEO_TS folder is one video, its VIDEO_TS.IFO named for the folder it's in, as Show all videos has it
+bool CGUIMediaWindow::AddShuffleFiles(const CFileItemList &items, bool bSubfolders, CFileItemList &files, int iDepth, CGUIDialogProgress *progress)
+{
+	for (int i = 0; i < items.Size() && files.Size() < SHUFFLE_MAX_FILES; i++)
+	{
+		CFileItemPtr item = items[i];
+		if (item->IsParentFolder() || !item->CanQueue())
+			continue;
+
+		if (!item->m_bIsFolder)
+		{
+			if (!item->IsPlayList())
+				files.Add(CFileItemPtr(new CFileItem(*item)));
+			continue;
+		}
+
+		if (!bSubfolders || iDepth >= SHUFFLE_MAX_DEPTH)
+			continue;
+
+		if (GetID() == WINDOW_VIDEO_FILES && item->GetLabel().Equals("VIDEO_TS"))
+		{
+			CStdString strIFO = URIUtils::AddFileToFolder(item->GetPath(), "VIDEO_TS.IFO");
+			if (XFILE::CFile::Exists(strIFO))
+			{
+				CStdString strName = items.GetPath();
+				URIUtils::RemoveSlashAtEnd(strName);
+				CFileItemPtr dvd(new CFileItem(URIUtils::GetFileName(strName)));
+				dvd->SetPath(strIFO);
+				files.Add(dvd);
+			}
+			continue;
+		}
+
+		if (progress)
+		{
+			progress->SetLine(1, item->GetLabel());
+			progress->Progress();
+			if (progress->IsCanceled())
+				return false;
+		}
+
+		CFileItemList folder;
+		if (XFILE::CDirectory::GetDirectory(item->GetPath(), folder, m_guiState->GetExtensions(), false) &&
+			!AddShuffleFiles(folder, true, files, iDepth + 1, progress))
+			return false;
+	}
+	return true;
+}
+
+void CGUIMediaWindow::PlayShuffled(CFileItemList &files)
+{
+	int iPlaylist = m_guiState.get() ? m_guiState->GetPlaylist() : PLAYLIST_NONE;
+	if (iPlaylist == PLAYLIST_NONE || files.IsEmpty())
+		return;
+
+	CLog::Log(LOGNOTICE, "Shuffling %d files from %s", files.Size(), CURL(m_vecItems->GetPath()).GetWithoutUserDetails().c_str());
+	g_playlistPlayer.ClearPlaylist(iPlaylist);
+	g_playlistPlayer.Reset();
+	g_playlistPlayer.Add(iPlaylist, files);
+	g_playlistPlayer.GetPlaylist(iPlaylist).Shuffle();
+	g_playlistPlayer.SetCurrentPlaylist(iPlaylist);
+	g_playlistPlayer.Play();
 }
 
 // Checks if there is a disc in the dvd drive and whether the

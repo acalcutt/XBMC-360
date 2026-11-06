@@ -8,6 +8,7 @@
 #include "guilib\dialogs\GUIDialogContextMenu.h"
 
 class CFileItemList;
+class CGUIDialogProgress;
 
 // Base class for all media windows
 class CGUIMediaWindow : public CGUIWindow
@@ -73,7 +74,18 @@ protected:
 	virtual void OnDeleteItem(int iItem);
 	void OnRenameItem(int iItem);
 
+	// Shuffle and Shuffle with subfolders, at the top of a folder on the console's drives or a share in Videos, Music
+	// and Pictures: the first when it has files, the second when it has folders
+	void AddShuffleItems(CFileItemList &items);
+	// Plays the folder's files in a random order, or with bSubfolders those in its folders and theirs too, as the
+	// window's playlist
+	virtual void OnShuffle(bool bSubfolders);
+	// What Shuffle plays, the files as this window lists them. False when looking through the folders is cancelled
+	bool GetShuffleFiles(bool bSubfolders, CFileItemList &files);
+	void PlayShuffled(CFileItemList &files);
+
 protected:
+	bool AddShuffleFiles(const CFileItemList &items, bool bSubfolders, CFileItemList &files, int iDepth, CGUIDialogProgress *progress);
 	bool WaitForNetwork() const;
 
 	// Translate the folder to start in from the given quick path

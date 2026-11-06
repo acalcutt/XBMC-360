@@ -9291,7 +9291,15 @@ msgctxt "#33604"
 msgid "That's where the console keeps its copies: choose another folder."
 msgstr ""
 
-#empty strings from id 33605 to 34004
+msgctxt "#33605"
+msgid "Shuffle with subfolders"
+msgstr ""
+
+msgctxt "#33606"
+msgid "Looking through the folders"
+msgstr ""
+
+#empty strings from id 33607 to 34004
 
 msgctxt "#34005"
 msgid "Flac"
