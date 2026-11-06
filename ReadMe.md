@@ -48,6 +48,9 @@ the folder with your games as a Games source. Leaving Salvia goes to the console
 that (`DashXex` in SoftmodExtras.ini with Peer Pressure) to come back to it. DS, 3DS, PSP, PS2, GameCube, Wii,
 Dreamcast and Saturn games are listed too, but no emulator for them runs on the 360 yet.
 
+[docs/usb-stick.md](docs/usb-stick.md) sets up the USB stick that installs 360 Riffle and Salvia with the Peer
+Pressure softmod, from an empty stick.
+
 To install a build, copy `xbmc360\Release\xbmc360.xex` to the console as `default.xex` (in
 `Hdd1:\PeerPressure\360riffle` with the Peer Pressure softmod), with the `language`, `media`, `scripts`, `system` and
 `web` folders and `skins\360 Riffle` beside it. Leave out `settings.xml`, which holds the console's own settings.
