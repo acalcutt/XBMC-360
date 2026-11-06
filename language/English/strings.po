@@ -9143,7 +9143,11 @@ msgctxt "#33566"
 msgid "Copy this game to the console's hard drive or a USB drive to play it."
 msgstr ""
 
-#empty strings from id 33567 to 34004
+msgctxt "#33567"
+msgid "What's on it? Tick each kind, then OK"
+msgstr ""
+
+#empty strings from id 33568 to 34004
 
 msgctxt "#34005"
 msgid "Flac"

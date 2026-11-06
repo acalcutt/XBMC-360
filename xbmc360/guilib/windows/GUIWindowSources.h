@@ -39,10 +39,11 @@ private:
 	static bool AskShare(CStdString& path);
 	static bool AskFolder(CStdString& path);
 	static bool AskName(CStdString& name);
-	static bool ChooseType(CStdString& type);
+	static bool ChooseTypes(std::vector<CStdString>& types);
 	static void AddSource(const CStdString& type, const CStdString& name, const CStdString& path, bool allowWrite);
 	static CStdString UniqueName(const CStdString& type, const CStdString& name, const CStdString& except);
 	static CMediaSource* Find(const CStdString& type, const CStdString& name, const CStdString& path);
+	static CMediaSource* FindPath(const CStdString& type, const CStdString& path);
 
 	CFileItemList* m_items;
 };

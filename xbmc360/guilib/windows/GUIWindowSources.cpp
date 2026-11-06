@@ -16,6 +16,7 @@
 #include "network\Jellyfin.h"
 #include "network\MediaRiffle.h"
 #include "utils\URIUtils.h"
+#include <algorithm>
 
 using namespace XFILE;
 
@@ -198,8 +199,11 @@ bool CGUIWindowSources::ShowAndAddSource(const CStdString& type)
 	if (place == PLACE_SHARE ? !AskShare(path) : !AskFolder(path))
 		return false;
 
-	CStdString kind = type;
-	if (kind.IsEmpty() && !ChooseType(kind))
+	// What's on it: one kind or more, as a share or a drive can hold games and videos both. It's a source of each
+	std::vector<CStdString> kinds;
+	if (!type.IsEmpty())
+		kinds.push_back(type);
+	else if (!ChooseTypes(kinds))
 		return false;
 
 	CStdString name = CURL(path).GetWithoutUserDetails();
@@ -209,7 +213,8 @@ bool CGUIWindowSources::ShowAndAddSource(const CStdString& type)
 		return false;
 
 	bool allowWrite = CMediaSource::CanWriteTo(path) && CGUIDialogYesNo::ShowAndGetInput(13196, 13197, 0, 0);
-	AddSource(kind, name, path, allowWrite);
+	for (unsigned int i = 0; i < kinds.size(); i++)
+		AddSource(kinds[i], name, path, allowWrite);
 	return true;
 }
 
@@ -285,7 +290,8 @@ bool CGUIWindowSources::AskName(CStdString& name)
 }
 
 // A server's source can move to another server (linking or signing in there); a share's server, folder and sign-in
-// can change, or a folder; then its name, and whether it may be saved to
+// can change, or a folder; then its name, what's on it (the same place is a source of each kind on it: ticking one
+// adds it there, taking a tick off removes it from there), and whether it may be saved to
 bool CGUIWindowSources::ShowAndEditSource(const CStdString& type, const CMediaSource& source)
 {
 	CStdString path = source.strPath;
@@ -309,36 +315,81 @@ bool CGUIWindowSources::ShowAndEditSource(const CStdString& type, const CMediaSo
 	if (!AskName(name))
 		return false;
 
+	// The kinds it's a source of now, ticked to begin with. A server's sources hold videos only
+	std::vector<CStdString> had;
+	for (unsigned int i = 0; i < sizeof(TYPES) / sizeof(TYPES[0]); i++)
+	{
+		if (type.Equals(TYPES[i]) || FindPath(TYPES[i], source.strPath))
+			had.push_back(TYPES[i]);
+	}
+
+	std::vector<CStdString> kinds = had;
+	if (!server && !ChooseTypes(kinds))
+		return false;
+
 	std::vector<CStdString> paths;
 	paths.push_back(path);
+	bool allowWrite = !server && CMediaSource::CanWriteTo(path) && CGUIDialogYesNo::ShowAndGetInput(13196, 13197, 0, 0);
 
-	CMediaSource changed = source;
-	changed.FromNameAndPaths(type, UniqueName(type, name, source.strName), paths);
-	changed.m_allowWrite = !server && CMediaSource::CanWriteTo(changed.strPath) && CGUIDialogYesNo::ShowAndGetInput(13196, 13197, 0, 0);
-	return g_settings.UpdateShare(type, source.strName, changed);
+	bool changedAll = true;
+	for (unsigned int i = 0; i < sizeof(TYPES) / sizeof(TYPES[0]); i++)
+	{
+		CStdString kind = TYPES[i];
+		bool wanted = std::find(kinds.begin(), kinds.end(), kind) != kinds.end();
+		CMediaSource* existing = kind.Equals(type) ? Find(type, source.strName, source.strPath) : FindPath(kind, source.strPath);
+
+		if (wanted && existing)
+		{
+			CStdString oldName = existing->strName;
+			CMediaSource changed = *existing;
+			changed.FromNameAndPaths(kind, UniqueName(kind, name, oldName), paths);
+			changed.m_allowWrite = allowWrite;
+			changedAll = g_settings.UpdateShare(kind, oldName, changed) && changedAll;
+		}
+		else if (wanted)
+			AddSource(kind, name, path, allowWrite);
+		else if (existing)
+			g_settings.DeleteSource(kind, existing->strName, existing->strPath);
+	}
+
+	return changedAll;
 }
 
-bool CGUIWindowSources::ChooseType(CStdString& type)
+// What's on a share or folder: each kind ticked, starting from the kinds given. OK with none ticked asks again
+bool CGUIWindowSources::ChooseTypes(std::vector<CStdString>& types)
 {
 	CGUIDialogSelect* select = (CGUIDialogSelect*)g_windowManager.GetWindow(WINDOW_DIALOG_SELECT);
 	if (!select)
 		return false;
 
-	const char* types[] = { "video", "music", "pictures", "programs" };
-	unsigned int count = sizeof(types) / sizeof(types[0]);
+	const char* all[] = { "video", "music", "pictures", "programs" };
+	unsigned int count = sizeof(all) / sizeof(all[0]);
 
-	select->Reset();
-	select->SetHeading(13198);
-	for (unsigned int i = 0; i < count; i++)
-		select->Add(TypeName(types[i]));
-	select->DoModal();
+	for (;;)
+	{
+		select->Reset();
+		select->SetHeading(33567);
+		for (unsigned int i = 0; i < count; i++)
+		{
+			select->Add(TypeName(all[i]));
+			if (std::find(types.begin(), types.end(), CStdString(all[i])) != types.end())
+				select->SelectItem(i);
+		}
+		select->SetMultiSelection(true);
+		select->DoModal();
 
-	int chosen = select->GetSelectedLabel();
-	if (chosen < 0 || chosen >= (int)count)
-		return false;
+		if (!select->IsButtonPressed())
+			return false;
 
-	type = types[chosen];
-	return true;
+		const std::vector<int>& chosen = select->GetSelectedItems();
+		if (chosen.empty())
+			continue;
+
+		types.clear();
+		for (unsigned int i = 0; i < chosen.size(); i++)
+			types.push_back(all[chosen[i]]);
+		return true;
+	}
 }
 
 void CGUIWindowSources::AddSource(const CStdString& type, const CStdString& name, const CStdString& path, bool allowWrite)
@@ -359,6 +410,18 @@ CStdString CGUIWindowSources::UniqueName(const CStdString& type, const CStdStrin
 	for (int n = 2; !unique.Equals(except) && Find(type, unique, ""); n++)
 		unique.Format("%s (%d)", name.c_str(), n);
 	return unique;
+}
+
+// A source of a kind that's this place, whatever it's called there
+CMediaSource* CGUIWindowSources::FindPath(const CStdString& type, const CStdString& path)
+{
+	VECSOURCES* sources = g_settings.GetSourcesFromType(type);
+	for (unsigned int i = 0; sources && i < sources->size(); i++)
+	{
+		if ((*sources)[i].strPath.Equals(path))
+			return &(*sources)[i];
+	}
+	return NULL;
 }
 
 // A source of a kind by its name, and its path when that's given
