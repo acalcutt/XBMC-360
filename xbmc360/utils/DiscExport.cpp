@@ -27,13 +27,14 @@ using namespace XFILE;
 #define DISC_OPEN_SYNCHRONOUS          0x00000020 // FILE_SYNCHRONOUS_IO_NONALERT
 #define IOCTL_CDROM_GET_DRIVE_GEOMETRY 0x0002404C
 
-struct DiscGeometry // DISK_GEOMETRY
+// What the 360's drive gives for its geometry: how many sectors there are
+// and how big, not NT's DISK_GEOMETRY (read as that, an Xbox 360 game's
+// 3567872 sectors of 2048 bytes came out as nonsense). Room to spare after
+struct DiscGeometry
 {
-	LARGE_INTEGER Cylinders;
-	DWORD MediaType;
-	DWORD TracksPerCylinder;
-	DWORD SectorsPerTrack;
-	DWORD BytesPerSector;
+	DWORD dwSectors;
+	DWORD dwBytesPerSector;
+	DWORD dwSpare[4];
 };
 
 CDiscExport::CDiscExport()
@@ -114,16 +115,26 @@ static __int64 GetDiscSize(HANDLE hDevice, BYTE* pBuffer)
 	__int64 iSize = 0;
 
 	DiscGeometry geometry;
+	memset(&geometry, 0, sizeof(geometry));
 	IO_STATUS_BLOCK ioStatus;
 	NTSTATUS status = NtDeviceIoControlFile(hDevice, NULL, NULL, NULL, &ioStatus, IOCTL_CDROM_GET_DRIVE_GEOMETRY, NULL, 0, &geometry, sizeof(geometry));
 	if (NT_SUCCESS(status))
 	{
-		iSize = geometry.Cylinders.QuadPart * geometry.TracksPerCylinder * geometry.SectorsPerTrack * geometry.BytesPerSector;
-		CLog::Log(LOGNOTICE, "Disc image: the drive reports %I64d x %u x %u sectors of %u bytes, %I64d bytes",
-			geometry.Cylinders.QuadPart, geometry.TracksPerCylinder, geometry.SectorsPerTrack, geometry.BytesPerSector, iSize);
+		CLog::Log(LOGNOTICE, "Disc image: the drive reports %u sectors of %u bytes", geometry.dwSectors, geometry.dwBytesPerSector);
+		if (geometry.dwBytesPerSector == DISC_SECTOR)
+			iSize = (__int64)geometry.dwSectors * DISC_SECTOR;
 	}
 	else
 		CLog::Log(LOGNOTICE, "Disc image: the drive didn't give its size (status %08X)", status);
+
+	// The size of what's on the disc, as its file system gives it
+	ULARGE_INTEGER total;
+	if (GetDiskFreeSpaceEx(CDiscDrive::ROOT, NULL, &total, NULL))
+	{
+		CLog::Log(LOGNOTICE, "Disc image: its file system is %I64u bytes", total.QuadPart);
+		if (iSize == 0)
+			iSize = total.QuadPart;
+	}
 
 	DWORD dwRead = 0;
 
