@@ -9,6 +9,7 @@
 #undef CURL
 
 #include "MediaRiffle.h"
+#include "HttpRequest.h"
 #include "Application.h"
 #include "FileItem.h"
 #include "MediaSource.h"
@@ -31,9 +32,6 @@
 #include "video\VideoInfoTag.h"
 
 CMediaRiffle g_mediaRiffle;
-
-// CCurlFile's: marks each socket libcurl opens so XNet lets it talk to a PC (without it, connecting fails)
-extern "C" int xbmc_curl_sockopt_cb(void* clientp, curl_socket_t curlfd, curlsocktype purpose);
 
 #define LINK_FILE      "special://profile/mediariffle.xml"
 // How the console asks for its streams: H.264 (no HEVC decoder here) at 720p, which it decodes in time
@@ -308,62 +306,17 @@ bool CMediaRiffle::CallServer(const CStdString& server, const CStdString& token,
 	return true;
 }
 
-static size_t WriteToString(char* data, size_t size, size_t count, void* user)
-{
-	((std::string*)user)->append(data, size * count);
-	return size * count;
-}
-
 bool CMediaRiffle::Request(const CStdString& server, const CStdString& token, const CStdString& method, const CStdString& path,
 	const std::string* body, long& status, std::string& response, int timeout)
 {
-	status = 0;
-	response.clear();
-
-	CURL_HANDLE* h = curl_easy_init();
-	if (!h)
-		return false;
+	std::vector<CStdString> headers;
+	if (!token.IsEmpty())
+		headers.push_back("Authorization: Bearer " + token);
 
 	CStdString url = server + path;
-	char error[CURL_ERROR_SIZE] = "";
-	struct curl_slist* headers = NULL;
-	if (!token.IsEmpty())
-		headers = curl_slist_append(headers, ("Authorization: Bearer " + token).c_str());
-	headers = curl_slist_append(headers, "Accept: application/json");
-	if (body)
-		headers = curl_slist_append(headers, "Content-Type: application/json");
-
-	curl_easy_setopt(h, CURLOPT_URL, url.c_str());
-	curl_easy_setopt(h, CURLOPT_HTTPHEADER, headers);
-	curl_easy_setopt(h, CURLOPT_NOSIGNAL, 1L);
-	curl_easy_setopt(h, CURLOPT_ERRORBUFFER, error);
-	curl_easy_setopt(h, CURLOPT_SOCKOPTFUNCTION, xbmc_curl_sockopt_cb);
-	// As CCurlFile: the console has no certificate store
-	curl_easy_setopt(h, CURLOPT_SSL_VERIFYPEER, 0L);
-	curl_easy_setopt(h, CURLOPT_SSL_VERIFYHOST, 0L);
-	curl_easy_setopt(h, CURLOPT_CONNECTTIMEOUT, 10L);
-	curl_easy_setopt(h, CURLOPT_TIMEOUT, (long)timeout);
-	curl_easy_setopt(h, CURLOPT_USERAGENT, g_sysinfo.GetUserAgent().c_str());
-	curl_easy_setopt(h, CURLOPT_WRITEFUNCTION, WriteToString);
-	curl_easy_setopt(h, CURLOPT_WRITEDATA, &response);
-
-	if (method.Equals("POST"))
+	CStdString reason;
+	if (!CHttpRequest::Send(url, headers, method, body, status, response, timeout, reason))
 	{
-		curl_easy_setopt(h, CURLOPT_POST, 1L);
-		curl_easy_setopt(h, CURLOPT_POSTFIELDS, body ? body->c_str() : "");
-		curl_easy_setopt(h, CURLOPT_POSTFIELDSIZE, (long)(body ? body->size() : 0));
-	}
-	else if (!method.Equals("GET"))
-		curl_easy_setopt(h, CURLOPT_CUSTOMREQUEST, method.c_str());
-
-	CURLcode result = curl_easy_perform(h);
-	curl_easy_getinfo(h, CURLINFO_RESPONSE_CODE, &status);
-	curl_slist_free_all(headers);
-	curl_easy_cleanup(h);
-
-	if (result != CURLE_OK)
-	{
-		CStdString reason = error[0] ? error : curl_easy_strerror(result);
 		CLog::Log(LOGERROR, "MediaRiffle: %s %s failed: %s", method.c_str(), url.c_str(), reason.c_str());
 		CSingleLock lock(m_section);
 		m_lastError = reason;

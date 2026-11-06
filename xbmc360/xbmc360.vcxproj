@@ -411,6 +411,7 @@
     <ClInclude Include="filesystem\UPnPDirectory.h" />
     <ClInclude Include="filesystem\MediaRiffleDirectory.h" />
     <ClInclude Include="filesystem\MediaRiffleFile.h" />
+    <ClInclude Include="network\HttpRequest.h" />
     <ClInclude Include="network\MediaRiffle.h" />
     <ClInclude Include="guilib\TextureBundle.h" />
     <ClInclude Include="network\UPnP.h" />
@@ -773,6 +774,7 @@
     <ClCompile Include="filesystem\UPnPDirectory.cpp" />
     <ClCompile Include="filesystem\MediaRiffleDirectory.cpp" />
     <ClCompile Include="filesystem\MediaRiffleFile.cpp" />
+    <ClCompile Include="network\HttpRequest.cpp" />
     <ClCompile Include="network\MediaRiffle.cpp" />
     <ClCompile Include="guilib\TextureBundle.cpp" />
     <ClCompile Include="network\UPnP.cpp" />

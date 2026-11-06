@@ -755,6 +755,9 @@
     <ClInclude Include="network\UPnP.h">
       <Filter>Header Files\network</Filter>
     </ClInclude>
+    <ClInclude Include="network\HttpRequest.h">
+      <Filter>Header Files\network</Filter>
+    </ClInclude>
     <ClInclude Include="network\MediaRiffle.h">
       <Filter>Header Files\network</Filter>
     </ClInclude>
@@ -1847,6 +1850,9 @@
       <Filter>Source Files\filesystem</Filter>
     </ClCompile>
     <ClCompile Include="network\UPnP.cpp">
+      <Filter>Source Files\network</Filter>
+    </ClCompile>
+    <ClCompile Include="network\HttpRequest.cpp">
       <Filter>Source Files\network</Filter>
     </ClCompile>
     <ClCompile Include="network\MediaRiffle.cpp">
