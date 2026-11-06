@@ -20,8 +20,12 @@
 
 using namespace XFILE;
 
-// In each copy: its name, where it came from, and the files that came from there with their sizes
+// In each copy: its name, where it came from, the XEX it starts, and the files that came from there with their sizes
 #define LIST_FILE "360riffle-copy.txt"
+
+// The list's last line once everything from the share or disc is in the copy. A copy stopped part way, or one getting
+// files that are new on its share, has its files' lines after it until it's complete again
+#define LIST_DONE "done"
 
 // Space a copy leaves on the drive, when the games played longest ago can make it
 #define SPARE ((__int64)2 * 1024 * 1024 * 1024)
@@ -116,35 +120,97 @@ static bool GetFileInfo(const CStdString& strFile, __int64& iSize, unsigned __in
 	return true;
 }
 
-// A copy's list: its name, where it came from, and its files from there (path in the copy | size)
-static void ReadList(const CStdString& strFolder, CStdString& strName, CStdString& strFrom, CStdStringArray& files)
+// The XEX at the top of a copy: default.xex, or failing that the first one there. Empty when there's none
+static CStdString FindXex(const CStdString& strFolder)
 {
-	FILE* f = fopen((strFolder + LIST_FILE).c_str(), "r");
-	if (!f)
-		return;
+	if (GetFileAttributes((strFolder + "default.xex").c_str()) != 0xFFFFFFFF)
+		return "default.xex";
 
-	char line[1024];
-	while (fgets(line, sizeof(line), f))
+	CStdString strXex;
+	WIN32_FIND_DATA find;
+	HANDLE hFind = FindFirstFile((strFolder + "*.xex").c_str(), &find);
+	if (hFind != INVALID_HANDLE_VALUE)
 	{
-		CStdString strLine = line;
-		strLine.TrimRight("\r\n");
-		if (strLine.Left(5).Equals("name="))
-			strName = strLine.Mid(5);
-		else if (strLine.Left(5).Equals("from="))
-			strFrom = strLine.Mid(5);
-		else if (strLine.Left(5).Equals("file="))
-			files.push_back(strLine.Mid(5));
+		strXex = find.cFileName;
+		FindClose(hFind);
 	}
-	fclose(f);
+	return strXex;
 }
 
-static void WriteListHeader(const CStdString& strFolder, const CStdString& strName, const CStdString& strFrom)
+// A copy's list: its name, where it came from, the XEX it starts, and its files from there (path in the copy | size).
+// Without files, only its first lines are read
+static void ReadList(const CStdString& strFolder, CStdString& strName, CStdString& strFrom, CStdString& strXex, CStdStringArray* files)
+{
+	FILE* f = fopen((strFolder + LIST_FILE).c_str(), "r");
+	if (f)
+	{
+		char line[1024];
+		while (fgets(line, sizeof(line), f))
+		{
+			CStdString strLine = line;
+			strLine.TrimRight("\r\n");
+			if (strLine.Left(5).Equals("name="))
+				strName = strLine.Mid(5);
+			else if (strLine.Left(5).Equals("from="))
+				strFrom = strLine.Mid(5);
+			else if (strLine.Left(4).Equals("xex="))
+				strXex = strLine.Mid(4);
+			else if (strLine.Left(5).Equals("file="))
+			{
+				if (!files)
+					break;
+				files->push_back(strLine.Mid(5));
+			}
+		}
+		fclose(f);
+	}
+
+	// A list from before the XEX was written in it
+	if (strXex.IsEmpty())
+		strXex = FindXex(strFolder);
+}
+
+static void WriteListHeader(const CStdString& strFolder, const CStdString& strName, const CStdString& strFrom, const CStdString& strXex)
 {
 	FILE* f = fopen((strFolder + LIST_FILE).c_str(), "w");
 	if (!f)
 		return;
-	fprintf(f, "name=%s\r\nfrom=%s\r\n", strName.c_str(), strFrom.c_str());
+	fprintf(f, "name=%s\r\nfrom=%s\r\nxex=%s\r\n", strName.c_str(), strFrom.c_str(), strXex.c_str());
 	fclose(f);
+}
+
+static void AddListLine(const CStdString& strFolder, const char* line)
+{
+	FILE* f = fopen((strFolder + LIST_FILE).c_str(), "a");
+	if (!f)
+		return;
+	fprintf(f, "%s\r\n", line);
+	fclose(f);
+}
+
+// Whether everything from a copy's share or disc is in it: its list ends with LIST_DONE
+static bool IsDone(const CStdString& strFolder)
+{
+	FILE* f = fopen((strFolder + LIST_FILE).c_str(), "rb");
+	if (!f)
+		return false;
+
+	char tail[17];
+	size_t iRead = 0;
+	if (fseek(f, -16, SEEK_END) == 0)
+		iRead = fread(tail, 1, 16, f);
+	fclose(f);
+
+	tail[iRead] = 0;
+	CStdString strTail = tail;
+	strTail.TrimRight("\r\n");
+	return strTail.Right(5).Equals("\n" LIST_DONE);
+}
+
+// Whether a copy starts as it is, without its share or disc: complete, with its XEX
+static bool IsPlayable(const CStdString& strFolder, const CStdString& strXex)
+{
+	return !strXex.IsEmpty() && IsDone(strFolder) && GetFileAttributes((strFolder + strXex).c_str()) != 0xFFFFFFFF;
 }
 
 // Marks a copy as played now: its list's time is when it was last played
@@ -158,6 +224,16 @@ static void MarkPlayed(const CStdString& strFolder)
 	GetSystemTimeAsFileTime(&now);
 	SetFileTime(hFile, NULL, NULL, &now);
 	CloseHandle(hFile);
+}
+
+// Starts a copy's XEX, by its path on the console's drives: D:\ is ours only
+static void StartCopy(const CStdString& strCopy, const CStdString& strXex, const CStdString& strName)
+{
+	MarkPlayed(strCopy);
+
+	CStdString strRun = CEmulators::ConsolePath(strCopy + strXex);
+	CLog::Log(LOGNOTICE, "Starting %s from its copy on the console, %s", strName.c_str(), strRun.c_str());
+	CXEXUtils::RunXex(strRun);
 }
 
 CGameCopy::CGameCopy()
@@ -226,7 +302,8 @@ bool CGameCopy::ReadCopy(const CStdString& strFolder, Copy& copy)
 
 	CStdString strFrom;
 	CStdStringArray files;
-	ReadList(strFolder, copy.strName, strFrom, files);
+	ReadList(strFolder, copy.strName, strFrom, copy.strXex, &files);
+	copy.bPlayable = IsPlayable(strFolder, copy.strXex);
 
 	for (unsigned int i = 0; i < files.size(); i++)
 	{
@@ -289,9 +366,9 @@ void CGameCopy::GetCopies(std::vector<Copy>& copies)
 // copies them back. A copy left with nothing goes
 void CGameCopy::FreeGameData(const CStdString& strFolder)
 {
-	CStdString strName, strFrom;
+	CStdString strName, strFrom, strXex;
 	CStdStringArray files;
-	ReadList(strFolder, strName, strFrom, files);
+	ReadList(strFolder, strName, strFrom, strXex, &files);
 
 	for (unsigned int i = 0; i < files.size(); i++)
 	{
@@ -304,7 +381,7 @@ void CGameCopy::FreeGameData(const CStdString& strFolder)
 	}
 
 	RemoveEmptyFolders(strFolder);
-	WriteListHeader(strFolder, strName, strFrom);
+	WriteListHeader(strFolder, strName, strFrom, strXex);
 
 	__int64 iListSize = 0;
 	unsigned __int64 iWritten;
@@ -607,6 +684,13 @@ void CGameCopy::PlayDisc(const CStdString& strName, DWORD dwTitleId, int iDisc)
 	if (strCopy.IsEmpty())
 		strCopy.Format("%s%08X~disc%d\\", CopiesFolder().c_str(), dwTitleId, iDisc > 0 ? iDisc : 1);
 
+	// A disc's files don't change: a complete copy starts without the disc being read again
+	if (IsPlayable(strCopy, "default.xex"))
+	{
+		StartCopy(strCopy, "default.xex", strName);
+		return;
+	}
+
 	CopyAndStart("Dvd:\\", "default.xex", strCopy, strName);
 }
 
@@ -636,14 +720,24 @@ void CGameCopy::CopyAndStart(const CStdString& strFolder, const CStdString& strX
 	{
 		bool bStopped = job.m_dlgProgress->IsCanceled();
 		job.m_dlgProgress->Close();
-		if (!bStopped)
-			ShowMessage(33564, strName);
+		if (bStopped)
+			return;
+
+		// Its share can't be reached, or the disc read: a complete copy starts as it is
+		if (IsPlayable(strCopy, strXex))
+		{
+			CLog::Log(LOGNOTICE, "Couldn't look in %s for what's new: starting the copy as it is", CURL(strFolder).GetWithoutUserDetails().c_str());
+			StartCopy(strCopy, strXex, strName);
+			return;
+		}
+
+		ShowMessage(33564, strName);
 		return;
 	}
 
-	if (job.m_iTotal > 0)
+	if (!job.m_files.empty())
 	{
-		if (!MakeRoom(job.m_iTotal, strCopy))
+		if (job.m_iTotal > 0 && !MakeRoom(job.m_iTotal, strCopy))
 		{
 			job.m_dlgProgress->Close();
 			ShowMessage(33565, CStringUtils::SizeToString(job.m_iTotal));
@@ -659,9 +753,9 @@ void CGameCopy::CopyAndStart(const CStdString& strFolder, const CStdString& strX
 		for (unsigned int i = 0; i < job.m_folders.size(); i++)
 			::CreateDirectory(job.m_folders[i].Left(job.m_folders[i].size() - 1).c_str(), NULL);
 
-		// Its list: what it is, then each file as it's copied
+		// Its list: what it is, then each file as it's copied, then that it's complete
 		if (GetFileAttributes((strCopy + LIST_FILE).c_str()) == 0xFFFFFFFF)
-			WriteListHeader(strCopy, strName, CURL(strFolder).GetWithoutUserDetails());
+			WriteListHeader(strCopy, strName, CURL(strFolder).GetWithoutUserDetails(), strXex);
 		FILE* list = fopen((strCopy + LIST_FILE).c_str(), "a");
 
 		job.m_dwStart = CTimeUtils::timeGetTime();
@@ -695,16 +789,20 @@ void CGameCopy::CopyAndStart(const CStdString& strFolder, const CStdString& strX
 		}
 
 		if (list)
+		{
+			fprintf(list, "%s\r\n", LIST_DONE);
 			fclose(list);
+		}
 		CLog::Log(LOGNOTICE, "Copied it in %u seconds", (CTimeUtils::timeGetTime() - job.m_dwStart) / 1000);
+	}
+	else if (GetFileAttributes((strCopy + LIST_FILE).c_str()) != 0xFFFFFFFF && !IsDone(strCopy))
+	{
+		// Nothing missing: a copy from before lists said when they were complete
+		AddListLine(strCopy, LIST_DONE);
 	}
 
 	job.m_dlgProgress->Close();
-	MarkPlayed(strCopy);
-
-	CStdString strRun = CEmulators::ConsolePath(strCopy + strXex);
-	CLog::Log(LOGNOTICE, "Starting %s from its copy on the console, %s", strName.c_str(), strRun.c_str());
-	CXEXUtils::RunXex(strRun);
+	StartCopy(strCopy, strXex, strName);
 }
 
 // Shows how far the copy's got. False once it's been cancelled

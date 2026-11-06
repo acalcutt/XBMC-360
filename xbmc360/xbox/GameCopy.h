@@ -11,7 +11,8 @@ class CGUIDialogProgress;
 // share support is gone once the game starts, so the game's folder is copied to the console (special://temp/games/
 // Xbox 360/) and started from there.
 //
-// The copy stays for next time: playing again copies only what's new on the share, never over a file the copy has.
+// The copy stays for next time: playing again copies only what's new on the share, never over a file the copy has, and
+// a complete copy starts as it is when its share can't be reached (a disc's, without the disc being read again).
 // Saves a game keeps in its folder stay with the copy, and aren't written back to the share. Each copy lists the files
 // that came from the share (360riffle-copy.txt), so that freeing a game's space deletes those and keeps the rest, its
 // saves; playing it again copies them back. That's done by itself for the games played longest ago when a copy would
@@ -40,6 +41,8 @@ public:
 	{
 		CStdString strFolder;   // D:\cache\games\Xbox 360\<name>~<mark>, with a backslash at the end
 		CStdString strName;     // The game's name
+		CStdString strXex;      // The XEX it starts, in that folder
+		bool bPlayable;         // Complete, with its XEX: it starts without its share or disc
 		__int64 iGameBytes;     // Its files from the share
 		__int64 iOtherBytes;    // The rest, its saves
 		unsigned __int64 iPlayed; // When it was last played, as a FILETIME
