@@ -9319,7 +9319,11 @@ msgctxt "#33611"
 msgid "Their saves can't be got back. Games are copied again when played."
 msgstr ""
 
-#empty strings from id 33612 to 34004
+msgctxt "#33612"
+msgid "Play all with subfolders"
+msgstr ""
+
+#empty strings from id 33613 to 34004
 
 msgctxt "#34005"
 msgid "Flac"

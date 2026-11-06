@@ -396,8 +396,8 @@ bool CGUIWindowVideoBase::Update(const CStdString &strDirectory)
 
 bool CGUIWindowVideoBase::OnClick(int iItem)
 {
-	// Shuffle and Shuffle with subfolders aren't videos to resume
-	if (iItem >= 0 && iItem < m_vecItems->Size() && m_vecItems->Get(iItem)->HasProperty("shuffle"))
+	// Play all and Shuffle aren't videos to resume
+	if (iItem >= 0 && iItem < m_vecItems->Size() && m_vecItems->Get(iItem)->HasProperty("playall"))
 		return CGUIMediaWindow::OnClick(iItem);
 
 	if (g_guiSettings.GetInt("videoplayer.resumeautomatically") != RESUME_NO)

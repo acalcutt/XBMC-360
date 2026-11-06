@@ -5,10 +5,14 @@
 - _...Add new stuff here..._
 - **Home**: A on a tab goes down to its tiles, as Down does, instead of opening a list of its own (on the Disc tab,
   instead of starting the disc).
+- **Now playing**: the playlist playing, in its order with what's playing marked (A on an item plays it), where it's
+  got to, and the player's controls: previous, pause, stop, next and full screen. Start opens it from anywhere, and so
+  does A on Home's now playing card, which Down from the tiles reaches.
 - **Remove all** in Settings > System info > Games on the console: free every game's space and keep the saves, or
   remove them all, saves and all.
-- **Shuffle** and **Shuffle with subfolders** at the top of a folder in Videos, Music and Pictures, on the console's
-  drives or a share: its files, or its folders' too, played in a random order (pictures as a slideshow).
+- **Play all** and **Shuffle**, and both **with subfolders**, at the top of a folder in Videos, Music and Pictures, on
+  the console's drives or a share: its files, or its folders' too, played in order (folder by folder, by name) or in a
+  random order, opening Now playing (pictures as a slideshow).
 - **Game names**: an Xbox 360 disc, its copy and its exported folder go by the game's name (GRID, The Orange Box)
   instead of its title ID, as most discs have no label. 360 Riffle asks XboxUnity once for each game and keeps the
   answer.

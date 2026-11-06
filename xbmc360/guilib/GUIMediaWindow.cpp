@@ -779,9 +779,9 @@ bool CGUIMediaWindow::Update(const CStdString &strDirectory)
 		m_vecItems->Add(pItem);
 	}
 
-	// Shuffle and Shuffle with subfolders, in the windows that play what's in a folder
+	// Play all and Shuffle, in the windows that play what's in a folder
 	if (iWindow == WINDOW_MUSIC_FILES || iWindow == WINDOW_VIDEO_FILES || iWindow == WINDOW_PICTURES)
-		AddShuffleItems(*m_vecItems);
+		AddPlayAllItems(*m_vecItems);
 
 	m_iLastControl = GetFocusedControlID();
 
@@ -890,10 +890,10 @@ bool CGUIMediaWindow::OnClick(int iItem)
 		return true;
 	}
 
-	// Shuffle, or Shuffle with subfolders
-	if (pItem->HasProperty("shuffle"))
+	// Play all or Shuffle, of the folder or with its subfolders
+	if (pItem->HasProperty("playall"))
 	{
-		OnShuffle(pItem->GetPropertyInt("shuffle") == 2);
+		OnPlayAll(pItem->GetPropertyInt("playall") == 2, pItem->GetPropertyBOOL("random"));
 		return true;
 	}
 
@@ -995,7 +995,7 @@ bool CGUIMediaWindow::OnClick(int iItem)
 				{
 					CFileItemPtr item = m_vecItems->Get(i);
 
-					// Not folders, nor actions such as Shuffle
+					// Not folders, nor actions such as Play all
 					if (item->m_bIsFolder || !item->CanQueue())
 						continue;
 
@@ -1039,10 +1039,10 @@ bool CGUIMediaWindow::OnClick(int iItem)
 }
 
 // Deep enough for any library, short of a folder that leads back into itself
-#define SHUFFLE_MAX_DEPTH 16
-#define SHUFFLE_MAX_FILES 5000
+#define PLAYALL_MAX_DEPTH 16
+#define PLAYALL_MAX_FILES 5000
 
-void CGUIMediaWindow::AddShuffleItems(CFileItemList &items)
+void CGUIMediaWindow::AddPlayAllItems(CFileItemList &items)
 {
 	// Not the sources, nor a media server's listing (which has Play all and Shuffle of its own) or a flat one
 	CStdString strPath = items.GetPath();
@@ -1061,35 +1061,48 @@ void CGUIMediaWindow::AddShuffleItems(CFileItemList &items)
 			bFiles = true;
 	}
 
-	// Actions, not files: at the top, after "..", and left out of what plays when a file is played
-	int iPosition = items.Size() > 0 && items[0]->IsParentFolder() ? 1 : 0;
-	const int labels[] = { 191, 33605 }; // Shuffle, Shuffle with subfolders
-	const bool shown[] = { bFiles, bFolders };
-	for (int i = 0; i < 2; i++)
+	// Actions, not files: at the top, after "..", and left out of what plays when a file is played. The folder's own
+	// files when it has some, then with its subfolders when it has those
+	static const struct
 	{
-		if (!shown[i])
+		int label;
+		bool subfolders;
+		bool random;
+		const char* icon;
+	} ACTIONS[] = {
+		{ 33529, false, false, "OSDPlayNF.png" },     // Play all
+		{ 191,   false, true,  "OSDRandomOnNF.png" }, // Shuffle
+		{ 33612, true,  false, "OSDPlayNF.png" },     // Play all with subfolders
+		{ 33605, true,  true,  "OSDRandomOnNF.png" }, // Shuffle with subfolders
+	};
+
+	int iPosition = items.Size() > 0 && items[0]->IsParentFolder() ? 1 : 0;
+	for (int i = 0; i < (int)(sizeof(ACTIONS) / sizeof(ACTIONS[0])); i++)
+	{
+		if (ACTIONS[i].subfolders ? !bFolders : !bFiles)
 			continue;
 
-		CFileItemPtr item(new CFileItem(g_localizeStrings.Get(labels[i])));
-		item->SetPath(i == 0 ? "shuffle://" : "shuffle://subfolders");
+		CFileItemPtr item(new CFileItem(g_localizeStrings.Get(ACTIONS[i].label)));
+		item->SetPath(CStdString("playall://") + (ACTIONS[i].random ? "random/" : "") + (ACTIONS[i].subfolders ? "subfolders" : ""));
 		item->m_bIsFolder = false;
-		item->SetProperty("shuffle", i + 1);
+		item->SetProperty("playall", ACTIONS[i].subfolders ? 2 : 1);
+		item->SetProperty("random", ACTIONS[i].random);
 		item->SetLabelPreformated(true);
 		item->SetSpecialSort(SORT_ON_TOP);
 		item->SetCanQueue(false);
-		item->SetIconImage("OSDRandomOnNF.png");
+		item->SetIconImage(ACTIONS[i].icon);
 		items.AddFront(item, iPosition++);
 	}
 }
 
-void CGUIMediaWindow::OnShuffle(bool bSubfolders)
+void CGUIMediaWindow::OnPlayAll(bool bSubfolders, bool bRandom)
 {
 	CFileItemList files;
-	if (GetShuffleFiles(bSubfolders, files))
-		PlayShuffled(files);
+	if (GetPlayAllFiles(bSubfolders, files))
+		PlayFiles(files, bRandom);
 }
 
-bool CGUIMediaWindow::GetShuffleFiles(bool bSubfolders, CFileItemList &files)
+bool CGUIMediaWindow::GetPlayAllFiles(bool bSubfolders, CFileItemList &files)
 {
 	// Looking through the folders, on a share, can take a while
 	CGUIDialogProgress* progress = NULL;
@@ -1098,7 +1111,7 @@ bool CGUIMediaWindow::GetShuffleFiles(bool bSubfolders, CFileItemList &files)
 		progress = (CGUIDialogProgress*)g_windowManager.GetWindow(WINDOW_DIALOG_PROGRESS);
 		if (progress)
 		{
-			progress->SetHeading(191);
+			progress->SetHeading(33529);
 			progress->SetLine(0, 33606);
 			progress->SetLine(1, "");
 			progress->SetLine(2, "");
@@ -1109,17 +1122,18 @@ bool CGUIMediaWindow::GetShuffleFiles(bool bSubfolders, CFileItemList &files)
 		}
 	}
 
-	bool bDone = AddShuffleFiles(*m_vecItems, bSubfolders, files, 0, progress);
+	bool bDone = AddPlayAllFiles(*m_vecItems, bSubfolders, files, 0, progress);
 	if (progress)
 		progress->Close();
 	return bDone;
 }
 
-// A listing's files and, with bSubfolders, those in its folders and theirs, read as this window reads them. In Videos a
+// A listing's files and, with bSubfolders, those in its folders and theirs, read as this window reads them, in the
+// order they're listed: the folder's own as it's sorted, the folders' by name, each folder where it comes. In Videos a
 // DVD's VIDEO_TS folder is one video, its VIDEO_TS.IFO named for the folder it's in, as Show all videos has it
-bool CGUIMediaWindow::AddShuffleFiles(const CFileItemList &items, bool bSubfolders, CFileItemList &files, int iDepth, CGUIDialogProgress *progress)
+bool CGUIMediaWindow::AddPlayAllFiles(const CFileItemList &items, bool bSubfolders, CFileItemList &files, int iDepth, CGUIDialogProgress *progress)
 {
-	for (int i = 0; i < items.Size() && files.Size() < SHUFFLE_MAX_FILES; i++)
+	for (int i = 0; i < items.Size() && files.Size() < PLAYALL_MAX_FILES; i++)
 	{
 		CFileItemPtr item = items[i];
 		if (item->IsParentFolder() || !item->CanQueue())
@@ -1132,7 +1146,7 @@ bool CGUIMediaWindow::AddShuffleFiles(const CFileItemList &items, bool bSubfolde
 			continue;
 		}
 
-		if (!bSubfolders || iDepth >= SHUFFLE_MAX_DEPTH)
+		if (!bSubfolders || iDepth >= PLAYALL_MAX_DEPTH)
 			continue;
 
 		if (GetID() == WINDOW_VIDEO_FILES && item->GetLabel().Equals("VIDEO_TS"))
@@ -1158,25 +1172,33 @@ bool CGUIMediaWindow::AddShuffleFiles(const CFileItemList &items, bool bSubfolde
 		}
 
 		CFileItemList folder;
-		if (XFILE::CDirectory::GetDirectory(item->GetPath(), folder, m_guiState->GetExtensions(), false) &&
-			!AddShuffleFiles(folder, true, files, iDepth + 1, progress))
+		if (!XFILE::CDirectory::GetDirectory(item->GetPath(), folder, m_guiState->GetExtensions(), false))
+			continue;
+
+		folder.Sort(SORT_METHOD_LABEL, SORT_ORDER_ASC);
+		if (!AddPlayAllFiles(folder, true, files, iDepth + 1, progress))
 			return false;
 	}
 	return true;
 }
 
-void CGUIMediaWindow::PlayShuffled(CFileItemList &files)
+void CGUIMediaWindow::PlayFiles(CFileItemList &files, bool bRandom)
 {
 	int iPlaylist = m_guiState.get() ? m_guiState->GetPlaylist() : PLAYLIST_NONE;
 	if (iPlaylist == PLAYLIST_NONE || files.IsEmpty())
 		return;
 
-	CLog::Log(LOGNOTICE, "Shuffling %d files from %s", files.Size(), CURL(m_vecItems->GetPath()).GetWithoutUserDetails().c_str());
+	CLog::Log(LOGNOTICE, "Playing %d files from %s%s", files.Size(), CURL(m_vecItems->GetPath()).GetWithoutUserDetails().c_str(),
+		bRandom ? ", shuffled" : "");
 	g_playlistPlayer.ClearPlaylist(iPlaylist);
 	g_playlistPlayer.Reset();
 	g_playlistPlayer.Add(iPlaylist, files);
-	g_playlistPlayer.GetPlaylist(iPlaylist).Shuffle();
+	if (bRandom)
+		g_playlistPlayer.GetPlaylist(iPlaylist).Shuffle();
 	g_playlistPlayer.SetCurrentPlaylist(iPlaylist);
+
+	// Now playing, with what plays and its controls: a video goes full screen over it, and back from there
+	g_windowManager.ActivateWindow(WINDOW_MUSIC_PLAYLIST);
 	g_playlistPlayer.Play();
 }
 

@@ -74,18 +74,18 @@ protected:
 	virtual void OnDeleteItem(int iItem);
 	void OnRenameItem(int iItem);
 
-	// Shuffle and Shuffle with subfolders, at the top of a folder on the console's drives or a share in Videos, Music
-	// and Pictures: the first when it has files, the second when it has folders
-	void AddShuffleItems(CFileItemList &items);
-	// Plays the folder's files in a random order, or with bSubfolders those in its folders and theirs too, as the
-	// window's playlist
-	virtual void OnShuffle(bool bSubfolders);
-	// What Shuffle plays, the files as this window lists them. False when looking through the folders is cancelled
-	bool GetShuffleFiles(bool bSubfolders, CFileItemList &files);
-	void PlayShuffled(CFileItemList &files);
+	// Play all and Shuffle, at the top of a folder on the console's drives or a share in Videos, Music and Pictures:
+	// when it has files, and with subfolders when it has folders
+	void AddPlayAllItems(CFileItemList &items);
+	// Plays the folder's files, or with bSubfolders those in its folders and theirs too, as the window's playlist: in
+	// the order they're listed (the folders' by name), or with bRandom in a random order. Now playing shows them
+	virtual void OnPlayAll(bool bSubfolders, bool bRandom);
+	// What Play all plays, the files as this window lists them. False when looking through the folders is cancelled
+	bool GetPlayAllFiles(bool bSubfolders, CFileItemList &files);
+	void PlayFiles(CFileItemList &files, bool bRandom);
 
 protected:
-	bool AddShuffleFiles(const CFileItemList &items, bool bSubfolders, CFileItemList &files, int iDepth, CGUIDialogProgress *progress);
+	bool AddPlayAllFiles(const CFileItemList &items, bool bSubfolders, CFileItemList &files, int iDepth, CGUIDialogProgress *progress);
 	bool WaitForNetwork() const;
 
 	// Translate the folder to start in from the given quick path

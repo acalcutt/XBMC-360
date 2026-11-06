@@ -49,7 +49,7 @@ protected:
 
 	void OnRegenerateThumbs();
 	virtual bool OnPlayMedia(int iItem);
-	virtual void OnShuffle(bool bSubfolders);
+	virtual void OnPlayAll(bool bSubfolders, bool bRandom);
 	bool ShowPicture(int iItem, bool startSlideShow);
 	void OnShowPictureRecursive(const CStdString& strPath);
 	void OnSlideShow(const CStdString& strPicture);

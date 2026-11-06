@@ -361,12 +361,12 @@ void CGUIWindowPictures::OnSlideShow()
 	OnSlideShow(m_vecItems->GetPath());
 }
 
-// A slideshow of the folder's pictures, or those in its folders too, in a random order
-void CGUIWindowPictures::OnShuffle(bool bSubfolders)
+// A slideshow of the folder's pictures, or those in its folders too, in order or a random order
+void CGUIWindowPictures::OnPlayAll(bool bSubfolders, bool bRandom)
 {
 	CGUIWindowSlideShow *pSlideShow = (CGUIWindowSlideShow *)g_windowManager.GetWindow(WINDOW_SLIDESHOW);
 	if (pSlideShow)
-		pSlideShow->RunSlideShow(m_vecItems->GetPath(), bSubfolders, true, false,
+		pSlideShow->RunSlideShow(m_vecItems->GetPath(), bSubfolders, bRandom, !bRandom,
 															m_guiState->GetSortMethod(),
 															m_guiState->GetSortOrder());
 }
