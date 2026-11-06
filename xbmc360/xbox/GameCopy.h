@@ -80,6 +80,7 @@ private:
 	static bool MakeRoom(__int64 iNeeded, const CStdString& strExcept);
 	static bool ManageFolder(const Copy& copy);
 	static bool MoveFolder(const Copy& copy);
+	static void RemoveAll(const std::vector<Copy>& copies, __int64 iGameBytes, int iRoms);
 	static void ShowMessage(int iLine, const CStdString& strDetail);
 
 	bool AddFolder(const CStdString& strFrom, const CStdString& strTo);

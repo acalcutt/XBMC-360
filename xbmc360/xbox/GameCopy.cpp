@@ -651,6 +651,21 @@ void CGameCopy::ShowCopies()
 
 		select->Reset();
 		select->SetHeading(33580);
+
+		// Remove all, first, when there's more than one thing to remove
+		__int64 iAllGames = iRomBytes, iAll = iRomBytes;
+		for (unsigned int i = 0; i < copies.size(); i++)
+		{
+			iAllGames += copies[i].iGameBytes;
+			iAll += copies[i].iGameBytes + copies[i].iOtherBytes;
+		}
+		int iFirst = 0;
+		if (copies.size() + (iRoms > 0 ? 1 : 0) > 1)
+		{
+			select->Add(g_localizeStrings.Get(33607) + ": " + CStringUtils::SizeToString(iAll));
+			iFirst = 1;
+		}
+
 		for (unsigned int i = 0; i < copies.size(); i++)
 		{
 			CStdString strLine = copies[i].strName + ": ";
@@ -673,6 +688,13 @@ void CGameCopy::ShowCopies()
 		int iChosen = select->GetSelectedLabel();
 		if (iChosen < 0)
 			return;
+
+		if (iChosen < iFirst)
+		{
+			RemoveAll(copies, iAllGames, iRoms);
+			continue;
+		}
+		iChosen -= iFirst;
 
 		if (iChosen < (int)copies.size())
 		{
@@ -697,6 +719,59 @@ void CGameCopy::ShowCopies()
 			EmulatorGames(iRomBytes, true);
 		}
 	}
+}
+
+// Remove all: every copy's game files, keeping their saves, or every copy with its saves (which asks again). The
+// emulators' games go either way, as they keep no saves there. iGameBytes: what freeing them all frees
+void CGameCopy::RemoveAll(const std::vector<Copy>& copies, __int64 iGameBytes, int iRoms)
+{
+	CGUIDialogSelect* select = (CGUIDialogSelect*)g_windowManager.GetWindow(WINDOW_DIALOG_SELECT);
+	if (!select)
+		return;
+
+	CStdString strFree;
+	strFree.Format(g_localizeStrings.Get(33608).c_str(), CStringUtils::SizeToString(iGameBytes).c_str());
+
+	select->Reset();
+	select->SetHeading(33607);
+	select->Add(strFree);
+	select->Add(g_localizeStrings.Get(33609));
+	select->DoModal();
+
+	int iChosen = select->GetSelectedLabel();
+	if (iChosen < 0)
+		return;
+
+	bool bSaves = iChosen == 1;
+	if (bSaves)
+	{
+		CGUIDialogYesNo* dialog = (CGUIDialogYesNo*)g_windowManager.GetWindow(WINDOW_DIALOG_YES_NO);
+		if (!dialog)
+			return;
+
+		CStdString strQuestion;
+		strQuestion.Format(g_localizeStrings.Get(33610).c_str(), (int)copies.size() + iRoms);
+		dialog->SetHeading(33580);
+		dialog->SetLine(0, strQuestion);
+		dialog->SetLine(1, g_localizeStrings.Get(33611));
+		dialog->SetLine(2, "");
+		dialog->DoModal();
+		if (!dialog->IsConfirmed())
+			return;
+	}
+
+	CLog::Log(LOGNOTICE, "%s the %u game copies on the console and its %d emulator games", bSaves ? "Removing" : "Freeing",
+		copies.size(), iRoms);
+	for (unsigned int i = 0; i < copies.size(); i++)
+	{
+		if (bSaves)
+			DeleteTree(copies[i].strFolder);
+		else if (copies[i].iGameBytes > 0)
+			FreeGameData(copies[i].strFolder);
+	}
+
+	__int64 iRomBytes;
+	EmulatorGames(iRomBytes, true);
 }
 
 // What's in a folder on the share that its copy doesn't have yet: the folders to make and the files to copy. A file

@@ -9299,7 +9299,27 @@ msgctxt "#33606"
 msgid "Looking through the folders"
 msgstr ""
 
-#empty strings from id 33607 to 34004
+msgctxt "#33607"
+msgid "Remove all"
+msgstr ""
+
+msgctxt "#33608"
+msgid "Free all their games' %s, keeping their saves"
+msgstr ""
+
+msgctxt "#33609"
+msgid "Remove them all, saves and all"
+msgstr ""
+
+msgctxt "#33610"
+msgid "Remove all %d games on the console, saves and all?"
+msgstr ""
+
+msgctxt "#33611"
+msgid "Their saves can't be got back. Games are copied again when played."
+msgstr ""
+
+#empty strings from id 33612 to 34004
 
 msgctxt "#34005"
 msgid "Flac"

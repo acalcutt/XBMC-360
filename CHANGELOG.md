@@ -5,6 +5,8 @@
 - _...Add new stuff here..._
 - **Home**: A on a tab goes down to its tiles, as Down does, instead of opening a list of its own (on the Disc tab,
   instead of starting the disc).
+- **Remove all** in Settings > System info > Games on the console: free every game's space and keep the saves, or
+  remove them all, saves and all.
 - **Shuffle** and **Shuffle with subfolders** at the top of a folder in Videos, Music and Pictures, on the console's
   drives or a share: its files, or its folders' too, played in a random order (pictures as a slideshow).
 - **Game names**: an Xbox 360 disc, its copy and its exported folder go by the game's name (GRID, The Orange Box)
