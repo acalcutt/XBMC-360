@@ -3,6 +3,7 @@ Release/
 Debug/
 Xbox 360/
 *.log
+*.tlog
 
 # Visual Studio per-user settings and caches
 *.suo
