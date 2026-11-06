@@ -331,7 +331,7 @@ void CGameCopy::GetPlayable(CFileItemList& items)
 		item->SetPath(strFolder + strXex);
 		item->SetLabel2("Xbox 360");
 		item->SetLabelPreformated(true);
-		item->SetIconImage("DefaultProgram.png");
+		item->SetIconImage("DefaultGame.png");
 
 		// When it was last played: its list's time
 		__int64 iListSize;

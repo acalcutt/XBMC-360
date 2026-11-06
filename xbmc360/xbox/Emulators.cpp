@@ -340,7 +340,7 @@ void CEmulators::SetLabels(CFileItem& item)
 	item.SetLabel(strName);
 	item.SetLabel2(GetSystemName(GetSystem(item.GetPath())));
 	item.SetLabelPreformated(true);
-	item.SetIconImage("DefaultProgram.png");
+	item.SetIconImage("DefaultGame.png");
 }
 
 // Whether an emulator can open the path: it's on the console's hard drive
@@ -967,7 +967,7 @@ void CEmulators::GetCopied(CFileItemList& items)
 			item->SetPath(strPath);
 			item->SetLabel2(SYSTEMS[iSystem].name);
 			item->SetLabelPreformated(true);
-			item->SetIconImage("DefaultProgram.png");
+			item->SetIconImage("DefaultGame.png");
 			item->m_dwSize = ((__int64)files[i].nFileSizeHigh << 32) | files[i].nFileSizeLow;
 			item->m_dateTime = files[i].ftLastWriteTime;
 			items.Add(item);

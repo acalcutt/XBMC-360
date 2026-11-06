@@ -19,6 +19,9 @@
 
 ### 🐞 Bug fixes
 - _...Add new stuff here..._
+- **Pictures that were Confluence's**: a game without a picture shows a controller, not a computer mouse, and Settings,
+  System info, the file manager and the side blade show 360 Riffle's name and mark in place of Confluence's logo and
+  XBMC's.
 - **Choosing a folder** (to copy a disc, save an ISO, move a game): New folder asks for a name and opens the new folder,
   instead of doing nothing; Down past the end of the list reaches OK, which had taken Left; and OK no longer leaves a
   file named `1` behind in the folder it checks can be written to.

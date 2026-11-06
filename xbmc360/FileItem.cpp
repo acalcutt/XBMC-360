@@ -446,7 +446,7 @@ void CFileItem::FillInDefaultIcon()
 */			else if (IsXEX())
 			{
 				// xex
-				SetIconImage("DefaultProgram.png");
+				SetIconImage("DefaultGame.png");
 			}
 /*			else if (IsShortCut() && !IsLabelPreformated())
 			{

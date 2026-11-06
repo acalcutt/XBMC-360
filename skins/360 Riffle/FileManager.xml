@@ -19,7 +19,7 @@
 			<width>35</width>
 			<height>35</height>
 			<aspectratio>keep</aspectratio>
-			<texture>icon_system.png</texture>
+			<texture>mr-icon.png</texture>
 		</control>
 		<control type="grouplist">
 			<posx>65</posx>
