@@ -32,12 +32,39 @@ void CSecrets::Hide(CStdString& strText)
 		iPos = iColon + 1 + sizeof(HIDDEN) - 1;
 	}
 
+	CStdString strLower = strText;
+	strLower.ToLower();
+
+	// The same, encoded inside another address: zip://smb%3a%2f%2fuser%3apassword%40server%2fgame.zip/game.nes is
+	// how a zip on a share is opened
+	iPos = 0;
+	while ((iPos = strLower.Find("%3a%2f%2f", iPos)) >= 0)
+	{
+		iPos += 9;
+
+		int iAt = -1;
+		int iEnd = iPos;
+		while (iEnd < (int)strLower.size() && strLower[iEnd] != '/' && strLower[iEnd] != '"' &&
+			!isspace((unsigned char)strLower[iEnd]) && strLower.Mid(iEnd, 3) != "%2f")
+		{
+			if (strLower.Mid(iEnd, 3) == "%40")
+				iAt = iEnd;
+			iEnd++;
+		}
+
+		int iColon = strLower.Find("%3a", iPos);
+		if (iAt < 0 || iColon < 0 || iColon > iAt)
+			continue;
+
+		strText = strText.Left(iColon + 3) + HIDDEN + strText.Mid(iAt);
+		strLower = strLower.Left(iColon + 3) + HIDDEN + strLower.Mid(iAt);
+		iPos = iColon + 3 + sizeof(HIDDEN) - 1;
+	}
+
 	if (strText.Find('=') < 0)
 		return;
 
 	// name=value in a URL's query, or name="value" in a header
-	CStdString strLower = strText;
-	strLower.ToLower();
 
 	for (unsigned int i = 0; i < sizeof(KEYS) / sizeof(KEYS[0]); i++)
 	{
