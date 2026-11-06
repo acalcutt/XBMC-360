@@ -39,8 +39,10 @@ or signed out of on the same page.
 
 To play games for other consoles, unzip Salvia-360 from [Salvia's releases](https://github.com/danibiker/Salvia/releases)
 to a folder at the top of the hard drive or a USB drive, or one folder down (`Hdd1:\Salvia`, `Usb0:\Emulators\Salvia`),
-with the BIOS files its readme lists in its `system` folder (PlayStation games need `SCPH1001.BIN`). Then add the
-folder with your games as a Games source. Leaving Salvia goes to the console's default dashboard, so set 360 Riffle as
+with the BIOS files its readme lists in its `system` folder (PlayStation games need `SCPH1001.BIN`). With Peer
+Pressure, a SoftmodExtras entry of its own (Category `Apps`, Source `Salvia`, Destination `Hdd1:\PeerPressure\Salvia`)
+installs it to the hard drive, apart from 360 Riffle, so updating 360 Riffle leaves Salvia's settings alone. Then add
+the folder with your games as a Games source. Leaving Salvia goes to the console's default dashboard, so set 360 Riffle as
 that (`DashXex` in SoftmodExtras.ini with Peer Pressure) to come back to it. DS, 3DS, PSP, PS2, GameCube, Wii,
 Dreamcast and Saturn games are listed too, but no emulator for them runs on the 360 yet.
 
