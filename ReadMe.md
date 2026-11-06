@@ -62,6 +62,10 @@ Once it's installed, newer builds can go in from **System info > Update from USB
 drive (in `BadUpdatePayload\SoftmodExtras\360riffle`, where it's staged for Peer Pressure, or a `360riffle` folder at
 the top of the drive), without going through the softmod's installer.
 
+The version is `APP_VERSION` in [xbmc360/CompileInfo.h](xbmc360/CompileInfo.h), shown in System info and at the top
+of the log. [CHANGELOG.md](CHANGELOG.md) says what each version brings, with what's changed since the last one under
+`master`.
+
 ## From XBMC-360
 
 This is a port of XBMC4XBOX to XBox 360 using the Microsoft XBox 360 SDK (not using Linux and Kodi).
