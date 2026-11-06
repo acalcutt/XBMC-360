@@ -8,8 +8,12 @@
 #                     from USB installs it.
 #   release-*         Push to main: if no GitLab release exists for APP_VERSION (xbmc360/CompileInfo.h), create it with
 #                     the CHANGELOG.md notes and the build's zip as 360Riffle-v<version>.zip, with SHA256SUMS.
+#   bump-version      Build > Pipelines > Run pipeline with BUMP_VERSION set: bump the version, roll the changelog, push
+#                     release-v<version> and open a merge request. Merging it makes the release.
 #
 # CI/CD variables (Settings > CI/CD > Variables):
+#   CI_PUSH_TOKEN     Protected + Masked: a project access token, role Maintainer, scopes api + write_repository
+#                     (bump-version only)
 #   XBMC360_STOCK     Optional: a folder on the XDK runner holding a stock XBMC-360 bundle, for MilkDrop's data and
 #                     visualisations folders, which aren't in this repository. Without it the zip leaves them out: it
 #                     still updates an installed 360 Riffle, which keeps its own.
@@ -23,6 +27,13 @@ workflow:
     - if: $CI_COMMIT_BRANCH
 
 variables:
+  BUMP_VERSION:
+    value: "none"
+    options: ["none", "patch", "minor", "major", "prepatch", "preminor", "premajor", "prerelease"]
+    description: "Version bump type. Leave as 'none' to just build and release the current version."
+  BUMP_PREID:
+    value: "rc"
+    description: "Prerelease identifier for the pre* bump types (e.g. alpha, beta, rc)."
   # Where the version is, as release-check.ps1 and the build read it
   VERSION_FILE: xbmc360/CompileInfo.h
   VERSION_PATTERN: '#define APP_VERSION\s+"([^"]+)"'
@@ -40,10 +51,14 @@ stages:
   - release
 
 .ci-rules: &ci-rules
+  - if: $BUMP_VERSION != "none"
+    when: never
   - if: $CI_PIPELINE_SOURCE == "merge_request_event"
   - if: $CI_COMMIT_BRANCH == $CI_DEFAULT_BRANCH
 
 .release-rules: &release-rules
+  - if: $BUMP_VERSION != "none"
+    when: never
   - if: $CI_COMMIT_BRANCH == $CI_DEFAULT_BRANCH
 
 # ── Build ───────────────────────────────────────────────────────────────────────────────────────────
@@ -86,3 +101,15 @@ release-publish:
     - New-Item -ItemType Directory release-files | Out-Null
     - Copy-Item (Get-Item ci-files/360Riffle-*.zip) "release-files/360Riffle-$env:RELEASE_TAG.zip"
     - ./.gitlab/scripts/publish-release.ps1 -PackageName 360riffle -ReleaseName "360 Riffle"
+
+# ── Version bump ────────────────────────────────────────────────────────────────────────────────────
+
+bump-version:
+  stage: build
+  resource_group: bump-version
+  rules:
+    - if: $CI_PIPELINE_SOURCE == "web" && $BUMP_VERSION != "none"
+  variables:
+    GIT_DEPTH: 0   # full history: the changelog lists merge requests since the last tag
+  script:
+    - ./.gitlab/scripts/bump.ps1 -BumpType $env:BUMP_VERSION -PreId $env:BUMP_PREID
