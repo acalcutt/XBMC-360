@@ -17,6 +17,8 @@
 #include "guilib\dialogs\GUIDialogNumeric.h"
 #include "guilib\LocalizeStrings.h"
 #include "utils\AlarmClock.h"
+#include "utils\DiscExport.h"
+#include "xbox\DiscDrive.h"
 #include "xbox\IoSupport.h"
 
 #include <vector>
@@ -62,6 +64,9 @@ const BUILT_IN commands[] = {
 	{ "Playlist.PlayOffset",        true,   "Start playing from a particular offset in the playlist" },
 	{ "Playlist.Clear",             false,  "Clear the current playlist" },
 	{ "EjectTray",                  false,  "Close or open the DVD tray" },
+	{ "PlayDisc",                   false,  "Play the game or DVD in the drive, or open a data disc" },
+	{ "CopyDisc",                   false,  "Copy the disc's files to a folder" },
+	{ "SaveDiscImage",              false,  "Save an ISO image of the disc" },
 	{ "AlarmClock",                 true,   "Prompt for a length of time and start an alarm clock" },
 	{ "CancelAlarm",                true,   "Cancels an alarm" },
 	{ "Action",                     true,   "Executes an action for the active window (same as in keymap)" },
@@ -238,6 +243,21 @@ int CBuiltins::Execute(const CStdString& execString)
 	else if (execute.Equals("ejecttray"))
 	{
 		CIoSupport::ToggleTray();
+	}
+	// The disc in the drive (xbox\DiscDrive.h): play a game or DVD, or open a data disc; copy it; save an image of it
+	else if (execute.Equals("playdisc"))
+	{
+		CDiscDrive::Info disc;
+		if (CDiscDrive::Detect(disc))
+			CDiscDrive::Open(disc);
+	}
+	else if (execute.Equals("copydisc"))
+	{
+		CDiscExport::CopyFiles();
+	}
+	else if (execute.Equals("savediscimage"))
+	{
+		CDiscExport::SaveImage();
 	}
 	else if (execute.Equals("dialog.close") && params.size())
 	{

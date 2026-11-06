@@ -95,6 +95,9 @@ namespace INFO
 #define SYSTEM_HAS_LOGINSCREEN      148
 
 #define SYSTEM_INTERNET_STATE       159
+#define SYSTEM_HAS_DISC             160   // A disc is in the drive (xbox\DiscDrive.h)
+#define SYSTEM_DISC_TYPE            161   // What it is: Xbox 360 game, DVD video…
+#define SYSTEM_DISC_NAME            162   // Its label, or a game's title ID
 
 #define NETWORK_IP_ADDRESS          190
 #define NETWORK_MAC_ADDRESS         191

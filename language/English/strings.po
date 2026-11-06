@@ -4450,7 +4450,23 @@ msgctxt "#13237"
 msgid "Add, change and remove them"
 msgstr ""
 
-#empty strings from id 13238 to 13248
+msgctxt "#13238"
+msgid "Disc"
+msgstr ""
+
+msgctxt "#13239"
+msgid "Its files, to this console or a share"
+msgstr ""
+
+msgctxt "#13240"
+msgid "The whole disc, as one file"
+msgstr ""
+
+msgctxt "#13241"
+msgid "Open or close the tray"
+msgstr ""
+
+#empty strings from id 13242 to 13248
 
 msgctxt "#13249"
 msgid "Search for subtitles in RARs"

@@ -40,18 +40,18 @@
 				<description>Tabs</description>
 				<posx>300</posx>
 				<posy>36</posy>
-				<width>720</width>
+				<width>728</width>
 				<height>48</height>
 				<onleft>9000</onleft>
 				<onright>9000</onright>
 				<ondown>9001</ondown>
 				<orientation>horizontal</orientation>
 				<scrolltime>200</scrolltime>
-				<itemlayout width="120" height="48">
+				<itemlayout width="104" height="48">
 					<control type="label">
-						<posx>56</posx>
+						<posx>48</posx>
 						<posy>0</posy>
-						<width>112</width>
+						<width>96</width>
 						<height>48</height>
 						<font>font13_title</font>
 						<textcolor>mr_muted</textcolor>
@@ -60,12 +60,12 @@
 						<label>$INFO[ListItem.Label]</label>
 					</control>
 				</itemlayout>
-				<focusedlayout width="120" height="48">
+				<focusedlayout width="104" height="48">
 					<!-- The accent while the tabs have the focus; down in the tiles, the tab they belong to stays marked -->
 					<control type="image">
 						<posx>0</posx>
 						<posy>0</posy>
-						<width>112</width>
+						<width>96</width>
 						<height>48</height>
 						<texture border="16">mr-round.png</texture>
 						<colordiffuse>mr_accent</colordiffuse>
@@ -74,16 +74,16 @@
 					<control type="image">
 						<posx>0</posx>
 						<posy>0</posy>
-						<width>112</width>
+						<width>96</width>
 						<height>48</height>
 						<texture border="16">mr-round.png</texture>
 						<colordiffuse>mr_border</colordiffuse>
 						<visible>!Control.HasFocus(9000)</visible>
 					</control>
 					<control type="label">
-						<posx>56</posx>
+						<posx>48</posx>
 						<posy>0</posy>
-						<width>112</width>
+						<width>96</width>
 						<height>48</height>
 						<font>font13_title</font>
 						<textcolor>white</textcolor>
@@ -93,6 +93,11 @@
 					</control>
 				</focusedlayout>
 				<content>
+					<item id="7">
+						<label>13238</label>
+						<onclick>PlayDisc</onclick>
+						<visible>System.HasDisc</visible>
+					</item>
 					<item id="1">
 						<label>31960</label>
 						<onclick>ActivateWindow(Videos)</onclick>
@@ -147,6 +152,32 @@
 				<textcolor>mr_text</textcolor>
 				<aligny>center</aligny>
 				<label>$INFO[Container(9000).ListItem.Label]</label>
+			</control>
+			<control type="list" id="9107">
+				<include>HomeTileRow</include>
+				<visible>Container(9000).HasFocus(7)</visible>
+				<content>
+					<item>
+						<label>$INFO[System.DiscType]</label>
+						<label2>$INFO[System.DiscName]</label2>
+						<onclick>PlayDisc</onclick>
+					</item>
+					<item>
+						<label>13218</label>
+						<label2>13239</label2>
+						<onclick>CopyDisc</onclick>
+					</item>
+					<item>
+						<label>13219</label>
+						<label2>13240</label2>
+						<onclick>SaveDiscImage</onclick>
+					</item>
+					<item>
+						<label>13391</label>
+						<label2>13241</label2>
+						<onclick>EjectTray</onclick>
+					</item>
+				</content>
 			</control>
 			<control type="list" id="9101">
 				<include>HomeTileRow</include>

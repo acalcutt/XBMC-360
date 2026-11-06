@@ -31,7 +31,15 @@ public:
 	static CStdString GetTypeName(DiscType type);
 	static CStdString GetName(const Info& info);
 	static void Play(const Info& info);
+	// Plays a game or a DVD; opens a data disc in Videos
+	static void Open(const Info& info);
 	static void Eject();
+
+	// Whether there's a disc in, and what it is, for the GUI to ask every frame. Kept up without spinning the drive:
+	// the tray's state is asked once a second, and the disc is only read when that changes (again every few seconds
+	// for a while, as a disc takes a moment to spin up).
+	static bool HasDisc();
+	static const Info& Current();
 };
 
 #endif //H_CDISCDRIVE

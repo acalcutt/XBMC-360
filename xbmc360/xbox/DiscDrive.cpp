@@ -2,6 +2,7 @@
 #include "Application.h"
 #include "FileItem.h"
 #include "filesystem\File.h"
+#include "guilib\GUIWindowManager.h"
 #include "guilib\LocalizeStrings.h"
 #include "utils\Log.h"
 #include "utils\Util.h"
@@ -145,7 +146,58 @@ void CDiscDrive::Play(const Info& info)
 	}
 }
 
+void CDiscDrive::Open(const Info& info)
+{
+	if (info.type == DISC_DATA)
+		g_windowManager.ActivateWindow(WINDOW_VIDEO_FILES, ROOT);
+	else
+		Play(info);
+}
+
 void CDiscDrive::Eject()
 {
 	CIoSupport::ToggleTray();
+}
+
+// What HasDisc last found, and when it last asked and looked
+static CDiscDrive::Info s_current;
+static bool s_hasDisc = false;
+static DWORD s_trayState = 0xFFFFFFFF;
+static DWORD s_trayAsked = 0;
+static DWORD s_trayChanged = 0;
+static DWORD s_discRead = 0;
+
+#define TRAY_ASK_EVERY   1000
+#define DISC_READ_EVERY  3000
+#define DISC_READ_FOR    30000
+
+bool CDiscDrive::HasDisc()
+{
+	DWORD now = GetTickCount();
+	if (s_trayState != 0xFFFFFFFF && now - s_trayAsked < TRAY_ASK_EVERY)
+		return s_hasDisc;
+	s_trayAsked = now;
+
+	DWORD tray = CIoSupport::GetTrayState();
+	if (tray != s_trayState)
+	{
+		s_trayState = tray;
+		s_trayChanged = now;
+		s_discRead = 0;
+		s_hasDisc = false;
+	}
+
+	// Closed: read the disc, again while it spins up, until it's found or it's been long enough to say there's none
+	bool closed = tray == TRAY_CLOSED_NO_MEDIA || tray == TRAY_CLOSED_MEDIA_PRESENT;
+	if (!s_hasDisc && closed && now - s_trayChanged < DISC_READ_FOR && (s_discRead == 0 || now - s_discRead >= DISC_READ_EVERY))
+	{
+		s_discRead = now;
+		s_hasDisc = Detect(s_current);
+	}
+	return s_hasDisc;
+}
+
+const CDiscDrive::Info& CDiscDrive::Current()
+{
+	return s_current;
 }

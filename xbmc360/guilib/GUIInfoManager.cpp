@@ -28,6 +28,7 @@
 #include "pictures\GUIWindowSlideShow.h"
 #include "pictures\PictureInfoTag.h"
 #include "utils\AlarmClock.h"
+#include "xbox\DiscDrive.h"
 
 using namespace std;
 using namespace MUSIC_INFO;
@@ -274,6 +275,9 @@ int CGUIInfoManager::TranslateSingleString(const CStdString &strCondition)
 		else if (strTest.Equals("system.profilethumb")) ret = SYSTEM_PROFILETHUMB;
 		else if (strTest.Equals("system.alarmpos")) ret = SYSTEM_ALARM_POS;
 		else if (strTest.Equals("system.internetstate")) ret = SYSTEM_INTERNET_STATE;
+		else if (strTest.Equals("system.hasdisc")) ret = SYSTEM_HAS_DISC;
+		else if (strTest.Equals("system.disctype")) ret = SYSTEM_DISC_TYPE;
+		else if (strTest.Equals("system.discname")) ret = SYSTEM_DISC_NAME;
 		else if (strTest.Left(16).Equals("system.hasalarm("))
 			return AddMultiInfo(GUIInfo(bNegate ? -SYSTEM_HAS_ALARM : SYSTEM_HAS_ALARM, ConditionalStringParameter(strTest.Mid(16, strTest.size() - 17)), 0));
 		else if (strTest.Left(15).Equals("system.getbool("))
@@ -1178,6 +1182,10 @@ CStdString CGUIInfoManager::GetLabel(int info, int contextWindow)
 			}
 		}
 		break;
+		case SYSTEM_DISC_TYPE:
+			return CDiscDrive::HasDisc() ? CDiscDrive::GetTypeName(CDiscDrive::Current().type) : "";
+		case SYSTEM_DISC_NAME:
+			return CDiscDrive::HasDisc() ? CDiscDrive::GetName(CDiscDrive::Current()) : "";
 		case NETWORK_SUBNET_ADDRESS:
 		{
 			return g_application.getNetwork().m_networkinfo.subnet;
@@ -1545,6 +1553,8 @@ bool CGUIInfoManager::GetBool(int condition1, int contextWindow, const CGUIListI
 		bReturn = g_weatherManager.IsFetched();
 	else if (condition == SYSTEM_LOGGEDON)
 		bReturn = !(g_windowManager.GetActiveWindow() == WINDOW_LOGIN_SCREEN);
+	else if (condition == SYSTEM_HAS_DISC)
+		bReturn = CDiscDrive::HasDisc();
 	else if (condition == SYSTEM_HAS_LOGINSCREEN)
 	{
 		// TODO: Profiles not ported - xbmc4xbox: bReturn = g_settings.UsingLoginScreen();
