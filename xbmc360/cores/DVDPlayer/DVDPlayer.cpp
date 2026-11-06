@@ -427,12 +427,18 @@ bool CDVDPlayer::CloseFile()
 	// Set the abort request so that other threads can finish up
 	m_bAbortRequest = true;
 
-	// Tell demuxer to abort
+	// Tell demuxer and input stream to abort (a stream waiting on the network gives up
+	// rather than holding the player thread). Locked so OnExit can't delete them meanwhile.
+	LockStreams();
 	if(m_pDemuxer)
 		m_pDemuxer->Abort();
 
 	if(m_pSubtitleDemuxer)
 		m_pSubtitleDemuxer->Abort();
+
+	if(m_pInputStream)
+		m_pInputStream->Abort();
+	UnlockStreams();
 
 	CLog::Log(LOGNOTICE, "DVDPlayer: waiting for threads to exit");
 
@@ -1735,6 +1741,7 @@ void CDVDPlayer::OnExit()
 {
 	g_dvdPerformanceCounter.DisableMainPerformance();
 
+	bool streamsLocked = false;
 	try
 	{
 		CLog::Log(LOGNOTICE, "CDVDPlayer::OnExit()");
@@ -1761,6 +1768,10 @@ void CDVDPlayer::OnExit()
 			CloseSubtitleStream(!m_bAbortRequest);
 		}
 #endif
+		// Not while CloseFile is telling them to abort
+		LockStreams();
+		streamsLocked = true;
+
 		// destroy the demuxer
 		if (m_pDemuxer)
 		{
@@ -1784,6 +1795,9 @@ void CDVDPlayer::OnExit()
 		}
 		m_pInputStream = NULL;
 
+		UnlockStreams();
+		streamsLocked = false;
+
 		// clean up all selection streams
 		m_SelectionStreams.Clear(STREAM_NONE, STREAM_SOURCE_NONE);
 
@@ -1795,6 +1809,8 @@ void CDVDPlayer::OnExit()
 		CLog::Log(LOGERROR, "%s - Exception thrown when trying to close down player, memory leak will follow", __FUNCTION__);
 		m_pInputStream = NULL;
 		m_pDemuxer = NULL;
+		if (streamsLocked)
+			UnlockStreams();
 	}
 
 	m_bStop = true;
