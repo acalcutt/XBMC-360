@@ -178,6 +178,21 @@
 				<onup>13</onup>
 				<onleft>60</onleft>
 				<onright>10</onright>
+				<ondown>15</ondown>
+			</control>
+			<control type="radiobutton" id="15">
+				<description>Allow saving here</description>
+				<posx>0</posx>
+				<posy>135</posy>
+				<width>190</width>
+				<height>40</height>
+				<label>13186</label>
+				<font>font12</font>
+				<texturenofocus border="5">button-nofocus.png</texturenofocus>
+				<texturefocus border="5">button-focus.png</texturefocus>
+				<onup>14</onup>
+				<onleft>60</onleft>
+				<onright>10</onright>
 				<ondown>12</ondown>
 			</control>
 		</control>

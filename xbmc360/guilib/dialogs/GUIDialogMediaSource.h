@@ -44,6 +44,7 @@ protected:
 //	SScraperInfo m_info; // TODO
 	bool m_bRunScan;
 	bool m_bNameChanged;
+	bool m_allowWrite;
 
 //	VIDEO::SScanSettings m_settings; // TODO
 };

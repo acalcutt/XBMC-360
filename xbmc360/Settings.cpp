@@ -308,6 +308,7 @@ bool CSettings::UpdateShare(const CStdString &type, const CStdString oldName, co
 			(*it).strName = share.strName;
 			(*it).strPath = share.strPath;
 			(*it).vecPaths = share.vecPaths;
+			(*it).m_allowWrite = share.m_allowWrite;
 			pShare = &(*it);
 			break;
 		}
@@ -687,6 +688,9 @@ bool CSettings::SetSources(TiXmlNode *root, const char *section, const VECSOURCE
 			if (!share.m_strThumbnailImage.IsEmpty())
 				XMLUtils::SetPath(&source, "thumbnail", share.m_strThumbnailImage);
 
+			if (share.m_allowWrite)
+				XMLUtils::SetBoolean(&source, "allowwrite", true);
+
 			sectionNode->InsertEndChild(source);
 		}
 	}
@@ -843,6 +847,8 @@ bool CSettings::GetSource(const CStdString &category, const TiXmlNode *source, C
 			if (pThumbnailNode->FirstChild())
 				share.m_strThumbnailImage = pThumbnailNode->FirstChild()->Value();
 		}
+
+		XMLUtils::GetBoolean(source, "allowwrite", share.m_allowWrite);
 
 		return true;
 	}

@@ -20,13 +20,14 @@ public:
 		SOURCE_TYPE_VPATH        = 5
 	};
 
-	CMediaSource() { m_iDriveType = SOURCE_TYPE_UNKNOWN; /*m_iLockMode = LOCK_MODE_EVERYONE;*/ m_iBadPwdCount = 0; m_iHasLock = 0; m_ignore = false; }; // TODO - Locking
+	CMediaSource() { m_iDriveType = SOURCE_TYPE_UNKNOWN; /*m_iLockMode = LOCK_MODE_EVERYONE;*/ m_iBadPwdCount = 0; m_iHasLock = 0; m_ignore = false; m_allowWrite = false; }; // TODO - Locking
 	virtual ~CMediaSource() {};
 
 	bool operator==(const CMediaSource &right) const;
 
 	void FromNameAndPaths(const CStdString &category, const CStdString &name, const std::vector<CStdString> &paths);
 	bool IsWritable() const;
+	static bool CanWriteTo(const CStdString &strPath);
 	CStdString strName; // Name of the share, can be choosen freely.
 	CStdString strStatus; // Status of the share (eg has disk etc.)
 	CStdString strPath; // Path of the share, eg. iso9660:// or F:
@@ -74,6 +75,7 @@ public:
 
 	std::vector<CStdString> vecPaths;
 	bool m_ignore; // Do not store in XML
+	bool m_allowWrite; // Saving here is allowed: set when the source is added, or for the console's drives
 };
 
 // A vector to hold CMediaSource objects.

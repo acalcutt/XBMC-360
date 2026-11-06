@@ -94,6 +94,17 @@ void CMediaManager::GetLocalDrives(VECSOURCES &localDrives, bool includeQ)
 		else
 			share.m_iDriveType = CMediaSource::SOURCE_TYPE_LOCAL;
 
+		// The hard drive and USB drives are there to keep files on
+		switch(vecMountedDrives[i]->GetDriveType())
+		{
+			case DEVICE_HARDISK0_PART1:
+			case DEVICE_USB0:
+			case DEVICE_USB1:
+			case DEVICE_USB2:
+				share.m_allowWrite = true;
+				break;
+		}
+
 		localDrives.push_back(share);
 	}
 }

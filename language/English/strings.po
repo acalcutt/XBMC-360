@@ -4250,7 +4250,11 @@ msgctxt "#13185"
 msgid "Couldn't write to %s"
 msgstr ""
 
-#empty strings from id 13186 to 13199
+msgctxt "#13186"
+msgid "Allow saving"
+msgstr ""
+
+#empty strings from id 13187 to 13199
 
 msgctxt "#13200"
 msgid "Profiles"

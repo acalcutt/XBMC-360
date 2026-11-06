@@ -10,7 +10,20 @@ using namespace XFILE;
 
 bool CMediaSource::IsWritable() const
 {
-	return false;//return CUtil::SupportsWriteFileOperations(strPath); // TODO
+	return m_allowWrite && CanWriteTo(strPath);
+}
+
+// Whether files can be saved to a path at all: a network share, or a
+// console drive other than the disc and the flash
+bool CMediaSource::CanWriteTo(const CStdString &strPath)
+{
+	if (strPath.IsEmpty())
+		return false;
+
+	if (CURL(strPath).GetProtocol().Equals("smb"))
+		return true;
+
+	return URIUtils::IsHD(strPath) && !strPath.Left(4).Equals("Dvd:") && !strPath.Left(6).Equals("Flash:");
 }
 
 void CMediaSource::FromNameAndPaths(const CStdString &category, const CStdString &name, const vector<CStdString> &paths)

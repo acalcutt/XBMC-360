@@ -22,6 +22,7 @@ using namespace XFILE;
 #define CONTROL_NAME            12
 #define CONTROL_PATH_ADD        13
 #define CONTROL_PATH_REMOVE     14
+#define CONTROL_ALLOW_WRITE     15
 #define CONTROL_OK              18
 #define CONTROL_CANCEL          19
 #define CONTROL_CONTENT         20
@@ -30,6 +31,7 @@ CGUIDialogMediaSource::CGUIDialogMediaSource(void)
 	: CGUIDialog(WINDOW_DIALOG_MEDIA_SOURCE, "DialogMediaSource.xml")
 {
 	m_paths =  new CFileItemList;
+	m_allowWrite = false;
 }
 
 CGUIDialogMediaSource::~CGUIDialogMediaSource()
@@ -63,6 +65,11 @@ bool CGUIDialogMediaSource::OnMessage(CGUIMessage& message)
 				OnPathAdd();
 			else if (iControl == CONTROL_PATH_REMOVE)
 				OnPathRemove(GetSelectedItem());
+			else if (iControl == CONTROL_ALLOW_WRITE)
+			{
+				m_allowWrite = !m_allowWrite;
+				UpdateButtons();
+			}
 			else if (iControl == CONTROL_NAME)
 			{
 				OnEditChanged(iControl, m_name);
@@ -143,7 +150,8 @@ bool CGUIDialogMediaSource::ShowAndAddMediaSource(const CStdString &type)
 		}
 		
 		share.FromNameAndPaths(type, strName, dialog->GetPaths());
-		
+		share.m_allowWrite = dialog->m_allowWrite;
+
 		if (dialog->m_paths->Size() > 0)
 		{
 			share.m_strThumbnailImage = dialog->m_paths->Get(0)->GetThumbnailImage();
@@ -212,6 +220,7 @@ bool CGUIDialogMediaSource::ShowAndEditMediaSource(const CStdString &type, const
 
 		CMediaSource newShare;
 		newShare.FromNameAndPaths(type, strName, dialog->GetPaths());
+		newShare.m_allowWrite = dialog->m_allowWrite;
 		g_settings.UpdateShare(type, strOldName, newShare);
 	}
 	dialog->m_paths->Clear();
@@ -417,6 +426,12 @@ void CGUIDialogMediaSource::UpdateButtons()
 	OnMessage(msg);
 	SendMessage(GUI_MSG_ITEM_SELECT, CONTROL_PATH, currentItem);
 
+	// Saving here can only be allowed where files can be written
+	CMediaSource share;
+	share.FromNameAndPaths(m_type, m_name, GetPaths());
+	CONTROL_ENABLE_ON_CONDITION(CONTROL_ALLOW_WRITE, CMediaSource::CanWriteTo(share.strPath));
+	SET_CONTROL_SELECTED(GetID(), CONTROL_ALLOW_WRITE, m_allowWrite && CMediaSource::CanWriteTo(share.strPath));
+
 	if (m_type.Equals("video"))
 	{
 		SET_CONTROL_VISIBLE(CONTROL_CONTENT);
@@ -445,6 +460,7 @@ void CGUIDialogMediaSource::SetShare(const CMediaSource &share)
 	}
 	
 	m_name = share.strName;
+	m_allowWrite = share.m_allowWrite;
 	UpdateButtons();
 }
 
