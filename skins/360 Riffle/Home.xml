@@ -173,11 +173,6 @@
 						<label2>31969</label2>
 						<onclick>ActivateWindow(Programs)</onclick>
 					</item>
-					<item>
-						<label>31970</label>
-						<label2>31971</label2>
-						<onclick>ActivateWindow(Scripts)</onclick>
-					</item>
 				</content>
 			</control>
 			<control type="list" id="9103">
