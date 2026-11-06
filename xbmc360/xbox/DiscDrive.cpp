@@ -4,9 +4,11 @@
 #include "filesystem\File.h"
 #include "guilib\GUIWindowManager.h"
 #include "guilib\LocalizeStrings.h"
+#include "guilib\dialogs\GUIDialogSelect.h"
 #include "guilib\dialogs\GUIDialogYesNo.h"
 #include "utils\Log.h"
 #include "utils\Util.h"
+#include "xbox\GameCopy.h"
 #include "xbox\IoSupport.h"
 #include "xbox\XBKernalExports.h"
 
@@ -136,6 +138,51 @@ CStdString CDiscDrive::GetName(const Info& info)
 
 void CDiscDrive::Play(const Info& info)
 {
+	if (info.type == DISC_XBOX360_GAME)
+	{
+		// Peer Pressure won't start a game from the disc itself, but its files run from the hard drive. A copy made
+		// before (from the disc, or from a share's copy of it) starts at once
+		if (CGameCopy::HasDiscCopy(info.dwTitleId, info.iDiscNumber))
+		{
+			CGameCopy::PlayDisc(GetName(info), info.dwTitleId, info.iDiscNumber);
+			return;
+		}
+
+		CGUIDialogSelect* select = (CGUIDialogSelect*)g_windowManager.GetWindow(WINDOW_DIALOG_SELECT);
+		if (!select)
+			return;
+
+		// The copy says how big it is as it goes: the disc's size isn't its game's, and adding up its files takes a
+		// while on a disc
+		select->Reset();
+		select->SetHeading(GetName(info));
+		select->Add(g_localizeStrings.Get(33590));
+		select->Add(g_localizeStrings.Get(33591));
+		select->Add(g_localizeStrings.Get(33592));
+		select->DoModal();
+
+		switch (select->GetSelectedLabel())
+		{
+			case 0: // Copied to the hard drive and started there, kept for next time
+				CGameCopy::PlayDisc(GetName(info), info.dwTitleId, info.iDiscNumber);
+				return;
+
+			case 1: // Microsoft's dashboard, which starts discs itself
+				CLog::Log(LOGNOTICE, "Opening the Xbox dashboard, to play the disc from there");
+				g_application.Stop();
+				XLaunchNewImage(XLAUNCH_KEYWORD_DASH, 0);
+				CLog::Log(LOGERROR, "%s - couldn't open the Xbox dashboard", __FUNCTION__);
+				XLaunchNewImage(GetLoadedImageName(), 0);
+				return;
+
+			case 2: // From the disc, as other softmods allow
+				break;
+
+			default:
+				return;
+		}
+	}
+
 	if (info.type == DISC_XBOX360_GAME || info.type == DISC_XBOX_GAME)
 	{
 		// The game's own executable, by the drive's device name. Not the

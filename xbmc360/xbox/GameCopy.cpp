@@ -561,12 +561,64 @@ void CGameCopy::Play(const CFileItem& item)
 	CStdString strXex = item.GetPath();
 	CStdString strFolder;
 	URIUtils::GetDirectory(strXex, strFolder);
-	CStdString strCopy = CopyFolder(strXex);
 
 	CStdString strName = item.GetLabel();
 	if (URIUtils::GetExtension(strName).Equals(".xex"))
 		URIUtils::RemoveExtension(strName);
 
+	CopyAndStart(strFolder, URIUtils::GetFileName(strXex), CopyFolder(strXex), strName);
+}
+
+// A copy of this disc of the game with this title ID: its own (<title ID>~disc<n>), or for a game's first disc a
+// share's copy of a folder named for the title ID, as Copy disc to a folder names a disc without a label (other discs
+// of a game get "(Disc 2 of 2)" after it). The copies' folder, or empty
+CStdString CGameCopy::FindTitle(DWORD dwTitleId, int iDisc)
+{
+	CStdString strId, strDisc;
+	strId.Format("%08X", dwTitleId);
+	strDisc.Format("%s~disc%d", strId.c_str(), iDisc > 0 ? iDisc : 1);
+
+	CStdString strCopies = CopiesFolder();
+	WIN32_FIND_DATA find;
+	HANDLE hFind = FindFirstFile((strCopies + strId + "*").c_str(), &find);
+	if (hFind == INVALID_HANDLE_VALUE)
+		return "";
+
+	CStdString strFound;
+	do
+	{
+		CStdString strName = find.cFileName;
+		if (!(find.dwFileAttributes & FILE_ATTRIBUTE_DIRECTORY))
+			continue;
+
+		bool bShare = strName.Equals(strId) || (strName.Left(9).Equals(strId + "~") && !strName.Mid(9, 4).Equals("disc"));
+		if (strName.Equals(strDisc) || (bShare && iDisc <= 1))
+			strFound = strCopies + strName + "\\";
+	}
+	while (strFound.IsEmpty() && FindNextFile(hFind, &find));
+
+	FindClose(hFind);
+	return strFound;
+}
+
+void CGameCopy::PlayDisc(const CStdString& strName, DWORD dwTitleId, int iDisc)
+{
+	CStdString strCopy = FindTitle(dwTitleId, iDisc);
+	if (strCopy.IsEmpty())
+		strCopy.Format("%s%08X~disc%d\\", CopiesFolder().c_str(), dwTitleId, iDisc > 0 ? iDisc : 1);
+
+	CopyAndStart("Dvd:\\", "default.xex", strCopy, strName);
+}
+
+bool CGameCopy::HasDiscCopy(DWORD dwTitleId, int iDisc)
+{
+	CStdString strCopy = FindTitle(dwTitleId, iDisc);
+	return !strCopy.IsEmpty() && GetFileAttributes((strCopy + "default.xex").c_str()) != 0xFFFFFFFF;
+}
+
+// Copies what strCopy doesn't have of strFolder, the game's folder, and starts strXex from the copy
+void CGameCopy::CopyAndStart(const CStdString& strFolder, const CStdString& strXex, const CStdString& strCopy, const CStdString& strName)
+{
 	CGameCopy job;
 	job.m_dlgProgress = (CGUIDialogProgress*)g_windowManager.GetWindow(WINDOW_DIALOG_PROGRESS);
 	job.m_dlgProgress->SetHeading(33563);
@@ -650,7 +702,7 @@ void CGameCopy::Play(const CFileItem& item)
 	job.m_dlgProgress->Close();
 	MarkPlayed(strCopy);
 
-	CStdString strRun = CEmulators::ConsolePath(strCopy + URIUtils::GetFileName(strXex));
+	CStdString strRun = CEmulators::ConsolePath(strCopy + strXex);
 	CLog::Log(LOGNOTICE, "Starting %s from its copy on the console, %s", strName.c_str(), strRun.c_str());
 	CXEXUtils::RunXex(strRun);
 }

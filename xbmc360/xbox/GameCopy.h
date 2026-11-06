@@ -21,6 +21,11 @@ class CGameCopy : public IFileCallback
 public:
 	// Copies the XEX's folder to the console, or what's new in it, and starts the copy
 	static void Play(const CFileItem& item);
+	// The same for the game on the disc in the drive, which this console may not start from the disc itself (Peer
+	// Pressure doesn't): its copy is <title ID>~disc<n>, or a copy of it from a share whose folder was named for the
+	// title ID (as Copy disc to a folder names it)
+	static void PlayDisc(const CStdString& strName, DWORD dwTitleId, int iDisc);
+	static bool HasDiscCopy(DWORD dwTitleId, int iDisc);
 	// Whether the XEX's folder has a copy on the console (its game, or only its saves)
 	static bool HasCopy(const CStdString& strXex);
 	// What can be done with the XEX's copy: free its game's space, or remove it with its saves
@@ -52,6 +57,8 @@ private:
 
 	static CStdString CopyFolder(const CStdString& strXex);
 	static CStdString CopiesFolder();
+	static CStdString FindTitle(DWORD dwTitleId, int iDisc);
+	static void CopyAndStart(const CStdString& strFolder, const CStdString& strXex, const CStdString& strCopy, const CStdString& strName);
 	static void GetCopies(std::vector<Copy>& copies);
 	static bool ReadCopy(const CStdString& strFolder, Copy& copy);
 	static void FreeGameData(const CStdString& strFolder);
