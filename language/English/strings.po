@@ -4262,7 +4262,49 @@ msgctxt "#13188"
 msgid "User name: name, DOMAIN\\name or name@domain"
 msgstr ""
 
-#empty strings from id 13189 to 13199
+msgctxt "#13189"
+msgid "Sources"
+msgstr ""
+
+msgctxt "#13190"
+msgid "Add a source"
+msgstr ""
+
+msgctxt "#13191"
+msgid "A MediaRiffle or Jellyfin server, a Windows share, or a folder on this console"
+msgstr ""
+
+msgctxt "#13192"
+msgid "Windows share"
+msgstr ""
+
+msgctxt "#13193"
+msgid "A folder on this console"
+msgstr ""
+
+msgctxt "#13194"
+msgid "Couldn't open that share."
+msgstr ""
+
+msgctxt "#13195"
+msgid "Check its server, shared folder, user name and password. Try again?"
+msgstr ""
+
+msgctxt "#13196"
+msgid "Allow saving here?"
+msgstr ""
+
+msgctxt "#13197"
+msgid "Disc copies and diagnostics can then be saved to it."
+msgstr ""
+
+msgctxt "#13198"
+msgid "What's on it?"
+msgstr ""
+
+msgctxt "#13199"
+msgid "Name for the source"
+msgstr ""
 
 msgctxt "#13200"
 msgid "Profiles"
@@ -4380,7 +4422,35 @@ msgctxt "#13230"
 msgid "There's already a file with that name. Replace it?"
 msgstr ""
 
-#empty strings from id 13231 to 13248
+msgctxt "#13231"
+msgid "Open"
+msgstr ""
+
+msgctxt "#13232"
+msgid "Remove %s?"
+msgstr ""
+
+msgctxt "#13233"
+msgid "What's on it stays where it is."
+msgstr ""
+
+msgctxt "#13234"
+msgid "Where is it?"
+msgstr ""
+
+msgctxt "#13235"
+msgid "saving allowed"
+msgstr ""
+
+msgctxt "#13236"
+msgid "Where your videos, games, music and pictures come from. Press A on one to open, change or remove it."
+msgstr ""
+
+msgctxt "#13237"
+msgid "Add, change and remove them"
+msgstr ""
+
+#empty strings from id 13238 to 13248
 
 msgctxt "#13249"
 msgid "Search for subtitles in RARs"

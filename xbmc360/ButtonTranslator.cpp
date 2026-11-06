@@ -81,6 +81,7 @@ static const ActionMapping windows[] =
         {"video"                    , WINDOW_VIDEOS},
         {"videos"                   , WINDOW_VIDEOS},
         {"systeminfo"               , WINDOW_SYSTEM_INFORMATION},
+        {"sources"                  , WINDOW_SOURCES},
         {"screencalibration"        , WINDOW_SCREEN_CALIBRATION},
         {"guicalibration"           , WINDOW_SCREEN_CALIBRATION},
         {"picturessettings"         , WINDOW_SETTINGS_MYPICTURES},

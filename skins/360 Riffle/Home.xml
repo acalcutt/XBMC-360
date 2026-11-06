@@ -218,6 +218,11 @@
 						<onclick>ActivateWindow(Settings)</onclick>
 					</item>
 					<item>
+						<label>13189</label>
+						<label2>13237</label2>
+						<onclick>ActivateWindow(Sources)</onclick>
+					</item>
+					<item>
 						<label>31975</label>
 						<label2>31976</label2>
 						<onclick>ActivateWindow(SystemInfo)</onclick>

@@ -55,6 +55,7 @@
 #include "guilib\windows\GUIWindowSettingsCategory.h"
 #include "guilib\windows\GUIWindowScreensaver.h"
 #include "guilib\windows\GUIWindowSystemInfo.h"
+#include "guilib\windows\GUIWindowSources.h"
 #include "guilib\windows\GUIWindowFileManager.h"
 #include "guilib\windows\GUIWindowOSD.h"
 #include "guilib\dialogs\GUIDialogVideoSettings.h"
@@ -264,6 +265,7 @@ bool CApplication::Initialize()
 	g_windowManager.Add(new CGUIWindowVideoFiles);
 	g_windowManager.Add(new CGUIWindowSettings);
 	g_windowManager.Add(new CGUIWindowSystemInfo);
+	g_windowManager.Add(new CGUIWindowSources);				// window id = 10050
 	g_windowManager.Add(new CGUIWindowSettingsCategory);
 	g_windowManager.Add(new CGUIWindowScripts);
 	g_windowManager.Add(new CGUIWindowMusicSongs);
@@ -2635,6 +2637,7 @@ void CApplication::Cleanup()
 		g_windowManager.Delete(WINDOW_SETTINGS_MYPICTURES); // All the settings categories
 		g_windowManager.Delete(WINDOW_SCREENSAVER);
 		g_windowManager.Delete(WINDOW_SYSTEM_INFORMATION);
+		g_windowManager.Delete(WINDOW_SOURCES);
 		g_windowManager.Delete(WINDOW_WEATHER);
 		g_windowManager.Delete(WINDOW_VISUALISATION);
 		g_windowManager.Delete(WINDOW_FILES);

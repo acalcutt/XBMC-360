@@ -488,6 +488,9 @@
     <ClInclude Include="ApplicationMessenger.h">
       <Filter>Header Files</Filter>
     </ClInclude>
+    <ClInclude Include="guilib\windows\GUIWindowSources.h">
+      <Filter>Header Files\guilib\windows</Filter>
+    </ClInclude>
     <ClInclude Include="guilib\windows\GUIWindowSystemInfo.h">
       <Filter>Header Files\guilib\windows</Filter>
     </ClInclude>
@@ -1605,6 +1608,9 @@
     </ClCompile>
     <ClCompile Include="ApplicationMessenger.cpp">
       <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="guilib\windows\GUIWindowSources.cpp">
+      <Filter>Source Files\guilib\windows</Filter>
     </ClCompile>
     <ClCompile Include="guilib\windows\GUIWindowSystemInfo.cpp">
       <Filter>Source Files\guilib\windows</Filter>

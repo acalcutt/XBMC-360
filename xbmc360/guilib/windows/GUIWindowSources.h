@@ -1,0 +1,37 @@
+#ifndef H_GUILIB_CGUIWINDOWSOURCES
+#define H_GUILIB_CGUIWINDOWSOURCES
+
+#include "guilib\GUIWindow.h"
+#include "MediaSource.h"
+
+class CFileItemList;
+
+// Settings > Sources: every source in one place, with what's on it and where it is; adding, changing and removing them.
+// Adding asks where the media is (a MediaRiffle or Jellyfin server, a Windows share or a folder on the console) and
+// only what that needs: a server's address, after which the console links or signs in there and then; a share's
+// server, folder and sign-in, checked by opening it; or a folder to pick. A share or folder is then asked what's on it,
+// a name, and whether things can be saved to it.
+class CGUIWindowSources : public CGUIWindow
+{
+public:
+	CGUIWindowSources(void);
+	virtual ~CGUIWindowSources(void);
+	virtual bool OnMessage(CGUIMessage& message);
+
+	// The window a kind of source is opened in, and that kind's name ("video": Videos)
+	static int WindowFor(const CStdString& type);
+	static CStdString TypeName(const CStdString& type);
+
+private:
+	void Refresh();
+	void OnAdd();
+	void OnSource(int item);
+	bool AddServer(bool mediaRiffle);
+	bool ChooseType(bool allowGames, CStdString& type);
+	void AddSource(const CStdString& type, const CStdString& name, const CStdString& path, bool allowWrite);
+	CMediaSource* Find(const CStdString& type, const CStdString& name, const CStdString& path);
+
+	CFileItemList* m_items;
+};
+
+#endif //H_GUILIB_CGUIWINDOWSOURCES
