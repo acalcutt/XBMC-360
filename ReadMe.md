@@ -49,6 +49,9 @@ Dreamcast and Saturn games are listed too, but no emulator for them runs on the 
 To install a build, copy `xbmc360\Release\xbmc360.xex` to the console as `default.xex` (in
 `Hdd1:\PeerPressure\360riffle` with the Peer Pressure softmod), with the `language`, `media`, `scripts`, `system` and
 `web` folders and `skins\360 Riffle` beside it. Leave out `settings.xml`, which holds the console's own settings.
+Once it's installed, newer builds can go in from **System info > Update from USB**, from the same bundle on a USB
+drive (in `BadUpdatePayload\SoftmodExtras\360riffle`, where it's staged for Peer Pressure, or a `360riffle` folder at
+the top of the drive), without going through the softmod's installer.
 
 ## From XBMC-360
 
