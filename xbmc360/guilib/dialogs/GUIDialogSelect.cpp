@@ -12,6 +12,7 @@ CGUIDialogSelect::CGUIDialogSelect(void)
 	: CGUIDialogBoxBase(WINDOW_DIALOG_SELECT, "DialogSelect.xml")
 {
 	m_bButtonEnabled = false;
+	m_bMultiSelection = false;
 	m_vecListInternal = new CFileItemList;
 	m_selectedItem = new CFileItem;
 	m_vecList = m_vecListInternal;
@@ -29,6 +30,14 @@ bool CGUIDialogSelect::OnMessage(CGUIMessage& message)
 	{
 		case GUI_MSG_WINDOW_DEINIT:
 		{
+			// The ticked items, kept for after: closing empties the list
+			m_selectedItems.clear();
+			for (int i = 0; m_bMultiSelection && i < m_vecList->Size(); i++)
+			{
+				if (m_vecList->Get(i)->IsSelected())
+					m_selectedItems.push_back(i);
+			}
+
 			CGUIDialog::OnMessage(message);
 			Reset();
 			return true;
@@ -37,6 +46,7 @@ bool CGUIDialogSelect::OnMessage(CGUIMessage& message)
 		case GUI_MSG_WINDOW_INIT:
 		{
 			m_bButtonPressed = false;
+			m_selectedItems.clear();
 			CGUIDialog::OnMessage(message);
 			m_iSelected = -1;
 			CGUIMessage msg(GUI_MSG_LABEL_BIND, GetID(), CONTROL_LIST, 0, 0, m_vecList);
@@ -46,7 +56,14 @@ bool CGUIDialogSelect::OnMessage(CGUIMessage& message)
 			items.Format("%i %s", m_vecList->Size(), g_localizeStrings.Get(127).c_str());
 			SET_CONTROL_LABEL(CONTROL_NUMBEROFFILES, items);
 
-			if (m_bButtonEnabled)
+			if (m_bMultiSelection)
+			{
+				// OK, for when the ticks are right
+				SET_CONTROL_LABEL(CONTROL_BUTTON, 186);
+				CGUIMessage msg2(GUI_MSG_VISIBLE, GetID(), CONTROL_BUTTON);
+				g_windowManager.SendMessage(msg2);
+			}
+			else if (m_bButtonEnabled)
 			{
 				CGUIMessage msg2(GUI_MSG_VISIBLE, GetID(), CONTROL_BUTTON);
 				g_windowManager.SendMessage(msg2);
@@ -73,6 +90,15 @@ bool CGUIDialogSelect::OnMessage(CGUIMessage& message)
 					g_windowManager.SendMessage(msg);
 					m_iSelected = msg.GetParam1();
 
+					if (m_bMultiSelection)
+					{
+						// Ticked or not, and the dialog stays for more
+						if (m_iSelected >= 0 && m_iSelected < (int)m_vecList->Size())
+							m_vecList->Get(m_iSelected)->Select(!m_vecList->Get(m_iSelected)->IsSelected());
+						m_iSelected = -1;
+						return true;
+					}
+
 					if(m_iSelected >= 0 && m_iSelected < (int)m_vecList->Size())
 					{
 						*m_selectedItem = *m_vecList->Get(m_iSelected);
@@ -98,6 +124,7 @@ bool CGUIDialogSelect::OnMessage(CGUIMessage& message)
 void CGUIDialogSelect::Reset()
 {
 	m_bButtonEnabled = false;
+	m_bMultiSelection = false;
 	m_vecListInternal->Clear();
 	m_vecList = m_vecListInternal;
 }
@@ -169,4 +196,20 @@ void CGUIDialogSelect::SetSelected(int iSelected)
 {
 	if (iSelected < 0 || iSelected >= (int)m_vecList->Size()) return;
 	m_iSelected = iSelected;
+}
+
+void CGUIDialogSelect::SetMultiSelection(bool bMultiSelection)
+{
+	m_bMultiSelection = bMultiSelection;
+}
+
+void CGUIDialogSelect::SelectItem(int iItem, bool bSelected /* = true */)
+{
+	if (iItem >= 0 && iItem < (int)m_vecList->Size())
+		m_vecList->Get(iItem)->Select(bSelected);
+}
+
+const std::vector<int>& CGUIDialogSelect::GetSelectedItems() const
+{
+	return m_selectedItems;
 }
