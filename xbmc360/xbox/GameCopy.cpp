@@ -291,6 +291,68 @@ bool CGameCopy::HasCopy(const CStdString& strXex)
 	return GetFileAttributes(strFolder.c_str()) != 0xFFFFFFFF;
 }
 
+bool CGameCopy::IsCopy(const CStdString& strPath)
+{
+	CStdString strCopies = CopiesFolder();
+	return strPath.size() > strCopies.size() && strPath.Left(strCopies.size()).Equals(strCopies);
+}
+
+// The copy a path in the copies' folder is in, with a backslash at the end
+CStdString CGameCopy::CopyOf(const CStdString& strPath)
+{
+	int iSlash = strPath.Find('\\', CopiesFolder().size());
+	return iSlash > 0 ? strPath.Left(iSlash + 1) : strPath + "\\";
+}
+
+void CGameCopy::GetPlayable(CFileItemList& items)
+{
+	CStdString strCopies = CopiesFolder();
+	WIN32_FIND_DATA find;
+	HANDLE hFind = FindFirstFile((strCopies + "*").c_str(), &find);
+	if (hFind == INVALID_HANDLE_VALUE)
+		return;
+
+	do
+	{
+		if (IsDots(find.cFileName) || !(find.dwFileAttributes & FILE_ATTRIBUTE_DIRECTORY))
+			continue;
+
+		CStdString strFolder = strCopies + find.cFileName + "\\";
+		CStdString strName, strFrom, strXex;
+		ReadList(strFolder, strName, strFrom, strXex, NULL);
+		if (!IsPlayable(strFolder, strXex))
+			continue;
+
+		CFileItemPtr item(new CFileItem(strName));
+		item->SetPath(strFolder + strXex);
+		item->SetLabel2("Xbox 360");
+		item->SetLabelPreformated(true);
+		item->SetIconImage("DefaultProgram.png");
+
+		// When it was last played: its list's time
+		__int64 iListSize;
+		unsigned __int64 iPlayed;
+		if (GetFileInfo(strFolder + LIST_FILE, iListSize, iPlayed))
+		{
+			FILETIME played;
+			played.dwLowDateTime = (DWORD)iPlayed;
+			played.dwHighDateTime = (DWORD)(iPlayed >> 32);
+			item->m_dateTime = played;
+		}
+		items.Add(item);
+	}
+	while (FindNextFile(hFind, &find));
+	FindClose(hFind);
+}
+
+void CGameCopy::PlayCopy(const CStdString& strXex)
+{
+	CStdString strCopy = CopyOf(strXex);
+	CStdString strName, strFrom, strListed;
+	ReadList(strCopy, strName, strFrom, strListed, NULL);
+	StartCopy(strCopy, strXex.Mid(strCopy.size()), strName);
+}
+
 // A copy as the list shows it: its game's files that are still as they came (the rest is its saves), and when it
 // was played
 bool CGameCopy::ReadCopy(const CStdString& strFolder, Copy& copy)
@@ -431,7 +493,8 @@ void CGameCopy::ShowMessage(int iLine, const CStdString& strDetail)
 	}
 }
 
-// What to do with a copy: free its game's space and keep its saves, or remove it, saves and all. True when it changed
+// What to do with a copy: play it as it is, free its game's space and keep its saves, or remove it, saves and all. True
+// when it changed
 bool CGameCopy::ManageFolder(const Copy& copy)
 {
 	CGUIDialogSelect* select = (CGUIDialogSelect*)g_windowManager.GetWindow(WINDOW_DIALOG_SELECT);
@@ -443,8 +506,18 @@ bool CGameCopy::ManageFolder(const Copy& copy)
 
 	select->Reset();
 	select->SetHeading(copy.strName);
+
+	int iOptions = 0, iPlay = -1, iFree = -1;
+	if (copy.bPlayable)
+	{
+		select->Add(g_localizeStrings.Get(208));
+		iPlay = iOptions++;
+	}
 	if (copy.iGameBytes > 0)
+	{
 		select->Add(strFree);
+		iFree = iOptions++;
+	}
 	select->Add(g_localizeStrings.Get(33584));
 	select->DoModal();
 
@@ -452,7 +525,13 @@ bool CGameCopy::ManageFolder(const Copy& copy)
 	if (iChosen < 0)
 		return false;
 
-	if (copy.iGameBytes > 0 && iChosen == 0)
+	if (iChosen == iPlay)
+	{
+		StartCopy(copy.strFolder, copy.strXex, copy.strName);
+		return false;
+	}
+
+	if (iChosen == iFree)
 	{
 		CLog::Log(LOGNOTICE, "Freeing the game files of the console's copy of %s, %s", copy.strName.c_str(), copy.strFolder.c_str());
 		FreeGameData(copy.strFolder);
@@ -465,11 +544,10 @@ bool CGameCopy::ManageFolder(const Copy& copy)
 	return true;
 }
 
-void CGameCopy::ManageCopy(const CStdString& strXex)
+bool CGameCopy::ManageCopy(const CStdString& strXex)
 {
 	Copy copy;
-	if (ReadCopy(CopyFolder(strXex), copy))
-		ManageFolder(copy);
+	return ReadCopy(IsCopy(strXex) ? CopyOf(strXex) : CopyFolder(strXex), copy) && ManageFolder(copy);
 }
 
 // The emulators' games copied to the console: the files in the other folders beside the copies' (one per system).

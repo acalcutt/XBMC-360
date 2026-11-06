@@ -641,6 +641,9 @@
     <ClInclude Include="filesystem\FlatDirectory.h">
       <Filter>Header Files\filesystem</Filter>
     </ClInclude>
+    <ClInclude Include="filesystem\LocalGamesDirectory.h">
+      <Filter>Header Files\filesystem</Filter>
+    </ClInclude>
     <ClInclude Include="filesystem\CurlFile.h">
       <Filter>Header Files\filesystem</Filter>
     </ClInclude>
@@ -1769,6 +1772,9 @@
       <Filter>Source Files\filesystem</Filter>
     </ClCompile>
     <ClCompile Include="filesystem\FlatDirectory.cpp">
+      <Filter>Source Files\filesystem</Filter>
+    </ClCompile>
+    <ClCompile Include="filesystem\LocalGamesDirectory.cpp">
       <Filter>Source Files\filesystem</Filter>
     </ClCompile>
     <ClCompile Include="filesystem\CurlFile.cpp">

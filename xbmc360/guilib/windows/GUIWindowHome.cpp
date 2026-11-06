@@ -2,6 +2,7 @@
 #include "FileItem.h"
 #include "Settings.h"
 #include "URL.h"
+#include "filesystem\LocalGamesDirectory.h"
 #include "guilib\GUIWindowManager.h"
 #include "guilib\Key.h"
 #include "guilib\LocalizeStrings.h"
@@ -105,6 +106,19 @@ void CGUIWindowHome::FillSourceRows()
 			add->SetLabel2(g_localizeStrings.Get(13189));
 			add->SetProperty("addsource", true);
 			m_rows[i]->Add(add);
+		}
+
+		// Games copied to the console from shares and discs: a tile of their own while there are any
+		int iGames = strcmp(ROWS[i].type, "programs") == 0 ? XFILE::CLocalGamesDirectory::Count() : 0;
+		if (iGames > 0)
+		{
+			CStdString strGames;
+			strGames.Format(g_localizeStrings.Get(iGames == 1 ? 33593 : 33594).c_str(), iGames);
+
+			CFileItemPtr local(new CFileItem(g_localizeStrings.Get(13242)));
+			local->SetPath(XFILE::CLocalGamesDirectory::PATH);
+			local->SetLabel2(strGames);
+			m_rows[i]->Add(local);
 		}
 
 		CGUIMessage bind(GUI_MSG_LABEL_BIND, GetID(), ROWS[i].list, 0, 0, m_rows[i]);

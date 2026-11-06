@@ -5,6 +5,7 @@
 #include <vector>
 
 class CFileItem;
+class CFileItemList;
 class CGUIDialogProgress;
 
 // Xbox 360 games and apps on a network share. The console only starts a game from its own drives, and 360 Riffle's
@@ -27,10 +28,17 @@ public:
 	// title ID (as Copy disc to a folder names it)
 	static void PlayDisc(const CStdString& strName, DWORD dwTitleId, int iDisc);
 	static bool HasDiscCopy(DWORD dwTitleId, int iDisc);
+	// The copies that start as they are, without their share or disc, by their names: On this console's games
+	static void GetPlayable(CFileItemList& items);
+	// Whether a path is in a copy on the console
+	static bool IsCopy(const CStdString& strPath);
+	// Starts an XEX in a copy on the console, as the copy is
+	static void PlayCopy(const CStdString& strXex);
 	// Whether the XEX's folder has a copy on the console (its game, or only its saves)
 	static bool HasCopy(const CStdString& strXex);
-	// What can be done with the XEX's copy: free its game's space, or remove it with its saves
-	static void ManageCopy(const CStdString& strXex);
+	// What can be done with the XEX's copy, or the copy it's in: play it, free its game's space, or remove it with its
+	// saves. True when it changed
+	static bool ManageCopy(const CStdString& strXex);
 	// System info > Games on the console: every copy with its size, the emulators' games too, to free or remove
 	static void ShowCopies();
 
@@ -60,6 +68,7 @@ private:
 
 	static CStdString CopyFolder(const CStdString& strXex);
 	static CStdString CopiesFolder();
+	static CStdString CopyOf(const CStdString& strPath);
 	static CStdString FindTitle(DWORD dwTitleId, int iDisc);
 	static void CopyAndStart(const CStdString& strFolder, const CStdString& strXex, const CStdString& strCopy, const CStdString& strName);
 	static void GetCopies(std::vector<Copy>& copies);

@@ -400,6 +400,7 @@
     <ClInclude Include="filesystem\SpecialProtocolDirectory.h" />
     <ClInclude Include="filesystem\FileSMB.h" />
     <ClInclude Include="filesystem\FlatDirectory.h" />
+    <ClInclude Include="filesystem\LocalGamesDirectory.h" />
     <ClInclude Include="filesystem\CurlFile.h" />
     <ClInclude Include="filesystem\CurlSessionPool.h" />
     <ClInclude Include="filesystem\UPnPFile.h" />
@@ -768,6 +769,7 @@
     <ClCompile Include="filesystem\SpecialProtocolDirectory.cpp" />
     <ClCompile Include="filesystem\FileSMB.cpp" />
     <ClCompile Include="filesystem\FlatDirectory.cpp" />
+    <ClCompile Include="filesystem\LocalGamesDirectory.cpp" />
     <ClCompile Include="filesystem\CurlFile.cpp" />
     <ClCompile Include="filesystem\CurlSessionPool.cpp" />
     <ClCompile Include="filesystem\UPnPFile.cpp" />

@@ -9247,7 +9247,15 @@ msgctxt "#33592"
 msgid "Start it from the disc"
 msgstr ""
 
-#empty strings from id 33593 to 34004
+msgctxt "#33593"
+msgid "1 game"
+msgstr ""
+
+msgctxt "#33594"
+msgid "%d games"
+msgstr ""
+
+#empty strings from id 33595 to 34004
 
 msgctxt "#34005"
 msgid "Flac"

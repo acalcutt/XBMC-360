@@ -6,6 +6,7 @@
 #include "guilib\GUIWindowManager.h"
 #include "utils\URIUtils.h"
 #include "filesystem\File.h"
+#include "filesystem\LocalGamesDirectory.h"
 #include "utils\TimeUtils.h"
 #include "xbox\Emulators.h"
 #include "xbox\GameCopy.h"
@@ -113,6 +114,10 @@ bool CGUIWindowPrograms::GetDirectory(const CStdString &strDirectory, CFileItemL
 		items.SetLabel("");
 		return true;
 	}
+
+	// On this console's games come named, and are on the console
+	if (CLocalGamesDirectory::IsLocalGames(strDirectory))
+		return true;
 /*
 	if (strDirectory.Equals("plugin://programs/")) // TODO
 	{
@@ -294,8 +299,9 @@ void CGUIWindowPrograms::GetContextButtons(int itemNumber, CContextButtons &butt
 		}
 		else
 		{
-			// A game on a share that's been copied to the console: its copy can be freed or removed
-			if (item->IsXEX() && !URIUtils::IsHD(item->GetPath()) && CGameCopy::HasCopy(item->GetPath()))
+			// A game copied to the console (On this console's), or one on a share that's been: its copy can be freed or
+			// removed
+			if (item->IsXEX() && (CGameCopy::IsCopy(item->GetPath()) || (!URIUtils::IsHD(item->GetPath()) && CGameCopy::HasCopy(item->GetPath()))))
 				buttons.Add(CONTEXT_BUTTON_DELETE, 33587);
 #if 0 // TODO: OG Xbox stuff to be modded to suit 360
 			if (item->IsXBE() || item->IsShortCut())
@@ -429,9 +435,9 @@ bool CGUIWindowPrograms::OnContextButton(int itemNumber, CONTEXT_BUTTON button)
 		OnClick(itemNumber);
 		return true;
 
-		case CONTEXT_BUTTON_DELETE: // The console's copy of a game on a share
-		if (item)
-			CGameCopy::ManageCopy(item->GetPath());
+		case CONTEXT_BUTTON_DELETE: // The console's copy of a game
+		if (item && CGameCopy::ManageCopy(item->GetPath()))
+			Update(m_vecItems->GetPath());
 		return true;
 
 /*		case CONTEXT_BUTTON_GAMESAVES: // TODO
@@ -469,6 +475,13 @@ bool CGUIWindowPrograms::OnPlayMedia(int iItem) // TODO - Get more info from the
 			Update(CEmulators::ZipFolder(pItem->GetPath()));
 		else
 			CEmulators::Play(*pItem);
+		return true;
+	}
+
+	// A game copied to the console: started as its copy is, without its share or disc
+	if (CGameCopy::IsCopy(pItem->GetPath()))
+	{
+		CGameCopy::PlayCopy(pItem->GetPath());
 		return true;
 	}
 
