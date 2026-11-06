@@ -25,7 +25,9 @@ What it adds:
   32X, Game Boy (Color, Advance), N64, PlayStation, PC Engine, Neo Geo Pocket, WonderSwan, Lynx and Virtual Boy. They
   play in [Salvia](https://github.com/danibiker/Salvia)'s emulators, an XEX for each, which 360 Riffle starts with the
   game. A game on a share is copied to the console first, as the emulators read the console's drives only. The system
-  comes from the extension, or the folder's name for ones that many systems use (a `.zip` in `Genesis`).
+  comes from the extension, or the folder's name for ones that many systems use (a `.zip` in `Genesis`). A zipped
+  game is unzipped onto the console before it starts; a zip with several games in it, or one in a folder that doesn't
+  say its system, opens like a folder.
 - **HLS playback**: `.m3u8` streams over HTTP play (the bundled FFmpeg has no HLS demuxer of its own).
 - **Show all videos** in a folder and the folders below it as one list, **Shuffle** for any folder in Videos, the
   console's own keyboard for typing, controller shortcuts on the on-screen keyboard, filled-in System info pages, and
