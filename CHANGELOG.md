@@ -31,7 +31,9 @@ The first version of 360 Riffle, from [XBMC-360](https://github.com/brentdc-nz/X
 - **Xbox 360 games and homebrew on a share** are copied to the console to play, and kept with their saves. The games
   played longest ago are freed when space runs low, and Settings > System info > Games on the console shows each
   copy's size.
-- **On this console** in Games: the games copied to the console, to play without their share or disc.
+- **On this console** in Games: the games copied to the console, to play without their share or disc, or to move to a
+  USB drive, a share that allows saving or another folder (in a folder named for an emulator game's system where the
+  place doesn't say it).
 - **Videos**: Show all videos in a folder and its folders as one list, Shuffle a folder, play HLS (`.m3u8`) streams,
   and skip to the previous or next video with LB and RB.
 - **Settings** has System info in place of the System page, whose few settings are with the others like them (the TV

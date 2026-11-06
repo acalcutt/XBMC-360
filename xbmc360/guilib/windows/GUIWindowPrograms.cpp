@@ -300,12 +300,20 @@ void CGUIWindowPrograms::GetContextButtons(int itemNumber, CContextButtons &butt
 		else
 		{
 			// A game copied to the console (On this console's), or one on a share that's been: its copy can be freed or
-			// removed
-			if (item->IsXEX() && (CGameCopy::IsCopy(item->GetPath()) || (!URIUtils::IsHD(item->GetPath()) && CGameCopy::HasCopy(item->GetPath()))))
+			// removed, and On this console's moved to a drive or share
+			if (item->IsXEX() && CGameCopy::IsCopy(item->GetPath()))
+			{
+				buttons.Add(CONTEXT_BUTTON_MOVE, 33597);
 				buttons.Add(CONTEXT_BUTTON_DELETE, 33587);
-			// An emulator's game copied to the console: it can be removed
+			}
+			else if (item->IsXEX() && !URIUtils::IsHD(item->GetPath()) && CGameCopy::HasCopy(item->GetPath()))
+				buttons.Add(CONTEXT_BUTTON_DELETE, 33587);
+			// An emulator's game copied to the console: it can be moved or removed
 			else if (CEmulators::IsCopy(item->GetPath()))
+			{
+				buttons.Add(CONTEXT_BUTTON_MOVE, 33597);
 				buttons.Add(CONTEXT_BUTTON_DELETE, 33596);
+			}
 #if 0 // TODO: OG Xbox stuff to be modded to suit 360
 			if (item->IsXBE() || item->IsShortCut())
 			{
@@ -440,6 +448,11 @@ bool CGUIWindowPrograms::OnContextButton(int itemNumber, CONTEXT_BUTTON button)
 
 		case CONTEXT_BUTTON_DELETE: // The console's copy of a game
 		if (item && (CEmulators::IsCopy(item->GetPath()) ? CEmulators::RemoveCopy(*item) : CGameCopy::ManageCopy(item->GetPath())))
+			Update(m_vecItems->GetPath());
+		return true;
+
+		case CONTEXT_BUTTON_MOVE: // A game copied to the console, to a drive or share
+		if (item && (CEmulators::IsCopy(item->GetPath()) ? CEmulators::MoveCopy(*item) : CGameCopy::MoveCopy(item->GetPath())))
 			Update(m_vecItems->GetPath());
 		return true;
 

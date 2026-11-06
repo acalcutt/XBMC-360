@@ -47,6 +47,9 @@ public:
 	static bool IsCopy(const CStdString& strPath);
 	// Asks, and deletes a game copied to the console, with the files it names. True when it's gone
 	static bool RemoveCopy(const CFileItem& item);
+	// Moves a game copied to the console, with the files it names, to a drive or share (CGameMove): in a folder named
+	// for its system where the place's folders don't say it. True when it's gone from the console
+	static bool MoveCopy(const CFileItem& item);
 
 	virtual bool OnFileCallback(void* pContext, int ipercent, float avgSpeed);
 

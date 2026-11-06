@@ -13,6 +13,8 @@ class CDiscExport : public IFileCallback
 public:
 	static void CopyFiles();
 	static void SaveImage();
+	// A name the console's FATX drives and Windows shares both take, for a folder or an ISO
+	static CStdString MakeSafeName(const CStdString& strName);
 
 	virtual bool OnFileCallback(void* pContext, int ipercent, float avgSpeed);
 
@@ -20,7 +22,6 @@ private:
 	CDiscExport();
 
 	static bool ChooseDestination(const CDiscDrive::Info& disc, int iHeading, CStdString& strFolder, CStdString& strName);
-	static CStdString MakeSafeName(const CStdString& strName);
 	static __int64 MeasureFolder(const CStdString& strFolder);
 	static void ShowResult(int iHeading, int iLine, const CStdString& strDetail);
 

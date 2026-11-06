@@ -10,12 +10,14 @@
 #include "guilib\dialogs\GUIDialogProgress.h"
 #include "guilib\dialogs\GUIDialogSelect.h"
 #include "guilib\dialogs\GUIDialogYesNo.h"
+#include "utils\DiscExport.h"
 #include "utils\Log.h"
 #include "utils\StringUtils.h"
 #include "utils\TimeUtils.h"
 #include "utils\URIUtils.h"
 #include "utils\XEXUtils.h"
 #include "xbox\Emulators.h"
+#include "xbox\GameMove.h"
 #include <algorithm>
 
 using namespace XFILE;
@@ -493,8 +495,8 @@ void CGameCopy::ShowMessage(int iLine, const CStdString& strDetail)
 	}
 }
 
-// What to do with a copy: play it as it is, free its game's space and keep its saves, or remove it, saves and all. True
-// when it changed
+// What to do with a copy: play it as it is, move it to a drive or share, free its game's space and keep its saves, or
+// remove it, saves and all. True when it changed
 bool CGameCopy::ManageFolder(const Copy& copy)
 {
 	CGUIDialogSelect* select = (CGUIDialogSelect*)g_windowManager.GetWindow(WINDOW_DIALOG_SELECT);
@@ -507,11 +509,13 @@ bool CGameCopy::ManageFolder(const Copy& copy)
 	select->Reset();
 	select->SetHeading(copy.strName);
 
-	int iOptions = 0, iPlay = -1, iFree = -1;
+	int iOptions = 0, iPlay = -1, iMove = -1, iFree = -1;
 	if (copy.bPlayable)
 	{
 		select->Add(g_localizeStrings.Get(208));
 		iPlay = iOptions++;
+		select->Add(g_localizeStrings.Get(33597));
+		iMove = iOptions++;
 	}
 	if (copy.iGameBytes > 0)
 	{
@@ -531,6 +535,9 @@ bool CGameCopy::ManageFolder(const Copy& copy)
 		return false;
 	}
 
+	if (iChosen == iMove)
+		return MoveFolder(copy);
+
 	if (iChosen == iFree)
 	{
 		CLog::Log(LOGNOTICE, "Freeing the game files of the console's copy of %s, %s", copy.strName.c_str(), copy.strFolder.c_str());
@@ -548,6 +555,31 @@ bool CGameCopy::ManageCopy(const CStdString& strXex)
 {
 	Copy copy;
 	return ReadCopy(IsCopy(strXex) ? CopyOf(strXex) : CopyFolder(strXex), copy) && ManageFolder(copy);
+}
+
+bool CGameCopy::MoveCopy(const CStdString& strXex)
+{
+	Copy copy;
+	return ReadCopy(IsCopy(strXex) ? CopyOf(strXex) : CopyFolder(strXex), copy) && copy.bPlayable && MoveFolder(copy);
+}
+
+// A complete copy, game and saves, to a folder named for its game wherever it's wanted (not its list, which is the
+// console's), and then off the console
+bool CGameCopy::MoveFolder(const Copy& copy)
+{
+	CStdString strPlace;
+	if (!CGameMove::ChoosePlace(copy.strName, strPlace))
+		return false;
+
+	std::vector<CStdString> files, folders;
+	CGameMove::ListFolder(copy.strFolder, LIST_FILE, files, folders);
+
+	CStdString strTo = URIUtils::AddFileToFolder(strPlace, CDiscExport::MakeSafeName(copy.strName));
+	if (!CGameMove::Move(copy.strName, copy.strFolder, files, folders, strTo, true))
+		return false;
+
+	DeleteTree(copy.strFolder);
+	return true;
 }
 
 // The emulators' games copied to the console: the files in the other folders beside the copies' (one per system).

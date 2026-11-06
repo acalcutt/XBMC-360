@@ -14,6 +14,7 @@
 #include "utils\StringUtils.h"
 #include "utils\TimeUtils.h"
 #include "utils\URIUtils.h"
+#include "xbox\GameMove.h"
 #include "xbox\XBKernalExports.h"
 #include <algorithm>
 
@@ -974,8 +975,8 @@ void CEmulators::GetCopied(CFileItemList& items)
 	}
 }
 
-// A game's file in the cache, and for a .cue or .m3u the files it names
-static void DeleteGame(const CStdString& strFile, int iDepth)
+// A game's files in the cache: its own, and for a .cue or .m3u the files it names
+static void GameFiles(const CStdString& strFile, std::vector<CStdString>& files, int iDepth)
 {
 	if (IsList(strFile) && iDepth < 2)
 	{
@@ -985,10 +986,18 @@ static void DeleteGame(const CStdString& strFile, int iDepth)
 		CStdStringArray named;
 		ReadNamedFiles(strFile, named);
 		for (unsigned int i = 0; i < named.size(); i++)
-			DeleteGame(URIUtils::AddFileToFolder(strFolder, named[i]), iDepth + 1);
+			GameFiles(URIUtils::AddFileToFolder(strFolder, named[i]), files, iDepth + 1);
 	}
 
-	::DeleteFile(strFile.c_str());
+	files.push_back(strFile);
+}
+
+static void DeleteGame(const CStdString& strFile)
+{
+	std::vector<CStdString> files;
+	GameFiles(strFile, files, 0);
+	for (unsigned int i = 0; i < files.size(); i++)
+		::DeleteFile(files[i].c_str());
 }
 
 bool CEmulators::RemoveCopy(const CFileItem& item)
@@ -1008,8 +1017,28 @@ bool CEmulators::RemoveCopy(const CFileItem& item)
 		return false;
 
 	CLog::Log(LOGNOTICE, "Removing the %s game %s from the console", item.GetLabel2().c_str(), item.GetPath().c_str());
-	DeleteGame(item.GetPath(), 0);
+	DeleteGame(item.GetPath());
 	return true;
+}
+
+bool CEmulators::MoveCopy(const CFileItem& item)
+{
+	int iSystem = GetSystem(item.GetPath());
+	CStdString strPlace;
+	if (iSystem < 0 || !CGameMove::ChoosePlace(item.GetLabel(), strPlace))
+		return false;
+
+	// Where the place's folders say the system, straight in; elsewhere in a folder named for it, so that it's still
+	// known for that system's game there
+	CStdString strTo = strPlace;
+	if (GetSystem(URIUtils::AddFileToFolder(strPlace, URIUtils::GetFileName(item.GetPath()))) != iSystem)
+		strTo = URIUtils::AddFileToFolder(strPlace, SYSTEMS[iSystem].name);
+
+	CStdString strFolder;
+	URIUtils::GetDirectory(item.GetPath(), strFolder);
+	std::vector<CStdString> files, folders;
+	GameFiles(item.GetPath(), files, 0);
+	return CGameMove::Move(item.GetLabel(), strFolder, files, folders, strTo, false);
 }
 
 // Shows how far the copy's got. False once it's been cancelled

@@ -687,6 +687,7 @@
     <ClInclude Include="xbox\DiscDrive.h" />
     <ClInclude Include="xbox\Emulators.h" />
     <ClInclude Include="xbox\GameCopy.h" />
+    <ClInclude Include="xbox\GameMove.h" />
     <ClInclude Include="xbox\IoSupport.h" />
     <ClInclude Include="xbox\Network.h" />
     <ClInclude Include="xbox\socket_emu\addrinfo.h" />
@@ -1139,6 +1140,7 @@
     <ClCompile Include="xbox\DiscDrive.cpp" />
     <ClCompile Include="xbox\Emulators.cpp" />
     <ClCompile Include="xbox\GameCopy.cpp" />
+    <ClCompile Include="xbox\GameMove.cpp" />
     <ClCompile Include="xbox\IoSupport.cpp" />
     <ClCompile Include="xbox\Network.cpp" />
     <ClCompile Include="xbox\socket_emu\emu_socket.cpp" />

@@ -9259,7 +9259,39 @@ msgctxt "#33596"
 msgid "Remove it from the console"
 msgstr ""
 
-#empty strings from id 33597 to 34004
+msgctxt "#33597"
+msgid "Move it to a drive or share"
+msgstr ""
+
+msgctxt "#33598"
+msgid "Move %s to"
+msgstr ""
+
+msgctxt "#33599"
+msgid "Moving %s"
+msgstr ""
+
+msgctxt "#33600"
+msgid "There's already a %s there."
+msgstr ""
+
+msgctxt "#33601"
+msgid "Couldn't move %s. It's still on the console."
+msgstr ""
+
+msgctxt "#33602"
+msgid "There isn't room there for it: it needs %s."
+msgstr ""
+
+msgctxt "#33603"
+msgid "%s is in %s now."
+msgstr ""
+
+msgctxt "#33604"
+msgid "That's where the console keeps its copies: choose another folder."
+msgstr ""
+
+#empty strings from id 33605 to 34004
 
 msgctxt "#34005"
 msgid "Flac"

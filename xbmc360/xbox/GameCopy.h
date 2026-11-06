@@ -36,9 +36,12 @@ public:
 	static void PlayCopy(const CStdString& strXex);
 	// Whether the XEX's folder has a copy on the console (its game, or only its saves)
 	static bool HasCopy(const CStdString& strXex);
-	// What can be done with the XEX's copy, or the copy it's in: play it, free its game's space, or remove it with its
-	// saves. True when it changed
+	// What can be done with the XEX's copy, or the copy it's in: play it, move it, free its game's space, or remove it
+	// with its saves. True when it changed
 	static bool ManageCopy(const CStdString& strXex);
+	// Moves the complete copy an XEX is in to a drive or share (CGameMove), as a folder named for its game, saves and
+	// all. True when it's gone from the console
+	static bool MoveCopy(const CStdString& strXex);
 	// System info > Games on the console: every copy with its size, the emulators' games too, to free or remove
 	static void ShowCopies();
 
@@ -76,6 +79,7 @@ private:
 	static void FreeGameData(const CStdString& strFolder);
 	static bool MakeRoom(__int64 iNeeded, const CStdString& strExcept);
 	static bool ManageFolder(const Copy& copy);
+	static bool MoveFolder(const Copy& copy);
 	static void ShowMessage(int iLine, const CStdString& strDetail);
 
 	bool AddFolder(const CStdString& strFrom, const CStdString& strTo);
