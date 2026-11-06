@@ -7,6 +7,7 @@
 #include "Application.h"
 #include "filesystem\Drive.h"
 #include "utils\Diagnostics.h"
+#include "utils\Updater.h"
 #include "utils\StringUtils.h"
 
 #define STORAGE_UPDATE_EVERY 5000
@@ -39,6 +40,11 @@ bool CGUIWindowSystemInfo::OnMessage(CGUIMessage& message)
 			if (message.GetSenderId() == CONTROL_BT_DIAGNOSTICS)
 			{
 				CDiagnostics::SaveToUsb();
+				return true;
+			}
+			if (message.GetSenderId() == CONTROL_BT_UPDATE)
+			{
+				CUpdater::UpdateFromUsb();
 				return true;
 			}
 			iControl = message.GetSenderId();

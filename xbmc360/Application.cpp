@@ -29,6 +29,7 @@
 #include "cores\PlayerCoreFactory.h"
 #include "AdvancedSettings.h"
 #include "utils\URIUtils.h"
+#include "utils\Updater.h"
 #include "guilib\SkinInfo.h"
 #include "interfaces\Builtins.h"
 #include "interfaces\json-rpc\JSONRPC.h"
@@ -148,6 +149,9 @@ bool CApplication::Create()
 	CLog::Log(LOGNOTICE, "Starting %s.  Built on %s", APP_NAME, __DATE__);
 	CLog::Log(LOGNOTICE, "-----------------------------------------------------------------------");
 	CSpecialProtocol::LogPaths();
+
+	// The rest of an update from USB, before the splash, the skin or the language is opened
+	CUpdater::FinishUpdate();
 
 	// rand() (shuffling a playlist, among others) differs from one start to the next
 	FILETIME now;

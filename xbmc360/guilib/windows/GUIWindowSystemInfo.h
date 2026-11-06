@@ -13,6 +13,7 @@
 #define CONTROL_BT_VIDEO    97
 #define CONTROL_BT_HARDWARE 98
 #define CONTROL_BT_DIAGNOSTICS 90 // not a page: saves diagnostics to a USB drive
+#define CONTROL_BT_UPDATE      91 // not a page: installs a build of 360 Riffle from a USB drive
 
 class CGUIWindowSystemInfo : public CGUIWindow
 {

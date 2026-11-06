@@ -1226,6 +1226,9 @@
     <ClInclude Include="utils\Secrets.h">
       <Filter>Header Files\utils</Filter>
     </ClInclude>
+    <ClInclude Include="utils\Updater.h">
+      <Filter>Header Files\utils</Filter>
+    </ClInclude>
     <ClInclude Include="utils\DiscExport.h">
       <Filter>Header Files\utils</Filter>
     </ClInclude>
@@ -2318,6 +2321,9 @@
       <Filter>Source Files\utils</Filter>
     </ClCompile>
     <ClCompile Include="utils\Secrets.cpp">
+      <Filter>Source Files\utils</Filter>
+    </ClCompile>
+    <ClCompile Include="utils\Updater.cpp">
       <Filter>Source Files\utils</Filter>
     </ClCompile>
     <ClCompile Include="utils\DiscExport.cpp">

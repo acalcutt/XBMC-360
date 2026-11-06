@@ -659,6 +659,7 @@
     <ClInclude Include="utils\StringUtils.h" />
     <ClInclude Include="utils\Thread.h" />
     <ClInclude Include="utils\TimeUtils.h" />
+    <ClInclude Include="utils\Updater.h" />
     <ClInclude Include="utils\URIUtils.h" />
     <ClInclude Include="utils\StreamDetails.h" />
     <ClInclude Include="utils\StreamUtils.h" />
@@ -1108,6 +1109,7 @@
     <ClCompile Include="utils\StringUtils.cpp" />
     <ClCompile Include="utils\Thread.cpp" />
     <ClCompile Include="utils\TimeUtils.cpp" />
+    <ClCompile Include="utils\Updater.cpp" />
     <ClCompile Include="utils\URIUtils.cpp" />
     <ClCompile Include="utils\StreamDetails.cpp" />
     <ClCompile Include="utils\StreamUtils.cpp" />

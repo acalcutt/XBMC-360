@@ -9147,7 +9147,47 @@ msgctxt "#33567"
 msgid "What's on it? Tick each kind, then OK"
 msgstr ""
 
-#empty strings from id 33568 to 34004
+msgctxt "#33568"
+msgid "Update from USB"
+msgstr ""
+
+msgctxt "#33569"
+msgid "There's no build of 360 Riffle on a USB drive."
+msgstr ""
+
+msgctxt "#33570"
+msgid "It's looked for in BadUpdatePayload\\SoftmodExtras\\360riffle, or a 360riffle folder."
+msgstr ""
+
+msgctxt "#33571"
+msgid "The build on the USB drive (from %s) is the one installed."
+msgstr ""
+
+msgctxt "#33572"
+msgid "Install the build of 360 Riffle from %s?"
+msgstr ""
+
+msgctxt "#33573"
+msgid "360 Riffle starts again once it's in."
+msgstr ""
+
+msgctxt "#33574"
+msgid "Couldn't copy %s from the USB drive."
+msgstr ""
+
+msgctxt "#33575"
+msgid "This build couldn't be put in place of the running one. Install it with the softmod instead."
+msgstr ""
+
+msgctxt "#33576"
+msgid "There isn't room on the hard drive for the update (%s)."
+msgstr ""
+
+msgctxt "#33577"
+msgid "Copying the update"
+msgstr ""
+
+#empty strings from id 33578 to 34004
 
 msgctxt "#34005"
 msgid "Flac"
