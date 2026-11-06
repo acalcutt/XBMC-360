@@ -179,6 +179,16 @@ bool CJellyfin::SignIn(const CStdString& server)
 	return true;
 }
 
+void CJellyfin::SignOut(const CStdString& server)
+{
+	// Best effort: the server may be out of reach, and the token is dropped here anyway
+	if (IsSignedIn(server))
+		Queue(server, "POST", "/Sessions/Logout", NULL);
+
+	Forget(server);
+	CLog::Log(LOGNOTICE, "Jellyfin: signed out of %s", server.c_str());
+}
+
 // Quick Connect: a code to enter in Jellyfin where someone's signed in, shown until it's entered or runs out. 1 once
 // signed in, 0 when not (cancelled, ran out, unreachable), -1 when the server doesn't do it.
 int CJellyfin::QuickConnect(const CStdString& server, CVariant& signedIn)

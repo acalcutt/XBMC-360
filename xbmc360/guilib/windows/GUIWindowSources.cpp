@@ -304,7 +304,7 @@ CMediaSource* CGUIWindowSources::Find(const CStdString& type, const CStdString& 
 	return NULL;
 }
 
-// What to do with a source: open it, change it, remove it, or for a linked MediaRiffle server sign out
+// What to do with a source: open it, change it, remove it, or sign out of the MediaRiffle or Jellyfin server it's on
 void CGUIWindowSources::OnSource(int item)
 {
 	CFileItemPtr pItem = m_items->Get(item);
@@ -316,7 +316,9 @@ void CGUIWindowSources::OnSource(int item)
 
 	bool server = CMediaRiffle::IsMediaRiffle(source.strPath) || CJellyfin::IsJellyfin(source.strPath);
 	CStdString mediaRiffle = CMediaRiffle::ServerOf(source.strPath);
-	bool canSignOut = !mediaRiffle.IsEmpty() && g_mediaRiffle.IsLinked(mediaRiffle);
+	CStdString jellyfin = CJellyfin::ServerOf(source.strPath);
+	bool canSignOut = (!mediaRiffle.IsEmpty() && g_mediaRiffle.IsLinked(mediaRiffle)) ||
+		(!jellyfin.IsEmpty() && g_jellyfin.IsSignedIn(jellyfin));
 
 	CGUIDialogSelect* select = (CGUIDialogSelect*)g_windowManager.GetWindow(WINDOW_DIALOG_SELECT);
 	if (!select)
@@ -328,7 +330,7 @@ void CGUIWindowSources::OnSource(int item)
 	select->Add(g_localizeStrings.Get(1027));
 	select->Add(g_localizeStrings.Get(522));
 	if (canSignOut)
-		select->Add(g_localizeStrings.Get(33506));
+		select->Add(g_localizeStrings.Get(mediaRiffle.IsEmpty() ? 33550 : 33506));
 	select->DoModal();
 
 	switch (select->GetSelectedLabel())
@@ -374,8 +376,10 @@ void CGUIWindowSources::OnSource(int item)
 		}
 
 		case 3:
-			if (canSignOut)
+			if (canSignOut && !mediaRiffle.IsEmpty())
 				g_mediaRiffle.Unlink(mediaRiffle);
+			else if (canSignOut)
+				g_jellyfin.SignOut(jellyfin);
 			break;
 
 		default:

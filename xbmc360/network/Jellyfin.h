@@ -45,6 +45,8 @@ public:
 
 	// Signs in with Quick Connect, or a name and password where that's off. On the GUI thread. True once signed in.
 	bool SignIn(const CStdString& server);
+	// Signs out: the server drops this console's token, and so does it
+	void SignOut(const CStdString& server);
 
 	// An API call with the server's token: path from the server's root ("/UserViews?userId=…"); body as JSON, or none.
 	// False when the server couldn't be reached; else its status, and its answer when that's JSON.
