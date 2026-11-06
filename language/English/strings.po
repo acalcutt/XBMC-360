@@ -4300,7 +4300,27 @@ msgctxt "#13212"
 msgid "Canceled with %im%is left"
 msgstr ""
 
-#empty strings from id 13213 to 13248
+msgctxt "#13213"
+msgid "Xbox 360 game"
+msgstr ""
+
+msgctxt "#13214"
+msgid "Xbox game"
+msgstr ""
+
+msgctxt "#13215"
+msgid "DVD video"
+msgstr ""
+
+msgctxt "#13216"
+msgid "Data disc"
+msgstr ""
+
+msgctxt "#13217"
+msgid "disc %d of %d"
+msgstr ""
+
+#empty strings from id 13218 to 13248
 
 msgctxt "#13249"
 msgid "Search for subtitles in RARs"

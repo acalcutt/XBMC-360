@@ -7,6 +7,7 @@
 #include "utils\URIUtils.h"
 #include "filesystem\File.h"
 #include "utils\TimeUtils.h"
+#include "xbox\DiscDrive.h"
 
 using namespace XFILE;
 
@@ -110,6 +111,19 @@ bool CGUIWindowPrograms::GetDirectory(const CStdString &strDirectory, CFileItemL
 	if (items.IsVirtualDirectoryRoot())
 	{
 		items.SetLabel("");
+
+		// The disc in the drive comes first
+		CDiscDrive::Info disc;
+		if (CDiscDrive::Detect(disc))
+		{
+			CFileItemPtr pItem(new CFileItem(CDiscDrive::GetTypeName(disc.type)));
+			pItem->SetPath(CDiscDrive::ROOT);
+			pItem->m_bIsFolder = false;
+			pItem->SetLabel2(CDiscDrive::GetName(disc));
+			pItem->SetIconImage("DefaultDVDRom.png");
+			pItem->SetProperty("disc", true);
+			items.AddFront(pItem, 0);
+		}
 		return true;
 	}
 /*
@@ -411,8 +425,19 @@ bool CGUIWindowPrograms::OnPlayMedia(int iItem) // TODO - Get more info from the
 	if ( iItem < 0 || iItem >= (int)m_vecItems->Size() ) return false;
 	CFileItemPtr pItem = m_vecItems->Get(iItem);
 
-//	if (pItem->IsDVD())
-//		return MEDIA_DETECT::CAutorun::PlayDisc(); // TODO
+	if (pItem->GetPropertyBOOL("disc"))
+	{
+		// Look again: it may have been taken out since the list was made
+		CDiscDrive::Info disc;
+		if (!CDiscDrive::Detect(disc))
+			Update("");
+		else if (disc.type == CDiscDrive::DISC_DATA)
+			Update(CDiscDrive::ROOT);
+		else
+			CDiscDrive::Play(disc);
+
+		return true;
+	}
 
 	if (pItem->m_bIsFolder) return false;
 
