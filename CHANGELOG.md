@@ -13,6 +13,9 @@
 
 ### 🐞 Bug fixes
 - _...Add new stuff here..._
+- **Web server**: `/vfs/` only hands out files in your Videos, Music, Pictures and Games sources. Before, anyone on the
+  network could fetch any file the console can read through it, 360 Riffle's settings with share passwords and server
+  sign-ins too, as the web server is on by default without a password. Its setting says 360 Riffle, not XBMC.
 
 ## 0.1.0
 The first version of 360 Riffle, from [XBMC-360](https://github.com/brentdc-nz/XBMC-360).

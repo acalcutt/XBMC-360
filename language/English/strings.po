@@ -838,7 +838,7 @@ msgid "Scripts output"
 msgstr ""
 
 msgctxt "#263"
-msgid "Allow control of XBMC via HTTP"
+msgid "Allow control of 360 Riffle via HTTP"
 msgstr ""
 
 msgctxt "#264"

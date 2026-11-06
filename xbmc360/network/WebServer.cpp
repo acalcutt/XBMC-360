@@ -23,9 +23,13 @@
 #include "interfaces\json-rpc\JSONRPC.h"
 #include "filesystem\File.h"
 #include "filesystem\Directory.h"
+#include "filesystem\SpecialProtocol.h"
+#include "Settings.h"
 #include "URL.h"
 #include "utils\Log.h"
 #include "utils\URIUtils.h"
+#include "utils\Util.h"
+#include "xbox\Emulators.h"
 #include "utils\Variant.h"
 #include "utils\SingleLock.h"
 #include "XBDateTime.h"
@@ -95,6 +99,33 @@ bool CWebServer::IsAuthenticated(CWebServer *server, struct MHD_Connection *conn
 	return server->m_Credentials64Encoded.Equals(headervalue + strlen(strbase));
 }
 
+// What /vfs hands out: a file in a media source. Not the console's own files, its settings with the shares' passwords
+// and the servers' sign-ins among them, even where a source is a whole drive, nor a path that climbs out of a source
+static bool IsInSources(const CStdString& strPath)
+{
+	if (strPath.Find("..") >= 0)
+		return false;
+
+	CStdString strReal = CSpecialProtocol::TranslatePath(strPath);
+	CStdString strProfile = CSpecialProtocol::TranslatePath("special://profile/");
+	CStdString profiles[] = { strProfile, CEmulators::ConsolePath(strProfile) };
+	for (int i = 0; i < 2; i++)
+	{
+		if (CEmulators::ConsolePath(strReal).Left(profiles[i].size()).Equals(profiles[i]) || strReal.Left(profiles[i].size()).Equals(profiles[i]))
+			return false;
+	}
+
+	const char* types[] = { "video", "music", "pictures", "programs" };
+	for (unsigned int i = 0; i < sizeof(types) / sizeof(types[0]); i++)
+	{
+		VECSOURCES* sources = g_settings.GetSourcesFromType(types[i]);
+		bool bIsSourceName = false;
+		if (sources && CUtil::GetMatchingSource(strPath, *sources, bIsSourceName) >= 0 && !bIsSourceName)
+			return true;
+	}
+	return false;
+}
+
 enum MHD_Result CWebServer::AnswerToConnection(void *cls, struct MHD_Connection *connection,
 											const char *url, const char *method,
 											const char *version, const char *upload_data,
@@ -120,6 +151,11 @@ enum MHD_Result CWebServer::AnswerToConnection(void *cls, struct MHD_Connection 
 	{
 		strURL = strURL.Right(strURL.length() - 5);
 		CURL::Decode(strURL);
+		if (!IsInSources(strURL))
+		{
+			CLog::Log(LOGNOTICE, "WebServer: refused %s, which isn't in a source", CURL(strURL).GetWithoutUserDetails().c_str());
+			return (enum MHD_Result)CreateErrorResponse(connection, MHD_HTTP_FORBIDDEN, methodType);
+		}
 		return (enum MHD_Result)CreateFileDownloadResponse(connection, strURL, methodType);
 	}
 
