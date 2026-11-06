@@ -247,6 +247,19 @@
 				<height>100</height>
 				<texture border="16">mr-card.png</texture>
 			</control>
+			<!-- Down from the tiles to the card, A on it opens Now playing -->
+			<control type="button" id="9200">
+				<posx>0</posx>
+				<posy>0</posy>
+				<width>1152</width>
+				<height>100</height>
+				<label>-</label>
+				<texturefocus border="16">mr-round-outline.png</texturefocus>
+				<texturenofocus>-</texturenofocus>
+				<colordiffuse>mr_accent</colordiffuse>
+				<onup>9001</onup>
+				<onclick>ActivateWindow(MusicPlaylist)</onclick>
+			</control>
 			<control type="label">
 				<posx>24</posx>
 				<posy>16</posy>

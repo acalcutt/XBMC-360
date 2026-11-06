@@ -48,6 +48,7 @@
 #include "guilib\windows\GUIWindowScriptsInfo.h"
 #include "guilib\windows\GUIWindowFullScreen.h"
 #include "guilib\windows\GUIWindowVisualisation.h"
+#include "guilib\windows\GUIWindowNowPlaying.h"
 #include "guilib\windows\GUIWindowVideoFiles.h"
 #include "guilib\windows\GUIWindowMusicSongs.h"
 #include "guilib\windows\GUIWindowPictures.h"
@@ -279,6 +280,7 @@ bool CApplication::Initialize()
 	g_windowManager.Add(new CGUIWindowScriptsInfo);
 	g_windowManager.Add(new CGUIWindowFullScreen);
 	g_windowManager.Add(new CGUIWindowVisualisation);		// window id = 2006
+	g_windowManager.Add(new CGUIWindowNowPlaying);			// window id = 500, Now playing
 	g_windowManager.Add(new CGUIWindowSlideShow);			// window id = 2007
 	g_windowManager.Add(new CGUIWindowOSD);					// window id = 2901
 	g_windowManager.Add(new CGUIWindowScreensaver);
@@ -2672,6 +2674,7 @@ void CApplication::Cleanup()
 		g_windowManager.Delete(WINDOW_SOURCES);
 		g_windowManager.Delete(WINDOW_WEATHER);
 		g_windowManager.Delete(WINDOW_VISUALISATION);
+		g_windowManager.Delete(WINDOW_MUSIC_PLAYLIST);
 		g_windowManager.Delete(WINDOW_FILES);
 		g_windowManager.Delete(WINDOW_OSD);
 

@@ -6,7 +6,7 @@
       <X>FullScreen</X>
       <Y>Queue</Y>
       <rightshoulder>ContextMenu</rightshoulder>
-      <start>XBMC.ActivateWindow(PlayerControls)</start>
+      <start>XBMC.ActivateWindow(MusicPlaylist)</start>
       <back>PreviousMenu</back>
       <dpadleft>Left</dpadleft>
       <dpadright>Right</dpadright>

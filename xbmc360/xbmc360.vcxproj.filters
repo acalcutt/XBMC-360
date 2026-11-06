@@ -1268,6 +1268,9 @@
     <ClInclude Include="guilib\windows\GUIWindowVisualisation.h">
       <Filter>Header Files\guilib\windows</Filter>
     </ClInclude>
+    <ClInclude Include="guilib\windows\GUIWindowNowPlaying.h">
+      <Filter>Header Files\guilib\windows</Filter>
+    </ClInclude>
     <ClInclude Include="visualizations\VisualisationFactory.h">
       <Filter>Header Files\visualizations</Filter>
     </ClInclude>
@@ -2375,6 +2378,9 @@
       <Filter>Source Files\guilib</Filter>
     </ClCompile>
     <ClCompile Include="guilib\windows\GUIWindowVisualisation.cpp">
+      <Filter>Source Files\guilib\windows</Filter>
+    </ClCompile>
+    <ClCompile Include="guilib\windows\GUIWindowNowPlaying.cpp">
       <Filter>Source Files\guilib\windows</Filter>
     </ClCompile>
     <ClCompile Include="visualizations\VisualisationFactory.cpp">

@@ -1,0 +1,285 @@
+<window id="500">
+	<!-- Now playing (CGUIWindowNowPlaying): what's playing and where it's got to, the player's controls, and the playlist
+	     in its order, the item playing marked (it's the list's selected item). A on an item plays it -->
+	<defaultcontrol always="true">50</defaultcontrol>
+	<allowoverlay>no</allowoverlay>
+	<controls>
+		<include>CommonBackground</include>
+
+		<!-- Top bar, as on Home -->
+		<control type="group">
+			<include>Window_OpenClose_Animation</include>
+			<control type="image">
+				<posx>0</posx>
+				<posy>0</posy>
+				<width>1280</width>
+				<height>104</height>
+				<texture>mr-fill.png</texture>
+				<colordiffuse>mr_surface</colordiffuse>
+			</control>
+			<control type="image">
+				<posx>0</posx>
+				<posy>104</posy>
+				<width>1280</width>
+				<height>1</height>
+				<texture>mr-fill.png</texture>
+				<colordiffuse>mr_border</colordiffuse>
+			</control>
+			<control type="label">
+				<description>Name</description>
+				<posx>64</posx>
+				<posy>36</posy>
+				<width>800</width>
+				<height>48</height>
+				<font>font28_title</font>
+				<textcolor>mr_text</textcolor>
+				<aligny>center</aligny>
+				<label>31979</label>
+			</control>
+			<control type="label">
+				<description>Time</description>
+				<posx>64r</posx>
+				<posy>36</posy>
+				<width>160</width>
+				<height>48</height>
+				<font>font13_title</font>
+				<textcolor>mr_muted</textcolor>
+				<align>right</align>
+				<aligny>center</aligny>
+				<label>$INFO[System.Time]</label>
+			</control>
+		</control>
+
+		<!-- What's playing: its name, where it's got to -->
+		<control type="group">
+			<include>Window_OpenClose_Animation</include>
+			<control type="label">
+				<posx>64</posx>
+				<posy>124</posy>
+				<width>900</width>
+				<height>40</height>
+				<font>font16</font>
+				<textcolor>mr_text</textcolor>
+				<aligny>center</aligny>
+				<label>$INFO[VideoPlayer.Title]$INFO[MusicPlayer.Artist,, - ]$INFO[MusicPlayer.Title]</label>
+				<visible>Player.HasMedia</visible>
+			</control>
+			<control type="label">
+				<posx>64</posx>
+				<posy>124</posy>
+				<width>900</width>
+				<height>40</height>
+				<font>font16</font>
+				<textcolor>mr_muted</textcolor>
+				<aligny>center</aligny>
+				<label>31984</label>
+				<visible>!Player.HasMedia</visible>
+			</control>
+			<control type="label">
+				<posx>64r</posx>
+				<posy>124</posy>
+				<width>240</width>
+				<height>40</height>
+				<font>font13</font>
+				<textcolor>mr_muted</textcolor>
+				<align>right</align>
+				<aligny>center</aligny>
+				<label>$INFO[Player.Time]$INFO[Player.Duration, / ]</label>
+				<visible>Player.HasMedia</visible>
+			</control>
+			<control type="progress">
+				<posx>64</posx>
+				<posy>172</posy>
+				<width>1152</width>
+				<height>12</height>
+				<info>Player.Progress</info>
+				<visible>Player.HasMedia</visible>
+			</control>
+		</control>
+
+		<!-- The player's controls: the player's own commands, Play or Pause and Full screen as fit what's playing -->
+		<control type="list" id="60">
+			<include>Window_OpenClose_Animation</include>
+			<posx>64</posx>
+			<posy>200</posy>
+			<width>1152</width>
+			<height>64</height>
+			<onleft>60</onleft>
+			<onright>60</onright>
+			<ondown>50</ondown>
+			<orientation>horizontal</orientation>
+			<scrolltime>200</scrolltime>
+			<itemlayout width="192" height="64">
+				<control type="image">
+					<posx>0</posx>
+					<posy>0</posy>
+					<width>180</width>
+					<height>56</height>
+					<texture border="16">mr-card.png</texture>
+				</control>
+				<control type="label">
+					<posx>90</posx>
+					<posy>0</posy>
+					<width>170</width>
+					<height>56</height>
+					<font>font13_title</font>
+					<textcolor>mr_text</textcolor>
+					<align>center</align>
+					<aligny>center</aligny>
+					<label>$INFO[ListItem.Label]</label>
+				</control>
+			</itemlayout>
+			<focusedlayout width="192" height="64">
+				<control type="image">
+					<posx>0</posx>
+					<posy>0</posy>
+					<width>180</width>
+					<height>56</height>
+					<texture border="16">mr-round.png</texture>
+					<colordiffuse>mr_accent</colordiffuse>
+					<visible>Control.HasFocus(60)</visible>
+				</control>
+				<control type="image">
+					<posx>0</posx>
+					<posy>0</posy>
+					<width>180</width>
+					<height>56</height>
+					<texture border="16">mr-card.png</texture>
+					<visible>!Control.HasFocus(60)</visible>
+				</control>
+				<control type="label">
+					<posx>90</posx>
+					<posy>0</posy>
+					<width>170</width>
+					<height>56</height>
+					<font>font13_title</font>
+					<textcolor>white</textcolor>
+					<align>center</align>
+					<aligny>center</aligny>
+					<label>$INFO[ListItem.Label]</label>
+				</control>
+			</focusedlayout>
+			<content>
+				<item>
+					<label>210</label>
+					<onclick>PlayerControl(Previous)</onclick>
+				</item>
+				<item>
+					<label>31985</label>
+					<onclick>PlayerControl(Play)</onclick>
+					<visible>!Player.Paused</visible>
+				</item>
+				<item>
+					<label>208</label>
+					<onclick>PlayerControl(Play)</onclick>
+					<visible>Player.Paused</visible>
+				</item>
+				<item>
+					<label>31986</label>
+					<onclick>PlayerControl(Stop)</onclick>
+				</item>
+				<item>
+					<label>209</label>
+					<onclick>PlayerControl(Next)</onclick>
+				</item>
+				<item>
+					<label>31983</label>
+					<onclick>ActivateWindow(Visualisation)</onclick>
+					<visible>Player.HasAudio</visible>
+				</item>
+				<item>
+					<label>31983</label>
+					<onclick>ActivateWindow(FullscreenVideo)</onclick>
+					<visible>Player.HasVideo</visible>
+				</item>
+			</content>
+		</control>
+
+		<!-- The playlist -->
+		<control type="list" id="50">
+			<include>Window_OpenClose_Animation</include>
+			<posx>64</posx>
+			<posy>284</posy>
+			<width>1152</width>
+			<height>416</height>
+			<onup>60</onup>
+			<ondown>50</ondown>
+			<scrolltime>200</scrolltime>
+			<itemlayout height="52">
+				<control type="image">
+					<posx>0</posx>
+					<posy>0</posy>
+					<width>1152</width>
+					<height>46</height>
+					<texture border="16">mr-card.png</texture>
+				</control>
+				<control type="image">
+					<posx>14</posx>
+					<posy>8</posy>
+					<width>30</width>
+					<height>30</height>
+					<texture>OSDPlayNF.png</texture>
+					<visible>ListItem.IsSelected</visible>
+				</control>
+				<control type="label">
+					<posx>56</posx>
+					<posy>0</posy>
+					<width>1080</width>
+					<height>46</height>
+					<font>font13</font>
+					<textcolor>mr_text</textcolor>
+					<aligny>center</aligny>
+					<label>$INFO[ListItem.Label]</label>
+					<visible>!ListItem.IsSelected</visible>
+				</control>
+				<control type="label">
+					<posx>56</posx>
+					<posy>0</posy>
+					<width>1080</width>
+					<height>46</height>
+					<font>font13_title</font>
+					<textcolor>mr_accent</textcolor>
+					<aligny>center</aligny>
+					<label>$INFO[ListItem.Label]</label>
+					<visible>ListItem.IsSelected</visible>
+				</control>
+			</itemlayout>
+			<focusedlayout height="52">
+				<control type="image">
+					<posx>0</posx>
+					<posy>0</posy>
+					<width>1152</width>
+					<height>46</height>
+					<texture border="16">mr-card.png</texture>
+				</control>
+				<control type="image">
+					<posx>0</posx>
+					<posy>0</posy>
+					<width>1152</width>
+					<height>46</height>
+					<texture border="16">mr-round-outline.png</texture>
+					<colordiffuse>mr_accent</colordiffuse>
+					<visible>Control.HasFocus(50)</visible>
+				</control>
+				<control type="image">
+					<posx>14</posx>
+					<posy>8</posy>
+					<width>30</width>
+					<height>30</height>
+					<texture>OSDPlayNF.png</texture>
+					<visible>ListItem.IsSelected</visible>
+				</control>
+				<control type="label">
+					<posx>56</posx>
+					<posy>0</posy>
+					<width>1080</width>
+					<height>46</height>
+					<font>font13_title</font>
+					<textcolor>white</textcolor>
+					<aligny>center</aligny>
+					<label>$INFO[ListItem.Label]</label>
+				</control>
+			</focusedlayout>
+		</control>
+	</controls>
+</window>

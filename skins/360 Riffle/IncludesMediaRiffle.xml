@@ -52,6 +52,8 @@
 		<width>1152</width>
 		<height>110</height>
 		<onup>9000</onup>
+		<!-- To the now playing card, while something plays -->
+		<ondown>9200</ondown>
 		<orientation>horizontal</orientation>
 		<scrolltime>200</scrolltime>
 		<itemlayout width="288" height="110">

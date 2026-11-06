@@ -555,6 +555,7 @@
     <ClInclude Include="guilib\windows\GUIWindowOSD.h" />
     <ClInclude Include="guilib\windows\GUIWindowVideoFiles.h" />
     <ClInclude Include="guilib\windows\GUIWindowVisualisation.h" />
+    <ClInclude Include="guilib\windows\GUIWindowNowPlaying.h" />
     <ClInclude Include="guilib\windows\GUIWindowWeather.h" />
     <ClInclude Include="guilib\XMLUtils.h" />
     <ClInclude Include="GUILargeTextureManager.h" />
@@ -923,6 +924,7 @@
     <ClCompile Include="guilib\windows\GUIWindowOSD.cpp" />
     <ClCompile Include="guilib\windows\GUIWindowVideoFiles.cpp" />
     <ClCompile Include="guilib\windows\GUIWindowVisualisation.cpp" />
+    <ClCompile Include="guilib\windows\GUIWindowNowPlaying.cpp" />
     <ClCompile Include="guilib\windows\GUIWindowWeather.cpp" />
     <ClCompile Include="guilib\XMLUtils.cpp" />
     <ClCompile Include="GUILargeTextureManager.cpp" />
