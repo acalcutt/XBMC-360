@@ -31,7 +31,10 @@
 
 CMediaRiffle g_mediaRiffle;
 
-#define LINK_FILE      "special://profile/mediariffle.xml"
+// CCurlFile's: marks each socket libcurl opens so XNet lets it talk to a PC (without it, connecting fails)
+extern "C" int xbmc_curl_sockopt_cb(void* clientp, curl_socket_t curlfd, curlsocktype purpose);
+
+#define LINK_FILE     "special://profile/mediariffle.xml"
 #define SOURCE_PATH    "mediariffle://"
 // How the console asks for its streams: H.264 (no HEVC decoder here) at 720p, which it decodes in time
 #define PLAY_QUALITY   "720"
@@ -336,6 +339,7 @@ bool CMediaRiffle::Request(const CStdString& server, const CStdString& token, co
 	curl_easy_setopt(h, CURLOPT_HTTPHEADER, headers);
 	curl_easy_setopt(h, CURLOPT_NOSIGNAL, 1L);
 	curl_easy_setopt(h, CURLOPT_ERRORBUFFER, error);
+	curl_easy_setopt(h, CURLOPT_SOCKOPTFUNCTION, xbmc_curl_sockopt_cb);
 	// As CCurlFile: the console has no certificate store
 	curl_easy_setopt(h, CURLOPT_SSL_VERIFYPEER, 0L);
 	curl_easy_setopt(h, CURLOPT_SSL_VERIFYHOST, 0L);
