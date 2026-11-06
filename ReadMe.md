@@ -21,6 +21,11 @@ What it adds:
   up and the video libraries, streamed the same way.
 - **Network shares** that can be written to, and signed in to with a domain account (`DOMAIN\name` or
   `name@domain`), with file sizes and dates in their listings.
+- **Games for other consoles** in Games, next to Xbox 360 games: NES, SNES, Genesis, Master System, Game Gear, Sega CD,
+  32X, Game Boy (Color, Advance), N64, PlayStation, PC Engine, Neo Geo Pocket, WonderSwan, Lynx and Virtual Boy. They
+  play in [Salvia](https://github.com/danibiker/Salvia)'s emulators, an XEX for each, which 360 Riffle starts with the
+  game. A game on a share is copied to the console first, as the emulators read the console's drives only. The system
+  comes from the extension, or the folder's name for ones that many systems use (a `.zip` in `Genesis`).
 - **HLS playback**: `.m3u8` streams over HTTP play (the bundled FFmpeg has no HLS demuxer of its own).
 - **Show all videos** in a folder and the folders below it as one list, **Shuffle** for any folder in Videos, the
   console's own keyboard for typing, controller shortcuts on the on-screen keyboard, filled-in System info pages, and
@@ -31,6 +36,13 @@ its address (as `https://…` or with port 443 for HTTPS). The console then link
 a code to enter at the server's `/link` in a browser where you're signed in, and Jellyfin a Quick Connect code to enter
 in your Jellyfin profile (or asks for a name and password where Quick Connect is off). Sources can be changed, removed
 or signed out of on the same page.
+
+To play games for other consoles, unzip Salvia-360 from [Salvia's releases](https://github.com/danibiker/Salvia/releases)
+to a folder at the top of the hard drive or a USB drive, or one folder down (`Hdd1:\Salvia`, `Usb0:\Emulators\Salvia`),
+with the BIOS files its readme lists in its `system` folder (PlayStation games need `SCPH1001.BIN`). Then add the
+folder with your games as a Games source. Leaving Salvia goes to the console's default dashboard, so set 360 Riffle as
+that (`DashXex` in SoftmodExtras.ini with Peer Pressure) to come back to it. DS, 3DS, PSP, PS2, GameCube, Wii,
+Dreamcast and Saturn games are listed too, but no emulator for them runs on the 360 yet.
 
 To install a build, copy `xbmc360\Release\xbmc360.xex` to the console as `default.xex` (in
 `Hdd1:\PeerPressure\360riffle` with the Peer Pressure softmod), with the `language`, `media`, `scripts`, `system` and
