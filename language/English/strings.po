@@ -9191,7 +9191,43 @@ msgctxt "#33578"
 msgid "There's no %s game in this zip."
 msgstr ""
 
-#empty strings from id 33579 to 34004
+msgctxt "#33579"
+msgid "Looking at the game's files"
+msgstr ""
+
+msgctxt "#33580"
+msgid "Games on the console"
+msgstr ""
+
+msgctxt "#33581"
+msgid "%s of saves"
+msgstr ""
+
+msgctxt "#33582"
+msgid "%d emulator games"
+msgstr ""
+
+msgctxt "#33583"
+msgid "Free its %s, keeping its saves"
+msgstr ""
+
+msgctxt "#33584"
+msgid "Remove it, saves and all"
+msgstr ""
+
+msgctxt "#33585"
+msgid "Remove the %d emulator games copied to the console? They're copied again when played."
+msgstr ""
+
+msgctxt "#33586"
+msgid "No games have been copied to the console."
+msgstr ""
+
+msgctxt "#33587"
+msgid "Free or remove the console's copy"
+msgstr ""
+
+#empty strings from id 33588 to 34004
 
 msgctxt "#34005"
 msgid "Flac"

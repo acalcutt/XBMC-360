@@ -3,12 +3,12 @@
 #include "utils\Util.h"
 #include "utils\XEXUtils.h"
 #include "guilib\dialogs\GUIDialogMediaSource.h"
-#include "guilib\dialogs\GUIDialogOK.h"
 #include "guilib\GUIWindowManager.h"
 #include "utils\URIUtils.h"
 #include "filesystem\File.h"
 #include "utils\TimeUtils.h"
 #include "xbox\Emulators.h"
+#include "xbox\GameCopy.h"
 
 using namespace XFILE;
 
@@ -124,7 +124,18 @@ bool CGUIWindowPrograms::GetDirectory(const CStdString &strDirectory, CFileItemL
 //	m_database.BeginTransaction();
 	DWORD dwTick = CTimeUtils::timeGetTime();
 	bool bProgressVisible = false;
-	
+
+	// A folder with a game in it shows as the game. Finding out means a look in
+	// each folder, which on a share is a trip over the network each: there, only
+	// in a folder of no more than 50 folders
+	int iFolders = 0;
+	for (int i = 0; i < items.Size(); i++)
+	{
+		if (items[i]->m_bIsFolder && !items[i]->IsParentFolder())
+			iFolders++;
+	}
+	bool bLookInFolders = URIUtils::IsHD(strDirectory) || iFolders <= 50;
+
 	for (int i = 0; i < items.Size(); i++)
 	{
 		CStdString shortcutPath;
@@ -147,12 +158,10 @@ bool CGUIWindowPrograms::GetDirectory(const CStdString &strDirectory, CFileItemL
 			m_dlgProgress->Progress();
 		}
 
-		if (item->m_bIsFolder && !item->IsParentFolder()/* && !item->IsPlugin()*/ && URIUtils::IsHD(item->GetPath()))
+		if (item->m_bIsFolder && !item->IsParentFolder()/* && !item->IsPlugin()*/ && bLookInFolders)
 		{
 			// Folder item - let's check for a default.xex (an Xbox 360 game or app,
-			// as copied from a disc) or default.xbe file, and flatten if we have one.
-			// Only on the console's drives: one on a share can't be started, and
-			// asking every folder there would slow the listing
+			// as copied from a disc) or default.xbe file, and flatten if we have one
 			CStdString defaultXEX, defaultXBE;
 			URIUtils::AddFileToFolder(item->GetPath(), "default.xex", defaultXEX);
 			URIUtils::AddFileToFolder(item->GetPath(), "default.xbe", defaultXBE);
@@ -285,6 +294,9 @@ void CGUIWindowPrograms::GetContextButtons(int itemNumber, CContextButtons &butt
 		}
 		else
 		{
+			// A game on a share that's been copied to the console: its copy can be freed or removed
+			if (item->IsXEX() && !URIUtils::IsHD(item->GetPath()) && CGameCopy::HasCopy(item->GetPath()))
+				buttons.Add(CONTEXT_BUTTON_DELETE, 33587);
 #if 0 // TODO: OG Xbox stuff to be modded to suit 360
 			if (item->IsXBE() || item->IsShortCut())
 			{
@@ -417,6 +429,11 @@ bool CGUIWindowPrograms::OnContextButton(int itemNumber, CONTEXT_BUTTON button)
 		OnClick(itemNumber);
 		return true;
 
+		case CONTEXT_BUTTON_DELETE: // The console's copy of a game on a share
+		if (item)
+			CGameCopy::ManageCopy(item->GetPath());
+		return true;
+
 /*		case CONTEXT_BUTTON_GAMESAVES: // TODO
 		{
 			CStdString strTitleID;
@@ -455,10 +472,11 @@ bool CGUIWindowPrograms::OnPlayMedia(int iItem) // TODO - Get more info from the
 		return true;
 	}
 
-	// The console only starts games from its own drives
+	// The console only starts games from its own drives: one on a share is
+	// copied to the console and started from there
 	if (!URIUtils::IsHD(pItem->GetPath()))
 	{
-		CGUIDialogOK::ShowAndGetInput(33560, 33566, 0, 0);
+		CGameCopy::Play(*pItem);
 		return true;
 	}
 

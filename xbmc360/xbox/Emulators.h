@@ -35,6 +35,9 @@ public:
 	static bool HoldsSeveralGames(const CStdString& strPath);
 	// The zip:// folder a .zip opens as
 	static CStdString ZipFolder(const CStdString& strZip);
+	// A path of ours as it is on the console's drives, for another program: D:\ (and game:\) is where 360 Riffle
+	// is, which another program would take for its own folder
+	static CStdString ConsolePath(const CStdString& strPath);
 
 	virtual bool OnFileCallback(void* pContext, int ipercent, float avgSpeed);
 
@@ -50,7 +53,6 @@ private:
 
 	static CStdString FindCore(int iSystem);
 	static CStdString MainEntry(const CStdString& strZip, int iSystem);
-	static CStdString ConsolePath(const CStdString& strPath);
 	static CStdString ForEmulator(const CStdString& strPath);
 	static CStdString SafeName(const CStdString& strName, const CStdString& strFrom);
 	static void ShowMessage(int iLine, const CStdString& strDetail);
