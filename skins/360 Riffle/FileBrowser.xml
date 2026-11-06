@@ -56,9 +56,10 @@
 					<height>225</height>
 					<itemgap>5</itemgap>
 					<orientation>vertical</orientation>
+					<!-- Up from OK goes back to the list above, as left and right do -->
 					<onleft>450</onleft>
 					<onright>450</onright>
-					<onup>9000</onup>
+					<onup>450</onup>
 					<ondown>9000</ondown>
 					<control type="button" id="413">
 						<description>OK button</description>
@@ -114,6 +115,7 @@
 					<texture background="true" flipx="true">$INFO[ListItem.Icon]</texture> 
 					<visible>SubString(Control.GetLabel(416),*)</visible> 
 				</control>
+				<!-- Down past the list's last item goes to the buttons below it, as left does -->
 				<control type="panel" id="450">
 					<posx>20</posx>
 					<posy>120</posy>
@@ -122,7 +124,7 @@
 					<onleft>9000</onleft>
 					<onright>60</onright>
 					<onup>450</onup>
-					<ondown>450</ondown>
+					<ondown>9000</ondown>
 					<pagecontrol>60</pagecontrol>
 					<scrolltime>200</scrolltime>
 					<itemlayout height="40" width="640">
@@ -197,7 +199,7 @@
 					<onleft>9000</onleft>
 					<onright>60</onright>
 					<onup>451</onup>
-					<ondown>451</ondown>
+					<ondown>9000</ondown>
 					<pagecontrol>60</pagecontrol>
 					<scrolltime>200</scrolltime>
 					<itemlayout height="40" width="640">

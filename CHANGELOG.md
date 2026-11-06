@@ -15,6 +15,9 @@
 
 ### 🐞 Bug fixes
 - _...Add new stuff here..._
+- **Choosing a folder** (to copy a disc, save an ISO, move a game): New folder asks for a name and opens the new folder,
+  instead of doing nothing; Down past the end of the list reaches OK, which had taken Left; and OK no longer leaves a
+  file named `1` behind in the folder it checks can be written to.
 - **Web server**: `/vfs/` only hands out files in your Videos, Music, Pictures and Games sources. Before, anyone on the
   network could fetch any file the console can read through it, 360 Riffle's settings with share passwords and server
   sign-ins too, as the web server is on by default without a password. Its setting says 360 Riffle, not XBMC.
