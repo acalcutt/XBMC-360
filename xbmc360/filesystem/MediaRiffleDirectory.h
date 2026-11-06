@@ -10,8 +10,12 @@ namespace XFILE
 
 // A MediaRiffle server's video libraries, as the web app lists them (network\MediaRiffle.h). Under its source,
 // mediariffle://host:port/ (mediariffles:// over HTTPS):
-//   <source>                       Continue watching, and each Shows or Movies library
+//   <source>                       Continue watching, Categories, My lists, and each Shows or Movies library
 //   <source>continue/              what was stopped part way, most recent first
+//   <source>categories/            the categories everyone sees (the libraries' tags, and lists made categories)
+//   <source>category/<tag>/        the shows and movies in one (the tag URL-encoded)
+//   <source>lists/                 the user's own lists, Favorites first
+//   <source>list/<tag>/            the shows and movies on one
 //   <source>shows/<library>/       its shows
 //   <source>show/<show>/           its seasons (or, with only one, its episodes)
 //   <source>show/<show>/<season>/  that season's episodes
@@ -35,7 +39,12 @@ private:
 	bool GetSources(CFileItemList &items);
 	bool Get(const CStdString& path, CVariant& answer);
 	void AddRoot(CFileItemList &items);
+	void AddFolder(const CStdString& label, const CStdString& path, CFileItemList &items, const CStdString& label2 = "");
 	void AddContinue(CFileItemList &items);
+	bool AddTags(const CStdString& kind, CFileItemList &items);
+	bool AddTagged(const CStdString& kind, const CStdString& tag, CFileItemList &items);
+	void AddShowTiles(const CVariant& shows, CFileItemList &items);
+	void AddMovieTiles(const CVariant& movies, CFileItemList &items);
 	bool AddShows(const CStdString& library, CFileItemList &items);
 	bool AddShow(const CStdString& show, const CStdString& season, CFileItemList &items);
 	bool AddMovies(const CStdString& library, CFileItemList &items);

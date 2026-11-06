@@ -8773,7 +8773,26 @@ msgctxt "#33523"
 msgid "%s, part %d"
 msgstr ""
 
-#empty strings from id 33524 to 33529
+msgctxt "#33524"
+msgid "Categories"
+msgstr ""
+
+msgctxt "#33525"
+msgid "My lists"
+msgstr ""
+
+#empty strings from id 33526 to 33526
+
+#. How much is in a category (its files) or on a list (its shows and movies)
+msgctxt "#33527"
+msgid "%d files"
+msgstr ""
+
+msgctxt "#33528"
+msgid "%d items"
+msgstr ""
+
+#empty strings from id 33529 to 33529
 
 #. Add network location: the protocols
 msgctxt "#33530"

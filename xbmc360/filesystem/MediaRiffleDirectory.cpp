@@ -54,12 +54,16 @@ bool CMediaRiffleDirectory::GetDirectory(const CStdString& strPath, CFileItemLis
 		AddContinue(items);
 		return true;
 	}
+	if (kind.Equals("categories") || kind.Equals("lists"))
+		return AddTags(kind, items);
 	if (parts.size() < 2)
 	{
 		AddRoot(items);
 		return true;
 	}
 
+	if (kind.Equals("category") || kind.Equals("list"))
+		return AddTagged(kind, parts[1], items);
 	if (kind.Equals("shows"))
 		return AddShows(parts[1], items);
 	if (kind.Equals("show"))
@@ -134,13 +138,22 @@ CStdString CMediaRiffleDirectory::Image(const CVariant& image) const
 	return m_source + "image/" + path.Mid(12);
 }
 
+// A folder on this server: its path from the source
+void CMediaRiffleDirectory::AddFolder(const CStdString& label, const CStdString& path, CFileItemList &items, const CStdString& label2)
+{
+	CFileItemPtr item(new CFileItem(label));
+	item->SetPath(m_source + path);
+	item->m_bIsFolder = true;
+	item->SetLabel2(label2);
+	item->SetLabelPreformated(true);
+	items.Add(item);
+}
+
 void CMediaRiffleDirectory::AddRoot(CFileItemList &items)
 {
-	CFileItemPtr resume(new CFileItem(g_localizeStrings.Get(33520)));
-	resume->SetPath(m_source + "continue/");
-	resume->m_bIsFolder = true;
-	resume->SetLabelPreformated(true);
-	items.Add(resume);
+	AddFolder(g_localizeStrings.Get(33520), "continue/", items);
+	AddFolder(g_localizeStrings.Get(33524), "categories/", items);
+	AddFolder(g_localizeStrings.Get(33525), "lists/", items);
 
 	// Its video libraries (music has its own place)
 	CVariant libraries;
@@ -183,12 +196,54 @@ void CMediaRiffleDirectory::AddContinue(CFileItemList &items)
 	items.SetContent("episodes");
 }
 
+// The categories (/api/tags: { tag, files }) or the user's lists (/api/lists: { tag, items }), a folder each
+bool CMediaRiffleDirectory::AddTags(const CStdString& kind, CFileItemList &items)
+{
+	bool categories = kind.Equals("categories");
+	CVariant tags;
+	if (!Get(categories ? "/api/tags" : "/api/lists", tags))
+		return false;
+
+	for (unsigned int i = 0; i < tags.size(); i++)
+	{
+		CStdString tag = tags[i]["tag"].asString();
+		CStdString encoded = tag;
+		CURL::Encode(encoded);
+
+		CStdString count;
+		count.Format(g_localizeStrings.Get(categories ? 33527 : 33528).c_str(),
+			(int)tags[i][categories ? "files" : "items"].asInteger());
+		AddFolder(tag, CStdString(categories ? "category/" : "list/") + encoded + "/", items, count);
+	}
+	return true;
+}
+
+// What's in a category or on a list: its shows and movies (music has its own place)
+bool CMediaRiffleDirectory::AddTagged(const CStdString& kind, const CStdString& tag, CFileItemList &items)
+{
+	CVariant tagged;
+	if (!Get(CStdString(kind.Equals("category") ? "/api/tags/" : "/api/lists/") + tag, tagged))
+		return false;
+
+	AddShowTiles(tagged["shows"], items);
+	AddMovieTiles(tagged["movies"], items);
+	return true;
+}
+
 bool CMediaRiffleDirectory::AddShows(const CStdString& library, CFileItemList &items)
 {
 	CVariant shows;
 	if (!Get("/api/libraries/" + library + "/shows", shows))
 		return false;
 
+	AddShowTiles(shows, items);
+	items.SetContent("tvshows");
+	return true;
+}
+
+// Shows as the server lists them (ShowTiles): a folder each, with how many episodes, leaving out those the user hid
+void CMediaRiffleDirectory::AddShowTiles(const CVariant& shows, CFileItemList &items)
+{
 	for (unsigned int i = 0; i < shows.size(); i++)
 	{
 		const CVariant& show = shows[i];
@@ -207,8 +262,6 @@ bool CMediaRiffleDirectory::AddShows(const CStdString& library, CFileItemList &i
 		item->SetThumbnailImage(Image(show["image"]));
 		items.Add(item);
 	}
-	items.SetContent("tvshows");
-	return true;
 }
 
 // A show's seasons; or a season's episodes; or, when there's only the one season, its episodes straight away
@@ -278,6 +331,15 @@ bool CMediaRiffleDirectory::AddMovies(const CStdString& library, CFileItemList &
 	if (!Get("/api/libraries/" + library + "/movies", movies))
 		return false;
 
+	AddMovieTiles(movies, items);
+	items.SetContent("movies");
+	return true;
+}
+
+// Movies as the server lists them (MovieTiles), with their year, leaving out those the user hid: one in parts is a
+// folder of them, else the movie plays (its one part, found when it starts)
+void CMediaRiffleDirectory::AddMovieTiles(const CVariant& movies, CFileItemList &items)
+{
 	for (unsigned int i = 0; i < movies.size(); i++)
 	{
 		const CVariant& movie = movies[i];
@@ -292,7 +354,6 @@ bool CMediaRiffleDirectory::AddMovies(const CStdString& library, CFileItemList &
 			label = withYear;
 		}
 
-		// In parts: a folder of them. Else the movie plays (its one part, found when it starts)
 		bool inParts = movie["parts"].asInteger() > 1;
 		CStdString path;
 		path.Format(inParts ? "%smovie/%d/" : "%smovie/%d", m_source.c_str(), (int)movie["id"].asInteger());
@@ -306,8 +367,6 @@ bool CMediaRiffleDirectory::AddMovies(const CStdString& library, CFileItemList &
 			item->SetMimeType("video/mp2t");
 		items.Add(item);
 	}
-	items.SetContent("movies");
-	return true;
 }
 
 bool CMediaRiffleDirectory::AddMovie(const CStdString& movie, CFileItemList &items)
