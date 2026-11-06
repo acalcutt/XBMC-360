@@ -29,13 +29,17 @@ The first version of 360 Riffle, from [XBMC-360](https://github.com/brentdc-nz/X
 - **Games for other consoles** (NES to PlayStation) play in [Salvia](https://github.com/danibiker/Salvia)'s emulators,
   copied to the console from a share first. Zipped games unzip on the console.
 - **Xbox 360 games and homebrew on a share** are copied to the console to play, and kept with their saves. The games
-  played longest ago are freed when space runs low, and System info > Games on the console shows each copy's size.
+  played longest ago are freed when space runs low, and Settings > System info > Games on the console shows each
+  copy's size.
 - **On this console** in Games: the games copied to the console, to play without their share or disc.
 - **Videos**: Show all videos in a folder and its folders as one list, Shuffle a folder, play HLS (`.m3u8`) streams,
   and skip to the previous or next video with LB and RB.
-- **Update from USB** in System info installs a new build without the softmod's installer.
+- **Settings** has System info in place of the System page, whose few settings are with the others like them (the TV
+  aspect and turning the console off under Appearance, the player's audio and cache under Videos), and each page says
+  what's on it.
+- **Update from USB** in Settings > System info installs a new build without the softmod's installer.
 - **Releases** on GitLab, each with a zip to unzip at the top of a USB drive for Update from USB.
-- **Save diagnostics to USB** in System info (never passwords or tokens), and filled-in System info pages.
+- **Save diagnostics to USB** in Settings > System info (never passwords or tokens), and filled-in System info pages.
 - **Typing** with the console's own keyboard, and controller shortcuts on the on-screen keyboard.
 
 ### 🐞 Bug fixes

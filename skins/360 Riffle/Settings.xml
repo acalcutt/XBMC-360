@@ -129,9 +129,9 @@
 						<icon>-</icon>
 					</item>
 					<item id="8">
-						<label>13000</label>
+						<label>31975</label>
 						<label2>31406</label2>
-						<onclick>ActivateWindow(SystemSettings)</onclick>
+						<onclick>ActivateWindow(SystemInfo)</onclick>
 						<icon>-</icon>
 					</item>
 				</content>

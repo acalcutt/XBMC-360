@@ -209,29 +209,21 @@ void CGUISettings::Initialize()
 	AddCategory(3, "musicfiles", 14081);
 	AddBool(1, "musicfiles.usetags", 258, true);
 
-	// System settings
-	AddGroup(4, 13000);
-	AddCategory(4, "videooutput", 21373);
-	AddInt(1, "videooutput.aspect", 21374, VIDEO_NORMAL, VIDEO_NORMAL, 1, VIDEO_WIDESCREEN, SPIN_CONTROL_TEXT);
+	// No System group (4): Settings has System info in its place, and the system's settings are with the others like
+	// them. Video settings: playback, with the video player's audio and cache
+	AddGroup(5, 3);
+	AddCategory(5, "videoplayer", 14086);
+	AddInt(1, "videoplayer.resumeautomatically", 12017, RESUME_ASK, RESUME_NO, 1, RESUME_ASK, SPIN_CONTROL_TEXT);
 
-	AddCategory(4, "audiooutput", 772);
+	AddCategory(5, "audiooutput", 772);
 	AddBool(10, "audiooutput.downmixmultichannel", 548, true);
 
-	AddCategory(4, "dvdplayercache", 483);
+	AddCategory(5, "dvdplayercache", 483);
 	AddInt(1, "dvdplayercache.video", 14096, 1024, 0, 256, 16384, SPIN_CONTROL_INT_PLUS, MASK_KB, TEXT_OFF);
 	AddInt(2, "dvdplayercache.videotime", 14097, 8, 0, 1, 30, SPIN_CONTROL_INT_PLUS, MASK_SECS);
 	AddSeparator(3, "dvdplayercache.sep1");
 	AddInt(4, "dvdplayercache.audio", 14098, 384, 0, 128, 4096, SPIN_CONTROL_INT_PLUS, MASK_KB, TEXT_OFF);
 	AddInt(5, "dvdplayercache.audiotime", 14099, 8, 0, 1, 30, SPIN_CONTROL_INT_PLUS, MASK_SECS);
-
-	// System settings
-	AddCategory(4, "system", 13000);
-	AddInt(1, "system.shutdowntime", 357, 0, 0, 5, 120, SPIN_CONTROL_INT_PLUS, MASK_MINS, TEXT_OFF);
-
-	// Video settings
-	AddGroup(5, 3);
-	AddCategory(5, "videoplayer", 14086);
-	AddInt(1, "videoplayer.resumeautomatically", 12017, RESUME_ASK, RESUME_NO, 1, RESUME_ASK, SPIN_CONTROL_TEXT);
 
 	// Network settings
 	AddGroup(6, 705);
@@ -261,6 +253,9 @@ void CGUISettings::Initialize()
 	AddCategory(7, "videoscreen", 131);
 	AddInt(1, "videoscreen.resolution",169,(int)AUTORES, (int)HDTV_1080p, 1, (int)AUTORES, SPIN_CONTROL_TEXT);
 
+	AddCategory(7, "videooutput", 21373);
+	AddInt(1, "videooutput.aspect", 21374, VIDEO_NORMAL, VIDEO_NORMAL, 1, VIDEO_WIDESCREEN, SPIN_CONTROL_TEXT);
+
 	AddCategory(7, "filelists", 14081);
 	AddBool(1, "filelists.showparentdiritems", 13306, true);
 	AddBool(2, "filelists.showextensions", 497, true);
@@ -274,6 +269,9 @@ void CGUISettings::Initialize()
 	AddCategory(7, "screensaver", 360);
 	AddInt(1, "screensaver.time", 355, 3, 1, 1, 60, SPIN_CONTROL_INT_PLUS, MASK_MINS);
 	AddString(2, "screensaver.mode", 356, "Plasma", SPIN_CONTROL_TEXT);
+
+	AddCategory(7, "system", 14095);
+	AddInt(1, "system.shutdowntime", 357, 0, 0, 5, 120, SPIN_CONTROL_INT_PLUS, MASK_MINS, TEXT_OFF);
 }
 
 void CGUISettings::AddGroup(int groupID, int labelID)

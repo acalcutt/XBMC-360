@@ -31,7 +31,8 @@ What it adds:
 - **Xbox 360 games and homebrew on a share**: playing one copies its folder to the console and starts it there, as
   the console only starts games from its own drives. The copy stays, with any saves it keeps in its folder; playing
   again copies only what's new. When a copy would leave under 2 GB, the games played longest ago lose their game files
-  (not their saves), and **System info > Games on the console** shows each copy's size, to free or remove it.
+  (not their saves), and **Settings > System info > Games on the console** shows each copy's size, to free or remove
+  it.
 - **HLS playback**: `.m3u8` streams over HTTP play (the bundled FFmpeg has no HLS demuxer of its own).
 - **Show all videos** in a folder and the folders below it as one list, **Shuffle** for any folder in Videos, the
   console's own keyboard for typing, controller shortcuts on the on-screen keyboard, filled-in System info pages, and
@@ -58,9 +59,9 @@ Pressure softmod, from an empty stick.
 To install a build, copy `xbmc360\Release\xbmc360.xex` to the console as `default.xex` (in
 `Hdd1:\PeerPressure\360riffle` with the Peer Pressure softmod), with the `language`, `media`, `scripts`, `system` and
 `web` folders and `skins\360 Riffle` beside it. Leave out `settings.xml`, which holds the console's own settings.
-Once it's installed, newer builds can go in from **System info > Update from USB**, from the same bundle on a USB
-drive (in `BadUpdatePayload\SoftmodExtras\360riffle`, where it's staged for Peer Pressure, or a `360riffle` folder at
-the top of the drive), without going through the softmod's installer.
+Once it's installed, newer builds can go in from **Settings > System info > Update from USB**, from the same bundle on
+a USB drive (in `BadUpdatePayload\SoftmodExtras\360riffle`, where it's staged for Peer Pressure, or a `360riffle`
+folder at the top of the drive), without going through the softmod's installer.
 
 The version is `APP_VERSION` in [xbmc360/CompileInfo.h](xbmc360/CompileInfo.h), shown in System info and at the top
 of the log. [CHANGELOG.md](CHANGELOG.md) says what each version brings, with what's changed since the last one under

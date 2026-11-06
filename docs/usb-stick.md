@@ -3,7 +3,7 @@
 360 Riffle goes onto a console softmodded with [Peer Pressure](https://github.com/grimdoomer/Xbox360PeerPressure)
 (Grimdoomer's softmod) from a USB stick. The stick starts Peer Pressure's installer, and carries what that installer
 can put on the console: 360 Riffle, Salvia's emulators and other homebrew. 360 Riffle also installs updates from it
-(System info > Update from USB) and saves diagnostics to it.
+(Settings > System info > Update from USB) and saves diagnostics to it.
 
 Peer Pressure stays on the console once installed, so the stick is only needed to install or update things.
 
@@ -124,6 +124,6 @@ Riffle**, which becomes the homebrew dashboard, and **Salvia**.
 
 ## Updating 360 Riffle
 
-Build, run `tools\Stage-UsbStick.ps1` again, plug the stick into the console and choose **System info > Update from
-USB**. It says when the build on the stick was made, installs it if you say so, and starts 360 Riffle again. The
-installer's 360 Riffle entry does the same job, the long way round.
+Build, run `tools\Stage-UsbStick.ps1` again, plug the stick into the console and choose **Settings > System info >
+Update from USB**. It says when the build on the stick was made, installs it if you say so, and starts 360 Riffle
+again. The installer's 360 Riffle entry does the same job, the long way round.

@@ -7,8 +7,8 @@ every merge request and push to main, and makes a release of each new version.
 ## What a release has
 
 - `360Riffle-v<version>.zip`: the bundle as a `360riffle` folder. Unzip it at the top of a USB drive, plug that into
-  the console, and choose **System info > Update from USB**. For a new install with Peer Pressure, the folder goes on
-  the stick as `BadUpdatePayload\SoftmodExtras\360riffle` instead ([usb-stick.md](usb-stick.md)).
+  the console, and choose **Settings > System info > Update from USB**. For a new install with Peer Pressure, the
+  folder goes on the stick as `BadUpdatePayload\SoftmodExtras\360riffle` instead ([usb-stick.md](usb-stick.md)).
 - `SHA256SUMS`, to check the zip against.
 - The version's notes, from its section of CHANGELOG.md.
 

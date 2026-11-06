@@ -598,15 +598,15 @@ msgstr ""
 #Description Labels
 
 msgctxt "#31400"
-msgid "[B]CONFIGURE APPEARANCE SETTINGS[/B][CR][CR]Change the skin · Set language and region · Change file listing options[CR]Set up a screensaver"
+msgid "[B]CONFIGURE APPEARANCE SETTINGS[/B][CR][CR]Change the skin · Set language and region · Set the screen resolution and TV aspect[CR]Change file listing options · Set up a screensaver · Turn the console off when idle"
 msgstr ""
 
 msgctxt "#31401"
-msgid "[B]CONFIGURE VIDEO SETTINGS[/B][CR][CR]Manage your video library · Set video playback options · Change video listing options[CR]Set subtitle fonts"
+msgid "[B]CONFIGURE VIDEO SETTINGS[/B][CR][CR]Resume videos where they stopped · Downmix surround sound to stereo[CR]Set the video player's cache"
 msgstr ""
 
 msgctxt "#31402"
-msgid "[B]CONFIGURE MUSIC SETTINGS[/B][CR][CR]Manage your music library · Set music playback options · Change music listing options[CR]Setup song submission · Set karaoke options"
+msgid "[B]CONFIGURE MUSIC SETTINGS[/B][CR][CR]Crossfade between songs · Choose the visualisation · Read song tags"
 msgstr ""
 
 msgctxt "#31403"
@@ -618,11 +618,11 @@ msgid "[B]CONFIGURE WEATHER SETTINGS[/B][CR][CR]Set three cities to collect weat
 msgstr ""
 
 msgctxt "#31405"
-msgid "[B]CONFIGURE NETWORK SETTINGS[/B][CR][CR]Setup control of XBMC via UPnP and HTTP · Configure file sharing[CR]Enable Zeroconf · Configure AirPlay"
+msgid "[B]CONFIGURE NETWORK SETTINGS[/B][CR][CR]Turn on the web server, to control 360 Riffle from a browser · Set its port, name and password"
 msgstr ""
 
 msgctxt "#31406"
-msgid "[B]CONFIGURE SYSTEM SETTINGS[/B][CR][CR]Setup and calibrate displays · Configure audio output · Setup remote controls[CR]Set power saving options · Enable debugging · Setup master lock"
+msgid "[B]SYSTEM INFO[/B][CR][CR]See the console's memory, storage, network and video · Save diagnostics to USB[CR]Update from USB · Free or play the games copied to the console"
 msgstr ""
 
 msgctxt "#31407"
@@ -821,16 +821,12 @@ msgctxt "#31975"
 msgid "System info"
 msgstr ""
 
-msgctxt "#31976"
-msgid "Memory, network and storage"
-msgstr ""
-
 msgctxt "#31977"
 msgid "Restart or turn off"
 msgstr ""
 
 msgctxt "#31978"
-msgid "Appearance, video, network and more"
+msgid "Appearance, video, network and system info"
 msgstr ""
 
 msgctxt "#31979"
