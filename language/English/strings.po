@@ -4466,7 +4466,11 @@ msgctxt "#13241"
 msgid "Open or close the tray"
 msgstr ""
 
-#empty strings from id 13242 to 13248
+msgctxt "#13242"
+msgid "On this console"
+msgstr ""
+
+#empty strings from id 13243 to 13248
 
 msgctxt "#13249"
 msgid "Search for subtitles in RARs"

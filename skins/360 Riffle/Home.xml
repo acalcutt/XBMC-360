@@ -138,7 +138,8 @@
 			</control>
 		</control>
 
-		<!-- The focused tab: its name, and its tiles -->
+		<!-- The focused tab: its name, and its tiles. Videos, Games, Music and Pictures (9101-9104) are their sources,
+		     filled by the window (GUIWindowHome); the Disc, Files and Settings tiles are these -->
 		<control type="group" id="9001">
 			<posx>0</posx>
 			<posy>144</posy>
@@ -182,51 +183,18 @@
 			<control type="list" id="9101">
 				<include>HomeTileRow</include>
 				<visible>Container(9000).HasFocus(1)</visible>
-				<content>
-					<item>
-						<label>31981</label>
-						<label2>31982</label2>
-						<onclick>ActivateWindow(Videos,mediariffle://,return)</onclick>
-					</item>
-					<item>
-						<label>31966</label>
-						<label2>31967</label2>
-						<onclick>ActivateWindow(Videos)</onclick>
-					</item>
-				</content>
 			</control>
 			<control type="list" id="9102">
 				<include>HomeTileRow</include>
 				<visible>Container(9000).HasFocus(2)</visible>
-				<content>
-					<item>
-						<label>31968</label>
-						<label2>31969</label2>
-						<onclick>ActivateWindow(Programs)</onclick>
-					</item>
-				</content>
 			</control>
 			<control type="list" id="9103">
 				<include>HomeTileRow</include>
 				<visible>Container(9000).HasFocus(3)</visible>
-				<content>
-					<item>
-						<label>31972</label>
-						<label2>31967</label2>
-						<onclick>ActivateWindow(Music)</onclick>
-					</item>
-				</content>
 			</control>
 			<control type="list" id="9104">
 				<include>HomeTileRow</include>
 				<visible>Container(9000).HasFocus(4)</visible>
-				<content>
-					<item>
-						<label>31963</label>
-						<label2>31967</label2>
-						<onclick>ActivateWindow(Pictures)</onclick>
-					</item>
-				</content>
 			</control>
 			<control type="list" id="9105">
 				<include>HomeTileRow</include>
