@@ -4,12 +4,12 @@
 #include "Settings.h"
 #include "URL.h"
 #include "filesystem\Directory.h"
+#include "filesystem\SMBDirectory.h"
 #include "guilib\GUIWindowManager.h"
 #include "guilib\Key.h"
 #include "guilib\LocalizeStrings.h"
 #include "guilib\dialogs\GUIDialogFileBrowser.h"
 #include "guilib\dialogs\GUIDialogKeyboard.h"
-#include "guilib\dialogs\GUIDialogMediaSource.h"
 #include "guilib\dialogs\GUIDialogNetworkSetup.h"
 #include "guilib\dialogs\GUIDialogSelect.h"
 #include "guilib\dialogs\GUIDialogYesNo.h"
@@ -183,33 +183,20 @@ bool CGUIWindowSources::ShowAndAddSource(const CStdString& type)
 		place = places[chosen];
 	}
 
-	if (place == PLACE_MEDIARIFFLE || place == PLACE_JELLYFIN)
-		return AddServer(place == PLACE_MEDIARIFFLE);
-
+	// A server holds videos, and is named for the kind it is
 	CStdString path;
-	if (place == PLACE_SHARE)
+	if (place == PLACE_MEDIARIFFLE || place == PLACE_JELLYFIN)
 	{
-		// A Windows share: its server, folder and sign-in, until it opens or they give up
-		path = "smb://";
-		for (;;)
-		{
-			if (!CGUIDialogNetworkSetup::ShowAndGetNetworkAddress(path, true) || CURL(path).GetHostName().IsEmpty())
-				return false;
-
-			CFileItemList items;
-			if (CDirectory::GetDirectory(path, items, "", false))
-				break;
-			if (!CGUIDialogYesNo::ShowAndGetInput(13192, 13194, 13195, 0))
-				return false;
-		}
-	}
-	else
-	{
-		VECSOURCES drives;
-		g_mediaManager.GetLocalDrives(drives);
-		if (!CGUIDialogFileBrowser::ShowAndGetDirectory(drives, g_localizeStrings.Get(13193), path))
+		CStdString name = g_localizeStrings.Get(place == PLACE_MEDIARIFFLE ? 33500 : 33540);
+		if (!AskServer(place == PLACE_MEDIARIFFLE, path) || !AskName(name))
 			return false;
+
+		AddSource("video", name, path, false);
+		return true;
 	}
+
+	if (place == PLACE_SHARE ? !AskShare(path) : !AskFolder(path))
+		return false;
 
 	CStdString kind = type;
 	if (kind.IsEmpty() && !ChooseType(place == PLACE_CONSOLE, kind))
@@ -218,7 +205,7 @@ bool CGUIWindowSources::ShowAndAddSource(const CStdString& type)
 	CStdString name = CURL(path).GetWithoutUserDetails();
 	URIUtils::RemoveSlashAtEnd(name);
 	name = URIUtils::GetFileName(name);
-	if (!CGUIDialogKeyboard::ShowAndGetInput(name, g_localizeStrings.Get(13199), false))
+	if (!AskName(name))
 		return false;
 
 	bool allowWrite = CMediaSource::CanWriteTo(path) && CGUIDialogYesNo::ShowAndGetInput(13196, 13197, 0, 0);
@@ -226,30 +213,109 @@ bool CGUIWindowSources::ShowAndAddSource(const CStdString& type)
 	return true;
 }
 
-// A MediaRiffle or Jellyfin server: its address, then linking (with a code) or signing in straight away. It's a source
-// of videos, named for the server.
-bool CGUIWindowSources::AddServer(bool mediaRiffle)
+bool CGUIWindowSources::AskServer(bool mediaRiffle, CStdString& path)
 {
-	CStdString path = mediaRiffle ? "mediariffle://" : "jellyfin://";
+	if (path.IsEmpty())
+		path = mediaRiffle ? "mediariffle://" : "jellyfin://";
 	if (!CGUIDialogNetworkSetup::ShowAndGetNetworkAddress(path, true))
 		return false;
 
 	CStdString server = mediaRiffle ? CMediaRiffle::ServerOf(path) : CJellyfin::ServerOf(path);
-	CStdString source = mediaRiffle ? CMediaRiffle::SourceOf(path) : CJellyfin::SourceOf(path);
 	if (server.IsEmpty())
 		return false;
 
+	// Linked or signed in already (the same server, changing its name), or straight away
 	bool ready = mediaRiffle ? (g_mediaRiffle.IsLinked(server) || g_mediaRiffle.Link(server))
 		: (g_jellyfin.IsSignedIn(server) || g_jellyfin.SignIn(server));
 	if (!ready)
 		return false;
 
-	CStdString name = g_localizeStrings.Get(mediaRiffle ? 33500 : 33540);
-	if (!CGUIDialogKeyboard::ShowAndGetInput(name, g_localizeStrings.Get(13199), false))
-		return false;
-
-	AddSource("video", name, source, false);
+	path = mediaRiffle ? CMediaRiffle::SourceOf(path) : CJellyfin::SourceOf(path);
 	return true;
+}
+
+// What a share's error means, for whoever typed its details in
+static int ShareProblem(const CStdString& error)
+{
+	CStdString reason = error;
+	reason.ToUpper();
+
+	if (reason.Find("LOGON_FAILURE") >= 0 || reason.Find("WRONG_PASSWORD") >= 0 || reason.Find("ACCOUNT_RESTRICTION") >= 0)
+		return 13244;
+	if (reason.Find("BAD_NETWORK_NAME") >= 0 || reason.Find("NOT_FOUND") >= 0)
+		return 13245;
+	if (reason.Find("ACCESS_DENIED") >= 0)
+		return 13246;
+	if (reason.Find("CONNECT") >= 0 || reason.Find("RESOLV") >= 0 || reason.Find("ADDRESS") >= 0)
+		return 13247;
+	return 13195;
+}
+
+// A Windows share: its server, folder and sign-in, until it opens or they give up. When it doesn't, why, and back to
+// the details as they were typed, to change what's wrong.
+bool CGUIWindowSources::AskShare(CStdString& path)
+{
+	if (path.IsEmpty())
+		path = "smb://";
+
+	for (;;)
+	{
+		if (!CGUIDialogNetworkSetup::ShowAndGetNetworkAddress(path, true) || CURL(path).GetHostName().IsEmpty())
+			return false;
+
+		CFileItemList items;
+		if (CDirectory::GetDirectory(path, items, "", false))
+			return true;
+
+		if (!CGUIDialogYesNo::ShowAndGetInput(13192, 13194, ShareProblem(CSMBDirectory::GetLastError()), 0, 222, 13243))
+			return false;
+	}
+}
+
+bool CGUIWindowSources::AskFolder(CStdString& path)
+{
+	VECSOURCES drives;
+	g_mediaManager.GetLocalDrives(drives);
+	return CGUIDialogFileBrowser::ShowAndGetDirectory(drives, g_localizeStrings.Get(13193), path);
+}
+
+bool CGUIWindowSources::AskName(CStdString& name)
+{
+	return CGUIDialogKeyboard::ShowAndGetInput(name, g_localizeStrings.Get(13199), false);
+}
+
+// A server's source can move to another server (linking or signing in there); a share's server, folder and sign-in
+// can change, or a folder; then its name, and whether it may be saved to
+void CGUIWindowSources::EditSource(const CStdString& type, const CMediaSource& source)
+{
+	CStdString path = source.strPath;
+	bool mediaRiffle = CMediaRiffle::IsMediaRiffle(path);
+	bool server = mediaRiffle || CJellyfin::IsJellyfin(path);
+
+	if (server)
+	{
+		if (!AskServer(mediaRiffle, path))
+			return;
+	}
+	else if (CURL(path).GetProtocol().Equals("smb"))
+	{
+		if (!AskShare(path))
+			return;
+	}
+	else if (!URIUtils::IsMultiPath(path) && !AskFolder(path))
+		return;
+
+	CStdString name = source.strName;
+	if (!AskName(name))
+		return;
+
+	std::vector<CStdString> paths;
+	paths.push_back(path);
+
+	CMediaSource changed = source;
+	changed.FromNameAndPaths(type, UniqueName(type, name, source.strName), paths);
+	changed.m_allowWrite = !server && CMediaSource::CanWriteTo(changed.strPath) && CGUIDialogYesNo::ShowAndGetInput(13196, 13197, 0, 0);
+	g_settings.UpdateShare(type, source.strName, changed);
 }
 
 bool CGUIWindowSources::ChooseType(bool allowGames, CStdString& type)
@@ -277,18 +343,22 @@ bool CGUIWindowSources::ChooseType(bool allowGames, CStdString& type)
 
 void CGUIWindowSources::AddSource(const CStdString& type, const CStdString& name, const CStdString& path, bool allowWrite)
 {
-	// A name of its own among that kind's sources
-	CStdString unique = name;
-	for (int n = 2; Find(type, unique, ""); n++)
-		unique.Format("%s (%d)", name.c_str(), n);
-
 	std::vector<CStdString> paths;
 	paths.push_back(path);
 
 	CMediaSource source;
-	source.FromNameAndPaths(type, unique, paths);
+	source.FromNameAndPaths(type, UniqueName(type, name, ""), paths);
 	source.m_allowWrite = allowWrite;
 	g_settings.AddShare(type, source);
+}
+
+// A name of its own among that kind's sources (except is the one it's taking over from, when a source is changed)
+CStdString CGUIWindowSources::UniqueName(const CStdString& type, const CStdString& name, const CStdString& except)
+{
+	CStdString unique = name;
+	for (int n = 2; !unique.Equals(except) && Find(type, unique, ""); n++)
+		unique.Format("%s (%d)", name.c_str(), n);
+	return unique;
 }
 
 // A source of a kind by its name, and its path when that's given
@@ -314,7 +384,6 @@ void CGUIWindowSources::OnSource(int item)
 		return;
 	CMediaSource source = *found;
 
-	bool server = CMediaRiffle::IsMediaRiffle(source.strPath) || CJellyfin::IsJellyfin(source.strPath);
 	CStdString mediaRiffle = CMediaRiffle::ServerOf(source.strPath);
 	CStdString jellyfin = CJellyfin::ServerOf(source.strPath);
 	bool canSignOut = (!mediaRiffle.IsEmpty() && g_mediaRiffle.IsLinked(mediaRiffle)) ||
@@ -340,22 +409,8 @@ void CGUIWindowSources::OnSource(int item)
 			return;
 
 		case 1:
-		{
-			// A server's source has just its name to change
-			if (server)
-			{
-				CStdString name = source.strName;
-				if (CGUIDialogKeyboard::ShowAndGetInput(name, g_localizeStrings.Get(13199), false) && !name.Equals(source.strName))
-				{
-					CMediaSource renamed = source;
-					renamed.strName = name;
-					g_settings.UpdateShare(type, source.strName, renamed);
-				}
-			}
-			else
-				CGUIDialogMediaSource::ShowAndEditMediaSource(type, source);
+			EditSource(type, source);
 			break;
-		}
 
 		case 2:
 		{

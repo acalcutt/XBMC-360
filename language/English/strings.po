@@ -4470,7 +4470,27 @@ msgctxt "#13242"
 msgid "On this console"
 msgstr ""
 
-#empty strings from id 13243 to 13248
+msgctxt "#13243"
+msgid "Change details"
+msgstr ""
+
+msgctxt "#13244"
+msgid "The user name or password wasn't accepted."
+msgstr ""
+
+msgctxt "#13245"
+msgid "There's no shared folder by that name there."
+msgstr ""
+
+msgctxt "#13246"
+msgid "That user isn't allowed to open the shared folder."
+msgstr ""
+
+msgctxt "#13247"
+msgid "The server didn't answer: check its name or address."
+msgstr ""
+
+#empty string with id 13248
 
 msgctxt "#13249"
 msgid "Search for subtitles in RARs"

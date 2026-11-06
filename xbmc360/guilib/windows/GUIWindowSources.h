@@ -29,9 +29,19 @@ public:
 private:
 	void Refresh();
 	void OnSource(int item);
-	static bool AddServer(bool mediaRiffle);
+
+	// The steps a source is made from, each starting from what path is (empty for a new one) and giving what it
+	// becomes: a server's address, and linking or signing in; a share's server, folder and sign-in, checked by opening
+	// it; a folder on the console
+	static bool AskServer(bool mediaRiffle, CStdString& path);
+	static bool AskShare(CStdString& path);
+	static bool AskFolder(CStdString& path);
+	static bool AskName(CStdString& name);
 	static bool ChooseType(bool allowGames, CStdString& type);
+	// Changing a source: the same steps, each starting from what it is
+	static void EditSource(const CStdString& type, const CMediaSource& source);
 	static void AddSource(const CStdString& type, const CStdString& name, const CStdString& path, bool allowWrite);
+	static CStdString UniqueName(const CStdString& type, const CStdString& name, const CStdString& except);
 	static CMediaSource* Find(const CStdString& type, const CStdString& name, const CStdString& path);
 
 	CFileItemList* m_items;
