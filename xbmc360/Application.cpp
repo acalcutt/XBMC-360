@@ -30,6 +30,7 @@
 #include "AdvancedSettings.h"
 #include "utils\URIUtils.h"
 #include "utils\Updater.h"
+#include "xbox\DiscDrive.h"
 #include "guilib\SkinInfo.h"
 #include "interfaces\Builtins.h"
 #include "interfaces\json-rpc\JSONRPC.h"
@@ -696,6 +697,9 @@ void CApplication::Process()
 	{
 		m_slowTimer.Reset();
 		ProcessSlow();
+
+		// Straight back after starting a disc's game? Offers the Xbox dashboard (once, with Home up)
+		CDiscDrive::CheckPlayed();
 	}
 }
 

@@ -9227,7 +9227,15 @@ msgctxt "#33587"
 msgid "Free or remove the console's copy"
 msgstr ""
 
-#empty strings from id 33588 to 34004
+msgctxt "#33588"
+msgid "The game on the disc didn't start from 360 Riffle."
+msgstr ""
+
+msgctxt "#33589"
+msgid "Open the Xbox dashboard to play it from there?"
+msgstr ""
+
+#empty strings from id 33590 to 34004
 
 msgctxt "#34005"
 msgid "Flac"

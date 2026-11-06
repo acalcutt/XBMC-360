@@ -4,6 +4,7 @@
 #include "filesystem\File.h"
 #include "guilib\GUIWindowManager.h"
 #include "guilib\LocalizeStrings.h"
+#include "guilib\dialogs\GUIDialogYesNo.h"
 #include "utils\Log.h"
 #include "utils\Util.h"
 #include "xbox\IoSupport.h"
@@ -12,6 +13,9 @@
 using namespace XFILE;
 
 const char* CDiscDrive::ROOT = "Dvd:\\";
+
+// Written as Play starts the disc's game: its time says when, for CheckPlayed
+#define PLAYED_MARK "D:\\cache\\disc-played"
 
 static DWORD ReadBE32(const BYTE* p)
 {
@@ -139,6 +143,13 @@ void CDiscDrive::Play(const Info& info)
 		// console: a softmod makes that its homebrew dashboard, which is us
 		const char* game = info.type == DISC_XBOX360_GAME ? "\\Device\\Cdrom0\\default.xex" : "\\Device\\Cdrom0\\default.xbe";
 		CLog::Log(LOGNOTICE, "Starting the %s in the drive, %s", GetTypeName(info.type).c_str(), game);
+
+		// When this was, for CheckPlayed at our next start
+		::CreateDirectory("D:\\cache", NULL);
+		HANDLE hMark = CreateFile(PLAYED_MARK, GENERIC_WRITE, 0, NULL, CREATE_ALWAYS, FILE_ATTRIBUTE_NORMAL, NULL);
+		if (hMark != INVALID_HANDLE_VALUE)
+			CloseHandle(hMark);
+
 		g_application.Stop();
 		XLaunchNewImage(game, 0);
 
@@ -153,6 +164,40 @@ void CDiscDrive::Play(const Info& info)
 		item.SetLabel(GetName(info));
 		g_application.PlayFile(item);
 	}
+}
+
+void CDiscDrive::CheckPlayed()
+{
+	static bool s_bChecked = false;
+	if (s_bChecked || g_windowManager.GetActiveWindow() != WINDOW_HOME || g_windowManager.HasModalDialog())
+		return;
+	s_bChecked = true;
+
+	WIN32_FILE_ATTRIBUTE_DATA mark;
+	if (!GetFileAttributesEx(PLAYED_MARK, GetFileExInfoStandard, &mark))
+		return;
+	::DeleteFile(PLAYED_MARK);
+
+	// Back within a minute: the game didn't start (or was left at once)
+	FILETIME now;
+	GetSystemTimeAsFileTime(&now);
+	unsigned __int64 iNow = ((unsigned __int64)now.dwHighDateTime << 32) | now.dwLowDateTime;
+	unsigned __int64 iThen = ((unsigned __int64)mark.ftLastWriteTime.dwHighDateTime << 32) | mark.ftLastWriteTime.dwLowDateTime;
+	if (iNow < iThen || iNow - iThen > (unsigned __int64)60 * 10000000)
+		return;
+
+	CLog::Log(LOGNOTICE, "Back %u seconds after starting the disc's game: it didn't start", (unsigned int)((iNow - iThen) / 10000000));
+	if (!CGUIDialogYesNo::ShowAndGetInput(13238, 33588, 33589, 0))
+		return;
+
+	// Microsoft's dashboard, which starts discs itself (as the Guide's Xbox Home opens it)
+	CLog::Log(LOGNOTICE, "Opening the Xbox dashboard, to play the disc from there");
+	g_application.Stop();
+	XLaunchNewImage(XLAUNCH_KEYWORD_DASH, 0);
+
+	// Only back here when it couldn't be started
+	CLog::Log(LOGERROR, "%s - couldn't open the Xbox dashboard", __FUNCTION__);
+	XLaunchNewImage(GetLoadedImageName(), 0);
 }
 
 void CDiscDrive::Open(const Info& info)
