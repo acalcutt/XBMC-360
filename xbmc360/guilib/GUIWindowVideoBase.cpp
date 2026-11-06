@@ -67,7 +67,7 @@ void CGUIWindowVideoBase::GetContextButtons(int itemNumber, CContextButtons &but
 				buttons.Add(CONTEXT_BUTTON_SHUFFLE_ITEM, 191);
 
 			// or opened with every video in it and its folders in one list
-			if (item->m_bIsFolder && CFlatDirectory::CanFlatten(item->GetPath()))
+			if (item->m_bIsFolder && XFILE::CFlatDirectory::CanFlatten(item->GetPath()))
 				buttons.Add(CONTEXT_BUTTON_SHOW_ALL_VIDEOS, 13187);
 /*			else
 			{ // get players - TODO: GetPlayers/SelectPlayerDialog not ported
@@ -145,7 +145,7 @@ bool CGUIWindowVideoBase::OnContextButton(int itemNumber, CONTEXT_BUTTON button)
 		return true;
 
 	case CONTEXT_BUTTON_SHOW_ALL_VIDEOS:
-		Update(CFlatDirectory::Make(item->GetPath()));
+		Update(XFILE::CFlatDirectory::Make(item->GetPath()));
 		return true;
 
 /*	case CONTEXT_BUTTON_PLAY_WITH: // TODO: GetPlayers/SelectPlayerDialog not ported
