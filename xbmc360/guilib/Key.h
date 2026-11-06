@@ -178,6 +178,7 @@
 #define ACTION_VIS_RATE_PRESET_MINUS 133
 
 #define ACTION_ENTER                 135
+#define ACTION_SPACE                 136 // Virtual keyboard: types a space
 
 #define ACTION_FILTER_CLEAR          150
 #define ACTION_FILTER_SMS2           151

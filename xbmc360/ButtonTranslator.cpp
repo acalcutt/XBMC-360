@@ -60,6 +60,14 @@ static const ActionMapping actions[] =
         {"rotate"            , ACTION_ROTATE_PICTURE},
         {"increasepar"       , ACTION_INCREASE_PAR},
         {"decreasepar"       , ACTION_DECREASE_PAR},
+        // Virtual keyboard shortcuts
+        {"backspace"         , ACTION_BACKSPACE},
+        {"shift"             , ACTION_SHIFT},
+        {"symbols"           , ACTION_SYMBOLS},
+        {"cursorleft"        , ACTION_CURSOR_LEFT},
+        {"cursorright"       , ACTION_CURSOR_RIGHT},
+        {"enter"             , ACTION_ENTER},
+        {"space"             , ACTION_SPACE},
 };
 
 static const ActionMapping windows[] =

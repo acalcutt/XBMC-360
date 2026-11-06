@@ -116,6 +116,10 @@ bool CGUIDialogKeyboard::OnAction(const CAction &action)
 	{
 		OnSymbols();
 	}
+	else if (action.GetID() == ACTION_SPACE)
+	{
+		Character(L' ');
+	}
 	else if (action.GetID() >= REMOTE_0 && action.GetID() <= REMOTE_9)
 	{
 		OnRemoteNumberClick(action.GetID());

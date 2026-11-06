@@ -72,4 +72,15 @@
       <rightshoulder>Back</rightshoulder>
     </gamepad>
   </ContextMenu>
+  <VirtualKeyboard>
+    <gamepad>
+      <X>Backspace</X>
+      <Y>Shift</Y>
+      <leftshoulder>Symbols</leftshoulder>
+      <rightshoulder>Space</rightshoulder>
+      <leftanalogtrigger>CursorLeft</leftanalogtrigger>
+      <rightanalogtrigger>CursorRight</rightanalogtrigger>
+      <start>Enter</start>
+    </gamepad>
+  </VirtualKeyboard>
 </keymap>
