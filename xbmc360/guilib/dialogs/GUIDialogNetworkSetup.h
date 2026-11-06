@@ -9,7 +9,9 @@ class CGUIDialogNetworkSetup :
 public:
 	enum NET_PROTOCOL { NET_PROTOCOL_SMB = 0,
 	                    NET_PROTOCOL_MEDIARIFFLE,   // mediariffle://host:port/ (network\MediaRiffle.h)
-	                    NET_PROTOCOL_MEDIARIFFLES   // the same over HTTPS
+	                    NET_PROTOCOL_MEDIARIFFLES,  // the same over HTTPS
+	                    NET_PROTOCOL_JELLYFIN,      // jellyfin://host:port/ (network\Jellyfin.h)
+	                    NET_PROTOCOL_JELLYFINS      // the same over HTTPS
 	                  }; // TODO - Add more!
 	
 	CGUIDialogNetworkSetup(void);
@@ -27,6 +29,9 @@ public:
 protected:
 	void OnProtocolChange();
 	bool IsMediaRiffle() const { return m_protocol == NET_PROTOCOL_MEDIARIFFLE || m_protocol == NET_PROTOCOL_MEDIARIFFLES; }
+	bool IsJellyfin() const { return m_protocol == NET_PROTOCOL_JELLYFIN || m_protocol == NET_PROTOCOL_JELLYFINS; }
+	// A media server: just its address and port, signed in to when it's first opened
+	bool IsMediaServer() const { return IsMediaRiffle() || IsJellyfin(); }
 	CStdString DefaultPort() const;
 	void OnServerBrowse();
 	void OnOK();

@@ -113,6 +113,8 @@ void CGUIDialogNetworkSetup::OnInitWindow()
 	pSpin->AddLabel(g_localizeStrings.Get(20171), NET_PROTOCOL_SMB);
 	pSpin->AddLabel(g_localizeStrings.Get(33530), NET_PROTOCOL_MEDIARIFFLE);
 	pSpin->AddLabel(g_localizeStrings.Get(33531), NET_PROTOCOL_MEDIARIFFLES);
+	pSpin->AddLabel(g_localizeStrings.Get(33541), NET_PROTOCOL_JELLYFIN);
+	pSpin->AddLabel(g_localizeStrings.Get(33542), NET_PROTOCOL_JELLYFINS);
 	// TODO: Add more!
 
 	pSpin->SetValue(m_protocol);
@@ -129,6 +131,10 @@ CStdString CGUIDialogNetworkSetup::DefaultPort() const
 		return "5080";
 	if (m_protocol == NET_PROTOCOL_MEDIARIFFLES)
 		return "443";
+	if (m_protocol == NET_PROTOCOL_JELLYFIN)
+		return "8096";
+	if (m_protocol == NET_PROTOCOL_JELLYFINS)
+		return "8920";
 	return "445";
 }
 
@@ -252,11 +258,11 @@ void CGUIDialogNetworkSetup::UpdateButtons()
 //	CONTROL_ENABLE_ON_CONDITION(CONTROL_PASSWORD, m_protocol != NET_PROTOCOL_DAAP && m_protocol != NET_PROTOCOL_UPNP); // TODO
 	SendMessage(GUI_MSG_SET_TYPE, CONTROL_PASSWORD, CGUIEditControl::INPUT_TYPE_PASSWORD, 12326);
 
-	// MediaRiffle: the server's address and port only; the console signs in with a code when it's first opened
-	CONTROL_ENABLE_ON_CONDITION(CONTROL_REMOTE_PATH, !IsMediaRiffle());
-	CONTROL_ENABLE_ON_CONDITION(CONTROL_USERNAME, !IsMediaRiffle());
-	CONTROL_ENABLE_ON_CONDITION(CONTROL_PASSWORD, !IsMediaRiffle());
-	CONTROL_ENABLE_ON_CONDITION(CONTROL_SERVER_BROWSE, !IsMediaRiffle());
+	// MediaRiffle and Jellyfin: the server's address and port only; the console signs in when it's first opened
+	CONTROL_ENABLE_ON_CONDITION(CONTROL_REMOTE_PATH, !IsMediaServer());
+	CONTROL_ENABLE_ON_CONDITION(CONTROL_USERNAME, !IsMediaServer());
+	CONTROL_ENABLE_ON_CONDITION(CONTROL_PASSWORD, !IsMediaServer());
+	CONTROL_ENABLE_ON_CONDITION(CONTROL_SERVER_BROWSE, !IsMediaServer());
 
 	// TODO: FIX BETTER DAAP SUPPORT
 	// Server browse should be disabled if we are in DAAP, FTP, HTTP, HTTPS, RSS, TUXBOX, DAV or DAVS
@@ -280,8 +286,9 @@ CStdString CGUIDialogNetworkSetup::ConstructPath() const
 		url.SetProtocol("smb");
 	// TODO - Add the other protocols
 
-	// MediaRiffle: mediariffle://host:port/, from the address however it was typed ("http://media01:5080/" too)
-	if (IsMediaRiffle())
+	// MediaRiffle and Jellyfin: mediariffle://host:port/ or jellyfin://host:port/, from the address however it was typed
+	// ("http://media01:5080/" too)
+	if (IsMediaServer())
 	{
 		CStdString host = m_server;
 		host.Trim();
@@ -294,7 +301,10 @@ CStdString CGUIDialogNetworkSetup::ConstructPath() const
 		if (host.IsEmpty())
 			return "";
 
-		url.SetProtocol(m_protocol == NET_PROTOCOL_MEDIARIFFLES ? "mediariffles" : "mediariffle");
+		if (IsJellyfin())
+			url.SetProtocol(m_protocol == NET_PROTOCOL_JELLYFINS ? "jellyfins" : "jellyfin");
+		else
+			url.SetProtocol(m_protocol == NET_PROTOCOL_MEDIARIFFLES ? "mediariffles" : "mediariffle");
 		url.SetHostName(host);
 		if (atoi(m_port.c_str()) > 0)
 			url.SetPort(atoi(m_port.c_str()));
@@ -336,6 +346,10 @@ void CGUIDialogNetworkSetup::SetPath(const CStdString &path)
 		m_protocol = NET_PROTOCOL_MEDIARIFFLE;
 	else if (protocol == "mediariffles")
 		m_protocol = NET_PROTOCOL_MEDIARIFFLES;
+	else if (protocol == "jellyfin")
+		m_protocol = NET_PROTOCOL_JELLYFIN;
+	else if (protocol == "jellyfins")
+		m_protocol = NET_PROTOCOL_JELLYFINS;
 	// TODO: Add other protocols back as we support them!
 	else
 		m_protocol = NET_PROTOCOL_SMB; // Default to SMB

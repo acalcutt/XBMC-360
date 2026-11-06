@@ -21,6 +21,7 @@
 #include "filesystem\CurlSessionPool.h"
 #include "filesystem\SpecialProtocol.h"
 #include "network\MediaRiffle.h"
+#include "network\Jellyfin.h"
 #include "ApplicationMessenger.h"
 #include "ButtonTranslator.h"
 #include "guilib\AudioContext.h"
@@ -330,6 +331,7 @@ void CApplication::StartServices()
 {
 	StartIdleThread();
 	g_mediaRiffle.Start();
+	g_jellyfin.Start();
 }
 
 void CApplication::StopServices()

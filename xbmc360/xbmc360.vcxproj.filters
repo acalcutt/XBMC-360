@@ -746,6 +746,9 @@
     <ClInclude Include="filesystem\UPnPDirectory.h">
       <Filter>Header Files\filesystem</Filter>
     </ClInclude>
+    <ClInclude Include="filesystem\JellyfinDirectory.h">
+      <Filter>Header Files\filesystem</Filter>
+    </ClInclude>
     <ClInclude Include="filesystem\MediaRiffleDirectory.h">
       <Filter>Header Files\filesystem</Filter>
     </ClInclude>
@@ -756,6 +759,9 @@
       <Filter>Header Files\network</Filter>
     </ClInclude>
     <ClInclude Include="network\HttpRequest.h">
+      <Filter>Header Files\network</Filter>
+    </ClInclude>
+    <ClInclude Include="network\Jellyfin.h">
       <Filter>Header Files\network</Filter>
     </ClInclude>
     <ClInclude Include="network\MediaRiffle.h">
@@ -1843,6 +1849,9 @@
     <ClCompile Include="filesystem\UPnPDirectory.cpp">
       <Filter>Source Files\filesystem</Filter>
     </ClCompile>
+    <ClCompile Include="filesystem\JellyfinDirectory.cpp">
+      <Filter>Source Files\filesystem</Filter>
+    </ClCompile>
     <ClCompile Include="filesystem\MediaRiffleDirectory.cpp">
       <Filter>Source Files\filesystem</Filter>
     </ClCompile>
@@ -1853,6 +1862,9 @@
       <Filter>Source Files\network</Filter>
     </ClCompile>
     <ClCompile Include="network\HttpRequest.cpp">
+      <Filter>Source Files\network</Filter>
+    </ClCompile>
+    <ClCompile Include="network\Jellyfin.cpp">
       <Filter>Source Files\network</Filter>
     </ClCompile>
     <ClCompile Include="network\MediaRiffle.cpp">

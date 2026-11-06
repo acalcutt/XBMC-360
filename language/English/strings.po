@@ -8927,7 +8927,71 @@ msgctxt "#33535"
 msgid "The server didn't make that change."
 msgstr ""
 
-#empty strings from id 33536 to 34004
+#empty strings from id 33536 to 33539
+
+msgctxt "#33540"
+msgid "Jellyfin"
+msgstr ""
+
+msgctxt "#33541"
+msgid "Jellyfin server"
+msgstr ""
+
+msgctxt "#33542"
+msgid "Jellyfin server (HTTPS)"
+msgstr ""
+
+msgctxt "#33543"
+msgid "Couldn't reach the Jellyfin server."
+msgstr ""
+
+msgctxt "#33544"
+msgid "On a phone or computer signed in to Jellyfin,"
+msgstr ""
+
+msgctxt "#33545"
+msgid "open your profile, then Quick Connect,"
+msgstr ""
+
+msgctxt "#33546"
+msgid "Quick Connect is off on this server, so sign in with your name and password."
+msgstr ""
+
+msgctxt "#33547"
+msgid "Jellyfin user name"
+msgstr ""
+
+msgctxt "#33548"
+msgid "Jellyfin password"
+msgstr ""
+
+msgctxt "#33549"
+msgid "Signed in as %s."
+msgstr ""
+
+#empty strings from id 33550 to 33551
+
+msgctxt "#33552"
+msgid "Next up"
+msgstr ""
+
+#empty string with id 33553
+
+msgctxt "#33554"
+msgid "This console was signed out. Open the source again to sign in."
+msgstr ""
+
+#empty string with id 33555
+
+msgctxt "#33556"
+msgid "That name and password didn't sign in."
+msgstr ""
+
+msgctxt "#33557"
+msgid "The server's answer had no sign-in in it."
+msgstr ""
+
+#empty strings from id 33558 to 34004
 
 msgctxt "#34005"
 msgid "Flac"

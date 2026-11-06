@@ -49,6 +49,7 @@
 #include "xbox/Network.h"
 #include "ZipDirectory.h"
 #include "MediaRiffleDirectory.h"
+#include "JellyfinDirectory.h"
 //#include "RarDirectory.h" // TODO
 //#include "TuxBoxDirectory.h" // TODO
 //#include "HDHomeRunDirectory.h" // TODO
@@ -112,6 +113,7 @@ IDirectory* CFactoryDirectory::Create(const CStdString& strPath)
 //		if (strProtocol == "dav" || strProtocol == "davs") return new CDAVDirectory();// TODO
 		if (strProtocol == "smb") return new CSMBDirectory();
 		if (strProtocol == "mediariffle" || strProtocol == "mediariffles") return new CMediaRiffleDirectory();
+		if (strProtocol == "jellyfin" || strProtocol == "jellyfins") return new CJellyfinDirectory();
 #ifdef HAS_FILESYSTEM
 		if (strProtocol == "smb") return new CSMBDirectory();
 		if (strProtocol == "daap") return new CDAAPDirectory();
