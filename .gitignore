@@ -1,0 +1,4 @@
+# Build output: MSBuild writes objects, logs and libraries next to each project
+Release/
+Debug/
+Xbox 360/
