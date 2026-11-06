@@ -714,6 +714,72 @@ void CMediaRiffle::SaveLinks()
 		CLog::Log(LOGERROR, "MediaRiffle: couldn't save %s", LINK_FILE);
 }
 
+// What the server calls a path, to hide it: a show (show/<id>/), a movie (movie/<id>) or an episode (play/<id>, a
+// "file"). A season can't be hidden on its own.
+static bool HiddenKindOf(const CStdString& path, CStdString& kind, int& id)
+{
+	if (CMediaRiffle::ServerOf(path).IsEmpty())
+		return false;
+
+	CStdString rest = CURL(path).GetFileName();
+	rest.TrimRight("/");
+
+	CStdStringArray parts;
+	CStringUtils::SplitString(rest, "/", parts);
+	if (parts.size() != 2 || (id = atoi(parts[1].c_str())) <= 0)
+		return false;
+
+	if (parts[0].Equals("show"))
+		kind = "show";
+	else if (parts[0].Equals("movie"))
+		kind = "movie";
+	else if (parts[0].Equals("play"))
+		kind = "file";
+	else
+		return false;
+
+	return true;
+}
+
+bool CMediaRiffle::CanHide(const CStdString& path)
+{
+	CStdString kind;
+	int id;
+	return HiddenKindOf(path, kind, id);
+}
+
+bool CMediaRiffle::SetHidden(const CStdString& path, bool hidden)
+{
+	CStdString kind;
+	int id;
+	if (!HiddenKindOf(path, kind, id))
+		return false;
+
+	CStdString server = ServerOf(path);
+	CStdString api;
+	api.Format("/api/items/%s/%d/hidden", kind.c_str(), id);
+
+	CVariant body;
+	body["hidden"] = hidden;
+
+	long status = 0;
+	CVariant answer;
+	if (!Call(server, "PUT", api, &body, status, answer))
+	{
+		ShowUnreachable(server);
+		return false;
+	}
+	if (status != 200)
+	{
+		CLog::Log(LOGERROR, "MediaRiffle: %s%s: %ld", server.c_str(), api.c_str(), status);
+		ShowError(g_localizeStrings.Get(33535), ErrorOf(answer, status));
+		return false;
+	}
+
+	CLog::Log(LOGNOTICE, "MediaRiffle: %s %s %d", hidden ? "hid" : "showed again", kind.c_str(), id);
+	return true;
+}
+
 void CMediaRiffle::ShowError(const CStdString& line1, const CStdString& line2, const CStdString& line3)
 {
 	CGUIDialogOK* ok = (CGUIDialogOK*)g_windowManager.GetWindow(WINDOW_DIALOG_OK);

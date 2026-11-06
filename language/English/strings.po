@@ -8907,7 +8907,19 @@ msgctxt "#33531"
 msgid "MediaRiffle server (HTTPS)"
 msgstr ""
 
-#empty strings from id 33532 to 34004
+#empty string with id 33532
+
+msgctxt "#33533"
+msgid "Hide"
+msgstr ""
+
+#empty string with id 33534
+
+msgctxt "#33535"
+msgid "The server didn't make that change."
+msgstr ""
+
+#empty strings from id 33536 to 34004
 
 msgctxt "#34005"
 msgid "Flac"

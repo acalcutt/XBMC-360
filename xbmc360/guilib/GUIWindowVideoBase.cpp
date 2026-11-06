@@ -11,6 +11,7 @@
 #include "utils\StringUtils.h"
 #include "utils\log.h"
 #include "FileItem.h"
+#include "network\MediaRiffle.h"
 #include "video\VideoInfoTag.h"
 
 using namespace std;
@@ -95,6 +96,10 @@ void CGUIWindowVideoBase::GetContextButtons(int itemNumber, CContextButtons &but
 
 //			if (item->IsSmartPlayList() || m_vecItems->IsSmartPlayList()) // TODO - SmartPlayList not ported
 //				buttons.Add(CONTEXT_BUTTON_EDIT_SMART_PLAYLIST, 586);
+
+			// A MediaRiffle show, movie or episode can be hidden
+			if (CMediaRiffle::CanHide(item->GetPath()))
+				buttons.Add(CONTEXT_BUTTON_MEDIARIFFLE_HIDE, 33533);
 		}
 	}
 
@@ -172,6 +177,15 @@ bool CGUIWindowVideoBase::OnContextButton(int itemNumber, CONTEXT_BUTTON button)
 
 	case CONTEXT_BUTTON_SETTINGS:
 		g_windowManager.ActivateWindow(WINDOW_SETTINGS_MYVIDEOS);
+		return true;
+
+	case CONTEXT_BUTTON_MEDIARIFFLE_HIDE:
+		// Hidden, it's no longer listed here
+		if (g_mediaRiffle.SetHidden(item->GetPath(), true))
+		{
+			m_vecItems->RemoveDiscCache(GetID());
+			Update(m_vecItems->GetPath());
+		}
 		return true;
 
 	default:

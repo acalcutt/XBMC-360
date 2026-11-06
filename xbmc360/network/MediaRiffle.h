@@ -63,6 +63,10 @@ public:
 	// video a stream asked for when its turn comes.
 	static bool IsQueue(const CStdString& path);
 	bool PlayQueue(const CFileItem& item);
+	// Hiding, for the user on every device: out of the lists, Play all, Shuffle and Continue watching. Whether a path
+	// can be hidden (a show, a movie or an episode), and hiding it or showing it again. On the GUI thread.
+	static bool CanHide(const CStdString& path);
+	bool SetHidden(const CStdString& path, bool hidden);
 	// From the application while something plays (every frame), and when it stops or ends
 	void OnPlaying(const CStdString& currentFile, double seconds, bool paused);
 	void OnStopped(bool ended);
