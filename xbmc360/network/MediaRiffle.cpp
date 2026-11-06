@@ -131,7 +131,7 @@ bool CMediaRiffle::Link()
 	CVariant answer;
 	if (!CallServer(server, "", "POST", "/api/devices/code", &ask, status, answer, 15))
 	{
-		ShowError(g_localizeStrings.Get(33510), server);
+		ShowUnreachable(server);
 		return false;
 	}
 	if (status != 200)
@@ -324,6 +324,7 @@ bool CMediaRiffle::Request(const CStdString& server, const CStdString& token, co
 		return false;
 
 	CStdString url = server + path;
+	char error[CURL_ERROR_SIZE] = "";
 	struct curl_slist* headers = NULL;
 	if (!token.IsEmpty())
 		headers = curl_slist_append(headers, ("Authorization: Bearer " + token).c_str());
@@ -334,6 +335,7 @@ bool CMediaRiffle::Request(const CStdString& server, const CStdString& token, co
 	curl_easy_setopt(h, CURLOPT_URL, url.c_str());
 	curl_easy_setopt(h, CURLOPT_HTTPHEADER, headers);
 	curl_easy_setopt(h, CURLOPT_NOSIGNAL, 1L);
+	curl_easy_setopt(h, CURLOPT_ERRORBUFFER, error);
 	// As CCurlFile: the console has no certificate store
 	curl_easy_setopt(h, CURLOPT_SSL_VERIFYPEER, 0L);
 	curl_easy_setopt(h, CURLOPT_SSL_VERIFYHOST, 0L);
@@ -359,7 +361,10 @@ bool CMediaRiffle::Request(const CStdString& server, const CStdString& token, co
 
 	if (result != CURLE_OK)
 	{
-		CLog::Log(LOGERROR, "MediaRiffle: %s %s failed: %s", method.c_str(), url.c_str(), curl_easy_strerror(result));
+		CStdString reason = error[0] ? error : curl_easy_strerror(result);
+		CLog::Log(LOGERROR, "MediaRiffle: %s %s failed: %s", method.c_str(), url.c_str(), reason.c_str());
+		CSingleLock lock(m_section);
+		m_lastError = reason;
 		return false;
 	}
 	if (status >= 400)
@@ -405,7 +410,7 @@ bool CMediaRiffle::StartPlayback(const CFileItem& item, CFileItem& stream)
 	// Transcoding has to start before it answers
 	if (!Call("POST", "/api/play", &play, status, answer, 90))
 	{
-		ShowError(g_localizeStrings.Get(33510), GetServer());
+		ShowUnreachable(GetServer());
 		return false;
 	}
 	if (status != 200)
@@ -595,7 +600,7 @@ void CMediaRiffle::AddSource()
 	g_settings.AddShare("video", source);
 }
 
-void CMediaRiffle::ShowError(const CStdString& line1, const CStdString& line2)
+void CMediaRiffle::ShowError(const CStdString& line1, const CStdString& line2, const CStdString& line3)
 {
 	CGUIDialogOK* ok = (CGUIDialogOK*)g_windowManager.GetWindow(WINDOW_DIALOG_OK);
 	if (!ok)
@@ -604,8 +609,18 @@ void CMediaRiffle::ShowError(const CStdString& line1, const CStdString& line2)
 	ok->SetHeading(33500);
 	ok->SetLine(0, line1);
 	ok->SetLine(1, line2);
-	ok->SetLine(2, "");
+	ok->SetLine(2, line3);
 	ok->DoModal();
+}
+
+void CMediaRiffle::ShowUnreachable(const CStdString& server)
+{
+	CStdString reason;
+	{
+		CSingleLock lock(m_section);
+		reason = m_lastError;
+	}
+	ShowError(g_localizeStrings.Get(33510), server, reason);
 }
 
 // What the server said went wrong ({ "error": "…" }), or what its status means

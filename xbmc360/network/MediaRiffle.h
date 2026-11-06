@@ -66,7 +66,9 @@ protected:
 	void LoadLink();
 	void SaveLink();
 	void AddSource();
-	void ShowError(const CStdString& line1, const CStdString& line2 = "");
+	void ShowError(const CStdString& line1, const CStdString& line2 = "", const CStdString& line3 = "");
+	// The server couldn't be reached, and libcurl's reason why
+	void ShowUnreachable(const CStdString& server);
 	static CStdString ErrorOf(const CVariant& answer, long status);
 
 	// The link (special://profile/mediariffle.xml): the server it was made on, its token, and its account
@@ -74,6 +76,8 @@ protected:
 	CStdString m_linkServer;
 	CStdString m_token;
 	CStdString m_user;
+	// Why the last request that failed did ("Failed to connect to … port …: Connection refused")
+	CStdString m_lastError;
 
 	// What's playing from MediaRiffle, to save where it got to
 	struct Playing
