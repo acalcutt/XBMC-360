@@ -9187,7 +9187,11 @@ msgctxt "#33577"
 msgid "Copying the update"
 msgstr ""
 
-#empty strings from id 33578 to 34004
+msgctxt "#33578"
+msgid "There's no %s game in this zip."
+msgstr ""
+
+#empty strings from id 33579 to 34004
 
 msgctxt "#34005"
 msgid "Flac"

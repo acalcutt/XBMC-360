@@ -24,8 +24,17 @@ public:
 	static CStdString GetExtensions();
 	// A game in a listing: its name without the extension, and its system
 	static void SetLabels(CFileItem& item);
-	// Starts the game in its emulator, or says why it can't
+	// Starts the game in its emulator, or says why it can't. A game in a zip is unzipped on the console first
 	static void Play(const CFileItem& item);
+
+	// A .zip whose system its folders don't say (and not in a BIOS or emulator folder): it opens like a folder, and
+	// what's in it says what it is
+	static bool IsUnknownZip(const CStdString& strPath);
+	// A game's .zip with more than one game in it (several ROMs, or several discs and no .m3u), to open like a folder
+	// and choose one
+	static bool HoldsSeveralGames(const CStdString& strPath);
+	// The zip:// folder a .zip opens as
+	static CStdString ZipFolder(const CStdString& strZip);
 
 	virtual bool OnFileCallback(void* pContext, int ipercent, float avgSpeed);
 
@@ -40,6 +49,7 @@ private:
 	CEmulators();
 
 	static CStdString FindCore(int iSystem);
+	static CStdString MainEntry(const CStdString& strZip, int iSystem);
 	static CStdString ConsolePath(const CStdString& strPath);
 	static CStdString ForEmulator(const CStdString& strPath);
 	static CStdString SafeName(const CStdString& strName, const CStdString& strFrom);
@@ -47,7 +57,7 @@ private:
 
 	bool AddFile(const CStdString& strFrom, const CStdString& strFolder, CStdString& strName, int iDepth);
 	bool AddList(const CStdString& strFrom, const CStdString& strFolder, CStdString& strName, int iDepth);
-	bool CopyToConsole(const CFileItem& item, int iSystem, CStdString& strGame);
+	bool CopyToConsole(const CStdString& strFrom, const CStdString& strLabel, int iSystem, CStdString& strGame);
 	void MakeRoom(const CStdString& strCache, __int64 iNeeded);
 	bool ShowProgress(__int64 iDone);
 

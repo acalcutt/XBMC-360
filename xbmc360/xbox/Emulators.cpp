@@ -4,6 +4,7 @@
 #include "URL.h"
 #include "filesystem\Directory.h"
 #include "filesystem\SpecialProtocol.h"
+#include "filesystem\ZipManager.h"
 #include "guilib\GUIWindowManager.h"
 #include "guilib\LocalizeStrings.h"
 #include "guilib\dialogs\GUIDialogOK.h"
@@ -101,9 +102,20 @@ CEmulators::CEmulators()
 	m_dwStart = 0;
 }
 
-int CEmulators::GetSystem(const CStdString& strPath)
+// GetSystem's answer; bExcluded says the file is in a BIOS or emulator folder
+static int Classify(const CStdString& strPath, bool& bExcluded)
 {
-	CStdString strExt = URIUtils::GetExtension(strPath);
+	bExcluded = false;
+
+	// In a zip, the folders the zip is in count, as if it were one more
+	CStdString strFile = strPath;
+	if (strFile.Left(6).Equals("zip://"))
+	{
+		CURL url(strPath);
+		strFile = url.GetHostName() + "/" + url.GetFileName();
+	}
+
+	CStdString strExt = URIUtils::GetExtension(strFile);
 	strExt.ToLower();
 
 	bool bShared = false;
@@ -121,7 +133,7 @@ int CEmulators::GetSystem(const CStdString& strPath)
 	// The folders it's in, the nearest first, as far up as the share or
 	// drive: each by its whole name, then by two words of it and then one,
 	// so that "PlayStation 2" is that before it's "PlayStation"
-	CStdString strFolders = strPath;
+	CStdString strFolders = strFile;
 	strFolders.Replace('\\', '/');
 	CStdStringArray parts;
 	CStringUtils::SplitString(strFolders, "/", parts);
@@ -140,7 +152,10 @@ int CEmulators::GetSystem(const CStdString& strPath)
 		for (unsigned int j = 0; j < words.size(); j++)
 		{
 			if (InList(NOT_GAMES, words[j]))
+			{
+				bExcluded = true;
 				return -1;
+			}
 		}
 
 		CStdStringArray names;
@@ -164,6 +179,122 @@ int CEmulators::GetSystem(const CStdString& strPath)
 	}
 
 	return -1;
+}
+
+int CEmulators::GetSystem(const CStdString& strPath)
+{
+	bool bExcluded;
+	return Classify(strPath, bExcluded);
+}
+
+static bool IsZip(const CStdString& strPath)
+{
+	// Not one in a zip: those can't be opened
+	return URIUtils::GetExtension(strPath).Equals(".zip") && !strPath.Left(6).Equals("zip://");
+}
+
+bool CEmulators::IsUnknownZip(const CStdString& strPath)
+{
+	bool bExcluded;
+	return IsZip(strPath) && Classify(strPath, bExcluded) < 0 && !bExcluded;
+}
+
+CStdString CEmulators::ZipFolder(const CStdString& strZip)
+{
+	CStdString strFolder;
+	URIUtils::CreateArchivePath(strFolder, "zip", strZip, "");
+	return strFolder;
+}
+
+// The files in a zip (not its folders), by their paths in it, and their sizes
+static void GetZipFiles(const CStdString& strZip, CStdStringArray& names, std::vector<unsigned int>& sizes)
+{
+	std::vector<SZipEntry> entries;
+	if (!g_ZipManager.GetZipList(CEmulators::ZipFolder(strZip), entries))
+		return;
+
+	for (unsigned int i = 0; i < entries.size(); i++)
+	{
+		size_t length = strlen(entries[i].name);
+		if (length == 0 || entries[i].name[length - 1] == '/')
+			continue;
+		names.push_back(entries[i].name);
+		sizes.push_back(entries[i].usize);
+	}
+}
+
+// How well a file in a zip does as the game to start: one with its system's own extension is a game; failing that,
+// an .m3u (a game's discs), then a .cue (a disc's tracks), then another its system's games use. 0: none of those
+static int GameRank(const CStdString& strName, int iSystem)
+{
+	CStdString strExt = URIUtils::GetExtension(strName);
+	strExt.ToLower();
+
+	if (strExt.Equals(".zip"))
+		return 0;
+	if (InList(SYSTEMS[iSystem].extensions, strExt))
+		return 4;
+	if (!InList(SYSTEMS[iSystem].shared, strExt))
+		return 0;
+	if (strExt.Equals(".m3u"))
+		return 3;
+	if (strExt.Equals(".cue"))
+		return 2;
+	return 1;
+}
+
+bool CEmulators::HoldsSeveralGames(const CStdString& strPath)
+{
+	int iSystem = GetSystem(strPath);
+	if (!IsZip(strPath) || iSystem < 0)
+		return false;
+
+	CStdStringArray names;
+	std::vector<unsigned int> sizes;
+	GetZipFiles(strPath, names, sizes);
+
+	// Games (own extension) or discs (.cue) more than one, and no .m3u making the discs one game
+	int iBest = 0, iCount = 0;
+	for (unsigned int i = 0; i < names.size(); i++)
+	{
+		int iRank = GameRank(names[i], iSystem);
+		if (iRank > iBest)
+		{
+			iBest = iRank;
+			iCount = 0;
+		}
+		if (iRank == iBest)
+			iCount++;
+	}
+
+	return (iBest == 4 || iBest == 2) && iCount > 1;
+}
+
+// The game to start in a zip, as a zip:// path: the file that does best as one (GameRank), the biggest of those;
+// failing any, the zip's biggest file. Empty when the zip can't be read or has nothing in it
+CStdString CEmulators::MainEntry(const CStdString& strZip, int iSystem)
+{
+	CStdStringArray names;
+	std::vector<unsigned int> sizes;
+	GetZipFiles(strZip, names, sizes);
+
+	int iChosen = -1, iBest = -1;
+	for (unsigned int i = 0; i < names.size(); i++)
+	{
+		int iRank = GameRank(names[i], iSystem);
+		if (iRank > iBest || (iRank == iBest && sizes[i] > sizes[iChosen]))
+		{
+			iBest = iRank;
+			iChosen = i;
+		}
+	}
+
+	if (iChosen < 0)
+		return "";
+
+	CStdString strEntry;
+	URIUtils::CreateArchivePath(strEntry, "zip", strZip, names[iChosen]);
+	return strEntry;
 }
 
 CStdString CEmulators::GetSystemName(int iSystem)
@@ -239,11 +370,24 @@ void CEmulators::Play(const CFileItem& item)
 		return;
 	}
 
-	CStdString strGame = ConsolePath(item.GetPath());
+	// A zip's game is unzipped onto the console, wherever the zip is: every core can start it then, whatever it
+	// makes of zips
+	CStdString strFrom = item.GetPath();
+	if (IsZip(strFrom))
+	{
+		strFrom = MainEntry(item.GetPath(), iSystem);
+		if (strFrom.IsEmpty())
+		{
+			ShowMessage(33578, name);
+			return;
+		}
+	}
+
+	CStdString strGame = ConsolePath(strFrom);
 	if (!OnConsoleDrive(strGame))
 	{
 		CEmulators job;
-		if (!job.CopyToConsole(item, iSystem, strGame))
+		if (!job.CopyToConsole(strFrom, item.GetLabel(), iSystem, strGame))
 			return;
 
 		strGame = ConsolePath(strGame);
@@ -548,9 +692,10 @@ bool CEmulators::AddList(const CStdString& strFrom, const CStdString& strFolder,
 	return true;
 }
 
-// Copies the game from where it is to the console's drive, with its other
-// files. strGame: where it is on the console after
-bool CEmulators::CopyToConsole(const CFileItem& item, int iSystem, CStdString& strGame)
+// Copies the game from where it is (a share, a disc, a zip) to the console's
+// drive, with its other files. strLabel: what to call it if it can't be.
+// strGame: where it is on the console after
+bool CEmulators::CopyToConsole(const CStdString& strFrom, const CStdString& strLabel, int iSystem, CStdString& strGame)
 {
 	CStdString strTemp = CSpecialProtocol::TranslatePath("special://temp/");
 	CStdString strCache = URIUtils::AddFileToFolder(strTemp, "games");
@@ -568,9 +713,9 @@ bool CEmulators::CopyToConsole(const CFileItem& item, int iSystem, CStdString& s
 	}
 
 	CStdString strName;
-	if (!AddFile(item.GetPath(), strFolder, strName, 0))
+	if (!AddFile(strFrom, strFolder, strName, 0))
 	{
-		ShowMessage(33564, item.GetLabel());
+		ShowMessage(33564, strLabel);
 		return false;
 	}
 
@@ -587,7 +732,7 @@ bool CEmulators::CopyToConsole(const CFileItem& item, int iSystem, CStdString& s
 			return false;
 		}
 
-		CLog::Log(LOGNOTICE, "Copying the game %s to the console, %s", CURL(item.GetPath()).GetWithoutUserDetails().c_str(),
+		CLog::Log(LOGNOTICE, "Copying the game %s to the console, %s", CURL(strFrom).GetWithoutUserDetails().c_str(),
 			CStringUtils::SizeToString(m_iTotal).c_str());
 
 		m_dwStart = CTimeUtils::timeGetTime();

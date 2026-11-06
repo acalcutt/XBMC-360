@@ -176,6 +176,14 @@ bool CGUIWindowPrograms::GetDirectory(const CStdString &strDirectory, CFileItemL
 			// games where they are: those go
 			if (CEmulators::GetSystem(item->GetPath()) >= 0)
 				CEmulators::SetLabels(*item);
+			else if (CEmulators::IsUnknownZip(item->GetPath()))
+			{
+				// A zip that its folders don't say the system of opens like a folder, and
+				// the games in it say what they are
+				item->SetPath(CEmulators::ZipFolder(item->GetPath()));
+				item->m_bIsFolder = true;
+				item->SetIconImage("DefaultFolder.png");
+			}
 			else if (!item->IsXEX() && !URIUtils::GetExtension(item->GetPath()).Equals(".cut"))
 			{
 				items.Remove(i--);
@@ -436,10 +444,14 @@ bool CGUIWindowPrograms::OnPlayMedia(int iItem) // TODO - Get more info from the
 
 	if (pItem->m_bIsFolder) return false;
 
-	// A game for another console, in its emulator
+	// A game for another console, in its emulator. A zip with more than one game
+	// in it opens like a folder instead, to choose one
 	if (CEmulators::GetSystem(pItem->GetPath()) >= 0)
 	{
-		CEmulators::Play(*pItem);
+		if (CEmulators::HoldsSeveralGames(pItem->GetPath()))
+			Update(CEmulators::ZipFolder(pItem->GetPath()));
+		else
+			CEmulators::Play(*pItem);
 		return true;
 	}
 
