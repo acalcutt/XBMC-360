@@ -11,8 +11,8 @@ Peer Pressure stays on the console once installed, so the stick is only needed t
 
 | Path | What it is | Where it comes from |
 |---|---|---|
-| `Content\` | The Rock Band Blitz demo, whose title screen starts the exploit, and the save that does it | The Rock Band Blitz demo package, and Peer Pressure's `SoftmodInstaller.zip` |
-| `BadUpdatePayload\` | Peer Pressure's installer (`default.xex`) and the exploit's stages | `SoftmodInstaller.zip` |
+| `Content\` | The Rock Band Blitz demo, whose title screen starts the exploit, and the save that does it | `RockBandBlitz.zip`, and Peer Pressure's `SoftmodInstaller.zip` |
+| `BadUpdatePayload\` | Peer Pressure's installer (`default.xex`), the exploit's stages and the softmod's own files (`SoftmodData.zip`) | `SoftmodInstaller.zip` |
 | `BadUpdatePayload\SoftmodExtras\` | The extras the installer can install, listed in `SoftmodExtras.ini` | Set up below |
 | `BadUpdatePayload\SystemBackups\` | This console's backup: CPU key, NAND image and hard drive security sectors | Made by the installer |
 | `BadUpdatePayload\Log.txt` | The installer's log | Made by the installer |
@@ -32,17 +32,23 @@ FAT32, 16 GB or more. FAT32 takes files of up to 4 GB, which everything here fit
 
 ### 2. Peer Pressure
 
-Follow Peer Pressure's [installation guide](https://github.com/grimdoomer/Xbox360PeerPressure/wiki/Installation),
-which comes down to this:
+Peer Pressure's [installation guide](https://github.com/grimdoomer/Xbox360PeerPressure/wiki/Installation) covers this
+part, and says which consoles it works on. This stick was made from three downloads:
 
-- Copy the Rock Band Blitz demo package's `Content` folder to the top of the stick.
-- Unzip `SoftmodInstaller.zip` from [Peer Pressure's releases](https://github.com/grimdoomer/Xbox360PeerPressure/releases)
-  (v1.0.477 here) and copy its `BadUpdatePayload` and `Content` folders to the top of the stick, merging them.
-- If you like, add the 17559 system update's `$SystemUpdate` folder too: it reinstalls the system's extended packages
-  after formatting the hard drive.
+| Download | What's in it | Where it goes |
+|---|---|---|
+| `SoftmodInstaller.zip`, from [Peer Pressure's releases](https://github.com/grimdoomer/Xbox360PeerPressure/releases) (v1.0.477 here) | `BadUpdatePayload` (the installer, the exploit's stages, the softmod's own files and a `SoftmodExtras` with XeLL), `Content` (the save that starts the exploit) and `license.txt` | Unzip it to the top of the stick |
+| `RockBandBlitz.zip` | The Rock Band Blitz demo: one file, `5841122D\000D0000\DD774F20C36263F22AFD0A8B6FD742AC9E400B0A58` | Into `Content\0000000000000000` on the stick, beside the installer's save |
+| `UpdateData.zip`, from the same releases | Peer Pressure's update | Not part of the install: to update an installed Peer Pressure, put it on the stick as `$SoftmodUpdate\UpdateData.zip` and turn the console on, and it offers the update after the boot animation |
+
+The demo's paths in its zip use backslashes, which some unzip tools don't take for folders: check that it ended up as
+`Content\0000000000000000\5841122D\000D0000\DD774F20C36263F22AFD0A8B6FD742AC9E400B0A58`, a 365 MB file.
+
+If you like, add the 17559 system update's `$SystemUpdate` folder too: it reinstalls the system's extended packages
+after formatting the hard drive.
 
 On a console that hasn't had the softmod, run the installer once to make the system backup and do its Full Install,
-as the guide says. It also says which consoles it works on.
+as the guide says.
 
 ### 3. 360 Riffle
 
@@ -92,16 +98,18 @@ Source = "Salvia"
 Destination = "Hdd1:\PeerPressure\Salvia"
 ```
 
-Peer Pressure doesn't document the keys. As this file uses them:
+The file that comes in `SoftmodInstaller.zip` explains its keys in comments at its top, and has only the XeLL entry.
+In short (a section's name is ignored):
 
 | Key | What it does |
 |---|---|
-| `Category` | The installer's list it's in: `Dashboards`, `Apps` or `Xell` |
+| `Category` | The installer's group it's in, such as `Dashboards`, `Apps` or `Xell` |
 | `Name`, `Description` | What the installer shows for it |
-| `Source` | Its folder in `SoftmodExtras` |
-| `Destination` | Where it's copied to on the console |
-| `DashXex` | Makes it the homebrew dashboard, started from this file in `Destination` |
-| `EjectButtonBehavior`, `OtherOSName` | XeLL's entry: power on with the eject button to boot XeLL |
+| `Source` | Its folder, inside `SoftmodExtras` |
+| `Destination` | Where it's copied to on the console: under `Hdd1:` (the hard drive) or `HddSys:` (its system partition) |
+| `DashXex` (optional) | The file in `Destination` to set as the dashboard in the softmod's settings |
+| `EjectButtonBehavior` (optional) | `1` boots another OS when the console is powered on with the eject button, `0` doesn't |
+| `OtherOSName` (optional) | The other OS that boots then, such as `Xell` |
 
 Keep Salvia an entry of its own rather than inside 360 Riffle's folder: installing 360 Riffle again then doesn't copy
 Salvia's 150 MB again or reset its settings. 360 Riffle finds it at `Hdd1:\PeerPressure\Salvia` by itself.
