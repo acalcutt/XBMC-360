@@ -14,6 +14,7 @@
 #include "network\Jellyfin.h"
 #include "network\MediaRiffle.h"
 #include "utils\Log.h"
+#include "utils\Secrets.h"
 #include "utils\StringUtils.h"
 
 using namespace XFILE;
@@ -34,7 +35,8 @@ CStdString CDiagnostics::FindUsbDrive()
 	return "";
 }
 
-// A log, while the logger still has it open for writing (CFile opens with read sharing only, which that refuses)
+// A log, while the logger still has it open for writing (CFile opens with read sharing only, which that refuses), with
+// any password or key in it hidden: one written before they were kept out of the log can have them
 static bool CopyLog(const CStdString& from, const CStdString& to)
 {
 	HANDLE in = CreateFile(from.c_str(), GENERIC_READ, FILE_SHARE_READ | FILE_SHARE_WRITE, NULL, OPEN_EXISTING, 0, NULL);
@@ -51,8 +53,25 @@ static bool CopyLog(const CStdString& from, const CStdString& to)
 	static char buffer[64 * 1024];
 	DWORD read = 0, written = 0;
 	bool ok = true;
+	CStdString text; // Read and not written yet: whole lines are written, as a line can go on in the next read
 	while (ok && ReadFile(in, buffer, sizeof(buffer), &read, NULL) && read > 0)
-		ok = WriteFile(out, buffer, read, &written, NULL) && written == read;
+	{
+		text.append(buffer, read);
+		int end = text.ReverseFind('\n') + 1;
+		if (end <= 0)
+			continue;
+
+		CStdString lines = text.Left(end);
+		text = text.Mid(end);
+		CSecrets::Hide(lines);
+		ok = WriteFile(out, lines.c_str(), lines.size(), &written, NULL) && written == lines.size();
+	}
+
+	if (ok && !text.IsEmpty())
+	{
+		CSecrets::Hide(text);
+		ok = WriteFile(out, text.c_str(), text.size(), &written, NULL) && written == text.size();
+	}
 
 	CloseHandle(out);
 	CloseHandle(in);
