@@ -25,7 +25,8 @@ struct GameSystem
 {
 	const char* name;       // As the system is known
 	const char* extensions; // Its own: a file with one of these is its game, wherever it is
-	const char* shared;     // Ones other systems use too: its game when a folder it's in is named for it
+	const char* shared;     // Ones other systems or other files use too (.zip, .bin, .md for a README):
+	                        // its game when a folder it's in is named for it
 	const char* folders;    // Folder names for it, in lower case letters and digits only
 	const char* cores;      // Salvia's cores that play it, best first; none when no emulator for it runs on the 360
 };
@@ -34,22 +35,22 @@ static const GameSystem SYSTEMS[] =
 {
 	{ "NES", "|.nes|.fds|.unf|.unif|", "|.zip|", "|nes|famicom|nintendoentertainmentsystem|famicomdisksystem|fds|", "|Nestopia|" },
 	{ "SNES", "|.sfc|.smc|.fig|.swc|.gd3|.gd7|.dx2|.bsx|", "|.zip|", "|snes|superfamicom|supernintendo|supernes|sfc|", "|Snes9x2010|Snes9x|" },
-	{ "Genesis", "|.md|.gen|.smd|.mdx|.68k|.sgd|", "|.zip|.bin|", "|genesis|megadrive|segagenesis|segamegadrive|md|", "|Genesis-Plus-GX|picodrive|" },
+	{ "Genesis", "|.gen|.smd|.mdx|.68k|.sgd|", "|.zip|.bin|.md|", "|genesis|megadrive|segagenesis|segamegadrive|md|", "|Genesis-Plus-GX|picodrive|" },
 	{ "Master System", "|.sms|.sg|.bms|", "|.zip|", "|mastersystem|segamastersystem|sms|sg1000|", "|Genesis-Plus-GX|picodrive|" },
 	{ "Game Gear", "|.gg|", "|.zip|", "|gamegear|segagamegear|gg|", "|Genesis-Plus-GX|" },
 	{ "Sega CD", "", "|.cue|.chd|.iso|.m3u|", "|segacd|megacd|", "|Genesis-Plus-GX|picodrive|" },
 	{ "32X", "|.32x|", "|.zip|", "|32x|sega32x|", "|picodrive|" },
-	{ "Game Boy", "|.gb|.dmg|", "|.zip|", "|gb|gameboy|", "|Gambatte|" },
+	{ "Game Boy", "|.gb|", "|.zip|.dmg|", "|gb|gameboy|", "|Gambatte|" },
 	{ "Game Boy Color", "|.gbc|", "|.zip|", "|gbc|gameboycolor|", "|Gambatte|" },
 	{ "Game Boy Advance", "|.gba|", "|.zip|", "|gba|gameboyadvance|", "|vba-next|" },
 	{ "Nintendo 64", "|.z64|.n64|.v64|", "|.zip|", "|n64|nintendo64|", "|xbox64|" },
-	{ "PlayStation", "|.pbp|.cbn|", "|.cue|.bin|.img|.iso|.chd|.m3u|.mdf|", "|psx|ps1|psone|playstation|playstation1|sonyplaystation|", "|pcsxr-360|" },
+	{ "PlayStation", "|.cbn|", "|.cue|.bin|.img|.iso|.chd|.m3u|.mdf|.pbp|", "|psx|ps1|psone|playstation|playstation1|sonyplaystation|", "|pcsxr-360|" },
 	{ "PC Engine", "|.pce|", "|.zip|", "|pce|pcengine|turbografx|turbografx16|tg16|", "|beetle-pce-fast|beetle-pce|" },
 	{ "PC Engine CD", "", "|.cue|.chd|.m3u|", "|pcecd|pcenginecd|turbografxcd|tgcd|", "|beetle-pce-fast|beetle-pce|" },
 	{ "Neo Geo Pocket", "|.ngp|.ngc|.ngpc|.npc|", "|.zip|", "|ngp|ngpc|neogeopocket|neogeopocketcolor|", "|beetle-ngp|" },
 	{ "WonderSwan", "|.ws|.wsc|", "|.zip|", "|wonderswan|wonderswancolor|ws|wsc|", "|beetle-wswan|" },
 	{ "Atari Lynx", "|.lnx|.lyx|", "|.zip|", "|lynx|atarilynx|", "|beetle-lynx|" },
-	{ "Virtual Boy", "|.vb|.vboy|", "|.zip|", "|virtualboy|vb|", "|beetle-vb|" },
+	{ "Virtual Boy", "|.vboy|", "|.zip|.vb|", "|virtualboy|vb|", "|beetle-vb|" },
 
 	// No emulator for these runs on the 360 yet. Their games are listed all
 	// the same, so that playing one can say so
