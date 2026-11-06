@@ -1,0 +1,88 @@
+# 360 Riffle CI. The build runs on the Windows runner that has the Xbox 360 XDK (tags "windows" and "xdk": gitlab-runner-
+# install's Install-WindowsRunner.ps1, then Install-Xbox360Xdk.ps1); the other jobs run on any Windows runner. See
+# docs/releases.md.
+#
+#   build             Merge requests and pushes to main: Build.bat Release (the libraries, then 360 Riffle) and the bundle
+#                     zipped as a job artifact (7 days), 360Riffle-v<version>-ci<pipeline>-<commit>.zip, so a download
+#                     says what it is. It's a 360riffle folder: unzipped at the top of a USB drive, System info > Update
+#                     from USB installs it.
+#   release-*         Push to main: if no GitLab release exists for APP_VERSION (xbmc360/CompileInfo.h), create it with
+#                     the CHANGELOG.md notes and the build's zip as 360Riffle-v<version>.zip, with SHA256SUMS.
+#
+# CI/CD variables (Settings > CI/CD > Variables):
+#   XBMC360_STOCK     Optional: a folder on the XDK runner holding a stock XBMC-360 bundle, for MilkDrop's data and
+#                     visualisations folders, which aren't in this repository. Without it the zip leaves them out: it
+#                     still updates an installed 360 Riffle, which keeps its own.
+
+workflow:
+  rules:
+    - if: $CI_PIPELINE_SOURCE == "merge_request_event"
+    # No second, branch pipeline while a merge request is open for the branch
+    - if: $CI_COMMIT_BRANCH && $CI_OPEN_MERGE_REQUESTS && $CI_PIPELINE_SOURCE == "push"
+      when: never
+    - if: $CI_COMMIT_BRANCH
+
+variables:
+  # Where the version is, as release-check.ps1 and the build read it
+  VERSION_FILE: xbmc360/CompileInfo.h
+  VERSION_PATTERN: '#define APP_VERSION\s+"([^"]+)"'
+  # git clean without -x: the ignored build output stays between pipelines, so the libraries build once and Build.bat
+  # rebuilds only what changed. Every job, as any of them can run in the XDK runner's checkout. A pipeline run with
+  # GIT_CLEAN_FLAGS set to -ffdx builds everything again
+  GIT_CLEAN_FLAGS: -ffd
+
+default:
+  tags: [windows]
+
+stages:
+  - check
+  - build
+  - release
+
+.ci-rules: &ci-rules
+  - if: $CI_PIPELINE_SOURCE == "merge_request_event"
+  - if: $CI_COMMIT_BRANCH == $CI_DEFAULT_BRANCH
+
+.release-rules: &release-rules
+  - if: $CI_COMMIT_BRANCH == $CI_DEFAULT_BRANCH
+
+# ── Build ───────────────────────────────────────────────────────────────────────────────────────────
+
+# The first build compiles every library (about half an hour); later ones only what changed
+build:
+  stage: build
+  tags: [windows, xdk]
+  rules: *ci-rules
+  timeout: 2h
+  script:
+    - cmd /c Build.bat Release
+    - $version = ([regex]::Match((Get-Content $env:VERSION_FILE -Raw), $env:VERSION_PATTERN)).Groups[1].Value
+    - ./tools/New-Bundle.ps1 -Path bundle/360riffle -Stock $env:XBMC360_STOCK -Zip "ci-files/360Riffle-v$version-ci$env:CI_PIPELINE_IID-$env:CI_COMMIT_SHORT_SHA.zip"
+  artifacts:
+    name: 360Riffle-ci$CI_PIPELINE_IID
+    paths:
+      - ci-files/
+    expire_in: 7 days
+
+# ── Release ─────────────────────────────────────────────────────────────────────────────────────────
+
+release-check:
+  stage: check
+  rules: *release-rules
+  script:
+    - ./.gitlab/scripts/release-check.ps1 -File $env:VERSION_FILE -Pattern $env:VERSION_PATTERN
+  artifacts:
+    reports:
+      dotenv: release.env
+
+# The build's zip, as the release's: the same commit
+release-publish:
+  stage: release
+  rules: *release-rules
+  needs: [release-check, build]
+  resource_group: release
+  script:
+    - if ($env:RELEASE_PUBLISHED -eq 'true') { Write-Host "Release $env:RELEASE_TAG already exists; skipping."; exit 0 }
+    - New-Item -ItemType Directory release-files | Out-Null
+    - Copy-Item (Get-Item ci-files/360Riffle-*.zip) "release-files/360Riffle-$env:RELEASE_TAG.zip"
+    - ./.gitlab/scripts/publish-release.ps1 -PackageName 360riffle -ReleaseName "360 Riffle"
