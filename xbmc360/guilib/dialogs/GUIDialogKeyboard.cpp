@@ -15,6 +15,8 @@
 #include "AdvancedSettings.h"
 #include "guilib\LocalizeStrings.h"
 #include "utils\CharsetConverter.h"
+#include "utils\Log.h"
+#include "Application.h"
 
 // Symbol mapping (based on MS virtual keyboard - may need improving)
 static char symbol_map[37] = ")!@#$%^&*([]{}-_=+;:\'\",.<>/?\\|`~    ";
@@ -587,6 +589,14 @@ bool CGUIDialogKeyboard::ShowAndGetInput(CStdString& aTextString, const CStdStri
 	if (!pKeyboard)
 		return false;
 
+	// The console's keyboard, when it's to be used and opens. Not to filter a list, which ours does as it's typed.
+	bool confirmed = false;
+	if (pKeyboard->m_filtering == FILTERING_NONE && g_guiSettings.GetBool("lookandfeel.consolekeyboard") &&
+		ShowConsoleKeyboard(aTextString, strHeading, hiddenInput, confirmed))
+	{
+		return confirmed && (allowEmptyResult || !aTextString.IsEmpty());
+	}
+
 	// Setup keyboard
 	pKeyboard->Initialize();
 	pKeyboard->CenterWindow();
@@ -610,6 +620,54 @@ bool CGUIDialogKeyboard::ShowAndGetInput(CStdString& aTextString, const CStdStri
 	}
 	else
 		return false;
+}
+
+bool CGUIDialogKeyboard::ShowConsoleKeyboard(CStdString& text, const CStdString& heading, bool hidden, bool& confirmed)
+{
+	// It answers to one controller: the first there is
+	DWORD user = XUSER_MAX_COUNT;
+	for (DWORD i = 0; i < XUSER_MAX_COUNT && user == XUSER_MAX_COUNT; i++)
+	{
+		XINPUT_CAPABILITIES caps;
+		if (XInputGetCapabilities(i, XINPUT_FLAG_GAMEPAD, &caps) == ERROR_SUCCESS)
+			user = i;
+	}
+	if (user == XUSER_MAX_COUNT)
+		return false;
+
+	CStdStringW defaultText, title;
+	g_charsetConverter.utf8ToW(text, defaultText, false);
+	g_charsetConverter.utf8ToW(heading, title, false);
+
+	WCHAR result[512] = L"";
+	XOVERLAPPED overlapped;
+	memset(&overlapped, 0, sizeof(overlapped));
+	DWORD flags = (hidden ? VKBD_LATIN_PASSWORD : VKBD_LATIN_FULL) | VKBD_HIGHLIGHT_TEXT;
+	DWORD shown = XShowKeyboardUI(user, flags, defaultText.c_str(), title.c_str(), L"", result, sizeof(result) / sizeof(WCHAR), &overlapped);
+	if (shown != ERROR_IO_PENDING)
+	{
+		CLog::Log(LOGWARNING, "%s - the console's keyboard didn't open (%lu); using the skin's", __FUNCTION__, shown);
+		return false;
+	}
+
+	// The system draws it over this: on the GUI thread, keep rendering meanwhile (not taking input, which is the
+	// keyboard's); on another, the GUI thread does
+	while (!XHasOverlappedIoCompleted(&overlapped))
+	{
+		if (g_application.IsCurrentThread())
+			g_windowManager.ProcessRenderLoop(true);
+		else
+			Sleep(50);
+	}
+
+	confirmed = XGetOverlappedResult(&overlapped, NULL, TRUE) == ERROR_SUCCESS;
+	if (confirmed)
+	{
+		CStdStringA utf8;
+		g_charsetConverter.wToUTF8(result, utf8);
+		text = utf8;
+	}
+	return true;
 }
 
 bool CGUIDialogKeyboard::ShowAndGetInput(CStdString& aTextString, bool allowEmptyResult)

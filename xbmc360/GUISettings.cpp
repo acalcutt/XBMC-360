@@ -250,6 +250,7 @@ void CGUISettings::Initialize()
 	AddString(2, "lookandfeel.skintheme",15111,"SKINDEFAULT", SPIN_CONTROL_TEXT);
 	AddString(3, "lookandfeel.skincolors",14078, "SKINDEFAULT", SPIN_CONTROL_TEXT);
 	AddInt(5, "lookandfeel.skinzoom",20109, 0, -20, 2, 20, SPIN_CONTROL_INT, MASK_PERCENT);
+	AddBool(6, "lookandfeel.consolekeyboard", 13180, true);
 	AddBool(9, "lookandfeel.enablerssfeeds",13305, true);
 
 	AddCategory(7, "locale", 14090);

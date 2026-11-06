@@ -53,6 +53,10 @@ private:
 	void Backspace();
 	void SendSearchMessage();
 
+	// The console's own keyboard (the dashboard's, with Chatpad and USB keyboards), over this. False when it couldn't
+	// be opened; else whether its text was confirmed, in text.
+	static bool ShowConsoleKeyboard(CStdString& text, const CStdString& heading, bool hidden, bool& confirmed);
+
 	CStdStringW m_strEdit;
 	bool m_bIsConfirmed;
 	KEYBOARD m_keyType;

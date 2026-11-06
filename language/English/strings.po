@@ -4224,7 +4224,12 @@ msgctxt "#13179"
 msgid "Board temperature:"
 msgstr ""
 
-#empty strings from id 13180 to 13199
+#. Appearance: type with the console's own keyboard (the dashboard's) rather than the skin's
+msgctxt "#13180"
+msgid "Use the console's keyboard"
+msgstr ""
+
+#empty strings from id 13181 to 13199
 
 msgctxt "#13200"
 msgid "Profiles"
