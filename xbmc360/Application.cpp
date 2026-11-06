@@ -148,7 +148,7 @@ bool CApplication::Create()
 	CSpecialProtocol::SetProfilePath(g_settings.GetUserDataFolder());
 
 	CLog::Log(LOGNOTICE, "-----------------------------------------------------------------------");
-	CLog::Log(LOGNOTICE, "Starting %s.  Built on %s", APP_NAME, __DATE__);
+	CLog::Log(LOGNOTICE, "Starting %s %s.  Built on %s", APP_NAME, APP_VERSION, __DATE__);
 	CLog::Log(LOGNOTICE, "-----------------------------------------------------------------------");
 	CSpecialProtocol::LogPaths();
 

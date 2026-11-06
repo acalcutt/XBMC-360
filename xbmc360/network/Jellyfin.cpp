@@ -24,7 +24,6 @@
 CJellyfin g_jellyfin;
 
 #define ACCOUNTS_FILE   "special://profile/jellyfin.xml"
-#define CLIENT_VERSION  "1.0"
 // How long a Quick Connect code is shown for, and how often the server is asked whether it's been entered
 #define QUICK_CONNECT_FOR   300000
 #define QUICK_CONNECT_EVERY 3000
@@ -328,7 +327,7 @@ CStdString CJellyfin::AuthHeader(const CStdString& token) const
 {
 	CStdString header;
 	header.Format("MediaBrowser Client=\"%s\", Device=\"Xbox 360\", DeviceId=\"%s\", Version=\"%s\"",
-		APP_NAME, m_deviceId.c_str(), CLIENT_VERSION);
+		APP_NAME, m_deviceId.c_str(), APP_VERSION);
 	if (!token.IsEmpty())
 		header.AppendFormat(", Token=\"%s\"", token.c_str());
 	return header;

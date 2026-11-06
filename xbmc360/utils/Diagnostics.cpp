@@ -95,7 +95,7 @@ CStdString CDiagnostics::SystemReport()
 	CStdString report;
 	SYSTEMTIME now;
 	GetLocalTime(&now);
-	report.Format("%s diagnostics, %04d-%02d-%02d %02d:%02d:%02d\r\n\r\n", APP_NAME, now.wYear, now.wMonth, now.wDay,
+	report.Format("%s %s diagnostics, %04d-%02d-%02d %02d:%02d:%02d\r\n\r\n", APP_NAME, APP_VERSION, now.wYear, now.wMonth, now.wDay,
 		now.wHour, now.wMinute, now.wSecond);
 
 	AddInfo(report, "Build date", SYSTEM_BUILD_DATE);
