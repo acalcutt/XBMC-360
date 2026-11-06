@@ -126,14 +126,6 @@ bool CApplication::Create()
 	// Grab a handle to our thread to be used later in identifying the render thread
 	m_threadID = GetCurrentThreadId();
 
-	// TODO: Move to it's own function like xbmc4xbox
-	// Map our special:// protocol roots (special://xbmc, special://home,
-	CSpecialProtocol::SetXBMCPath("D:\\");
-	CSpecialProtocol::SetHomePath("D:\\");
-	CSpecialProtocol::SetTempPath("D:\\cache");
-	CSpecialProtocol::SetMasterProfilePath(g_settings.GetUserDataFolder());
-	CSpecialProtocol::SetProfilePath(g_settings.GetUserDataFolder());
-
 	// Check logpath
 	CStdString strLogFile, strLogFileOld;
 	URIUtils::AddSlashAtEnd(g_settings.m_logFolder);
@@ -141,9 +133,18 @@ bool CApplication::Create()
 	strLogFileOld.Format("%sxbmc.old.log", g_settings.m_logFolder);
 
 	// Rotate the log (xbmc.log -> xbmc.old.log), before anything is logged: the
-	// log keeps its file open once written to, and an open file can't be renamed
+	// log keeps its file open once written to, and an open file can't be renamed.
+	// That includes setting special://profile below, which logs where it is
 	::DeleteFile(strLogFileOld.c_str());
 	::MoveFile(strLogFile.c_str(), strLogFileOld.c_str());
+
+	// TODO: Move to it's own function like xbmc4xbox
+	// Map our special:// protocol roots (special://xbmc, special://home,
+	CSpecialProtocol::SetXBMCPath("D:\\");
+	CSpecialProtocol::SetHomePath("D:\\");
+	CSpecialProtocol::SetTempPath("D:\\cache");
+	CSpecialProtocol::SetMasterProfilePath(g_settings.GetUserDataFolder());
+	CSpecialProtocol::SetProfilePath(g_settings.GetUserDataFolder());
 
 	CLog::Log(LOGNOTICE, "-----------------------------------------------------------------------");
 	CLog::Log(LOGNOTICE, "Starting %s.  Built on %s", APP_NAME, __DATE__);
