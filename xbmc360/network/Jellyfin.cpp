@@ -4,6 +4,7 @@
 #include "HttpRequest.h"
 #include "Application.h"
 #include "CompileInfo.h"
+#include "FileItem.h"
 #include "URL.h"
 #include "filesystem\SpecialProtocol.h"
 #include "guilib\GUIWindowManager.h"
@@ -16,6 +17,7 @@
 #include "utils\JSONVariantParser.h"
 #include "utils\Log.h"
 #include "utils\SingleLock.h"
+#include "utils\StringUtils.h"
 
 CJellyfin g_jellyfin;
 
@@ -24,6 +26,8 @@ CJellyfin g_jellyfin;
 // How long a Quick Connect code is shown for, and how often the server is asked whether it's been entered
 #define QUICK_CONNECT_FOR   300000
 #define QUICK_CONNECT_EVERY 3000
+// The most a stream is asked to be, in bits a second: plenty for 720p H.264 on the console's 100 Mb/s
+#define MAX_BITRATE         8000000
 
 CJellyfin::CJellyfin()
 {
@@ -354,6 +358,105 @@ bool CJellyfin::CallServer(const CStdString& server, const CStdString& token, co
 		CLog::Log(LOGWARNING, "Jellyfin: %s %s: %ld %s", method.c_str(), url.c_str(), status, response.substr(0, 200).c_str());
 
 	answer = response.empty() ? CVariant() : CJSONVariantParser::Parse(response);
+	return true;
+}
+
+// What the console can play, for the server to make its stream to: nothing as it is (every file is transcoded, as
+// MediaRiffle's are), and HLS in MPEG-TS of H.264 at up to 720p and level 4.1 with stereo AAC, MP3 or AC-3
+static CVariant DeviceProfile()
+{
+	CVariant hls(CVariant::VariantTypeObject);
+	hls["Container"] = "ts";
+	hls["Type"] = "Video";
+	hls["VideoCodec"] = "h264";
+	hls["AudioCodec"] = "aac,mp3,ac3";
+	hls["Protocol"] = "hls";
+	hls["Context"] = "Streaming";
+	hls["MaxAudioChannels"] = "2";
+	hls["BreakOnNonKeyFrames"] = true;
+
+	const char* limits[][2] = { { "Width", "1280" }, { "Height", "720" }, { "VideoLevel", "41" } };
+	CVariant conditions(CVariant::VariantTypeArray);
+	for (unsigned int i = 0; i < sizeof(limits) / sizeof(limits[0]); i++)
+	{
+		CVariant condition(CVariant::VariantTypeObject);
+		condition["Condition"] = "LessThanEqual";
+		condition["Property"] = limits[i][0];
+		condition["Value"] = limits[i][1];
+		conditions.push_back(condition);
+	}
+	CVariant h264(CVariant::VariantTypeObject);
+	h264["Type"] = "Video";
+	h264["Codec"] = "h264";
+	h264["Conditions"] = conditions;
+
+	CVariant profile(CVariant::VariantTypeObject);
+	profile["Name"] = APP_NAME;
+	profile["MaxStreamingBitrate"] = MAX_BITRATE;
+	profile["DirectPlayProfiles"] = CVariant(CVariant::VariantTypeArray);
+	profile["TranscodingProfiles"] = CVariant(CVariant::VariantTypeArray);
+	profile["TranscodingProfiles"].push_back(hls);
+	profile["CodecProfiles"] = CVariant(CVariant::VariantTypeArray);
+	profile["CodecProfiles"].push_back(h264);
+	profile["SubtitleProfiles"] = CVariant(CVariant::VariantTypeArray);
+	return profile;
+}
+
+bool CJellyfin::StartPlayback(const CFileItem& item, CFileItem& stream)
+{
+	CStdString server = ServerOf(item.GetPath());
+	CStdStringArray parts;
+	CStdString rest = CURL(item.GetPath()).GetFileName();
+	rest.TrimRight("/");
+	CStringUtils::SplitString(rest, "/", parts);
+	if (server.IsEmpty() || parts.size() < 2 || !parts[0].Equals("play"))
+		return false;
+
+	if (!IsSignedIn(server) && !SignIn(server))
+		return false;
+
+	CStdString id = parts[1];
+	CStdString userId = GetUserId(server);
+
+	// Where it was stopped (on 10.9 and later /Items/{id}, before that under the user)
+	long status = 0;
+	CVariant details;
+	if (Call(server, "GET", "/Items/" + id + "?userId=" + userId, NULL, status, details) && status == 404)
+		Call(server, "GET", "/Users/" + userId + "/Items/" + id, NULL, status, details);
+	double resume = status == 200 ? details["UserData"]["PlaybackPositionTicks"].asDouble() / 10000000.0 : 0;
+
+	CVariant info(CVariant::VariantTypeObject);
+	info["DeviceProfile"] = DeviceProfile();
+	CStdString query;
+	query.Format("/Items/%s/PlaybackInfo?userId=%s&isPlayback=true&autoOpenLiveStream=true&maxStreamingBitrate=%d",
+		id.c_str(), userId.c_str(), MAX_BITRATE);
+
+	CVariant answer;
+	if (!Call(server, "POST", query, &info, status, answer, 60))
+	{
+		ShowUnreachable(server);
+		return false;
+	}
+	if (status != 200 || answer["MediaSources"].size() == 0)
+	{
+		ShowError(ErrorOf(answer, status));
+		return false;
+	}
+
+	// The stream's URL carries a key of its own, so the player needs no token for it (and it's kept out of the log)
+	CStdString url = answer["MediaSources"][0u]["TranscodingUrl"].asString();
+	if (url.IsEmpty())
+	{
+		ShowError(g_localizeStrings.Get(33558));
+		return false;
+	}
+
+	stream = item;
+	stream.SetPath(server + url);
+	stream.SetMimeType("application/vnd.apple.mpegurl");
+	stream.m_lStartOffset = (long)(resume * 75.0);
+
+	CLog::Log(LOGNOTICE, "Jellyfin: playing %s from %.0f s", id.c_str(), resume);
 	return true;
 }
 

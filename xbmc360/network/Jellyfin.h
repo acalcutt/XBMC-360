@@ -7,6 +7,8 @@
 
 #include <map>
 
+class CFileItem;
+
 // Jellyfin servers (and Emby's, whose API Jellyfin kept): their video libraries as sources (jellyfin://host:port/, or
 // jellyfins:// over HTTPS).
 //
@@ -43,6 +45,10 @@ public:
 	// False when the server couldn't be reached; else its status, and its answer when that's JSON.
 	bool Call(const CStdString& server, const CStdString& method, const CStdString& path, const CVariant* body,
 		long& status, CVariant& answer, int timeout = 20);
+
+	// Playing: a jellyfin:// item (<source>play/<item>), and the stream it plays as, an HLS stream the server makes for
+	// the console (H.264 at up to 720p), starting where it was stopped
+	bool StartPlayback(const CFileItem& item, CFileItem& stream);
 
 	// Errors, in a dialog: the server couldn't be reached (and libcurl's reason), or what it answered
 	void ShowUnreachable(const CStdString& server);

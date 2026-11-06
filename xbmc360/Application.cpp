@@ -1894,6 +1894,16 @@ bool CApplication::PlayFile(const CFileItem& item, bool bRestart)
 		return PlayFile(stream, false);
 	}
 
+	// A Jellyfin item, likewise: the HLS stream its server makes of it
+	if (!bRestart && CJellyfin::IsJellyfin(item.GetPath()))
+	{
+		CFileItem stream;
+		if (!g_jellyfin.StartPlayback(item, stream))
+			return false;
+
+		return PlayFile(stream, false);
+	}
+
 	if (!bRestart)
 	{
 		m_iPlaySpeed = 1;

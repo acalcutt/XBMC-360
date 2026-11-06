@@ -9085,7 +9085,11 @@ msgctxt "#33557"
 msgid "The server's answer had no sign-in in it."
 msgstr ""
 
-#empty strings from id 33558 to 34004
+msgctxt "#33558"
+msgid "The server didn't offer a stream this console can play."
+msgstr ""
+
+#empty strings from id 33559 to 34004
 
 msgctxt "#34005"
 msgid "Flac"
