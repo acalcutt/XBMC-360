@@ -4,7 +4,7 @@
 #include "utils\URIUtils.h"
 //#include "storage\DetectDVDType.h" // TODO
 #include "guilib\dialogs\GUIDialogNetworkSetup.h"
-#include "guilib\dialogs\GUIDialogMediaSource.h"
+#include "guilib\windows\GUIWindowSources.h"
 #include "guilib\dialogs\GUIDialogContextMenu.h"
 #include "MediaManager.h"
 //#include "AutoSwitch.h" // TODO
@@ -862,9 +862,10 @@ void CGUIDialogFileBrowser::OnAddNetworkLocation()
 	Update(m_vecItems->GetPath());
 }
 
+// The same steps as Settings > Sources, for adding a source and changing one
 void CGUIDialogFileBrowser::OnAddMediaSource()
 {
-	if (CGUIDialogMediaSource::ShowAndAddMediaSource(m_addSourceType))
+	if (CGUIWindowSources::ShowAndAddSource(m_addSourceType))
 	{
 		SetSources(*g_settings.GetSourcesFromType(m_addSourceType));
 		Update("");
@@ -873,10 +874,19 @@ void CGUIDialogFileBrowser::OnAddMediaSource()
 
 void CGUIDialogFileBrowser::OnEditMediaSource(CFileItem* pItem)
 {
-	if (CGUIDialogMediaSource::ShowAndEditMediaSource(m_addSourceType,pItem->GetLabel()))
+	VECSOURCES* sources = g_settings.GetSourcesFromType(m_addSourceType);
+	for (unsigned int i = 0; sources && i < sources->size(); i++)
 	{
-		SetSources(*g_settings.GetSourcesFromType(m_addSourceType));
-		Update("");
+		if (!(*sources)[i].strName.Equals(pItem->GetLabel()))
+			continue;
+
+		CMediaSource source = (*sources)[i];
+		if (CGUIWindowSources::ShowAndEditSource(m_addSourceType, source))
+		{
+			SetSources(*g_settings.GetSourcesFromType(m_addSourceType));
+			Update("");
+		}
+		return;
 	}
 }
 

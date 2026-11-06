@@ -28,7 +28,7 @@
 #include "filesystem\MultiPathDirectory.h"
 #include "guilib\dialogs\GUIDialogContextMenu.h"
 #include "guilib\GUIListContainer.h"
-#include "guilib\dialogs\GUIDialogMediaSource.h"
+#include "guilib\windows\GUIWindowSources.h"
 //#include "GUIPassword.h" // TODO
 #include "playlists\PlayListFactory.h"
 #include "guilib\GUIWindowManager.h"
@@ -493,7 +493,7 @@ void CGUIWindowFileManager::OnClick(int iList, int iItem)
 	CFileItemPtr pItem = m_vecItems[iList]->Get(iItem);
 	if (pItem->GetPath() == "add" && pItem->GetLabel() == g_localizeStrings.Get(1026)) // 'add source button' in empty root
 	{
-		if (CGUIDialogMediaSource::ShowAndAddMediaSource("files"))
+		if (CGUIWindowSources::ShowAndAddSource("files"))
 		{
 			SetSourcesWithLocal(*g_settings.GetSourcesFromType("files"));
 			Update(0,m_Directory[0]->GetPath());

@@ -286,7 +286,7 @@ bool CGUIWindowSources::AskName(CStdString& name)
 
 // A server's source can move to another server (linking or signing in there); a share's server, folder and sign-in
 // can change, or a folder; then its name, and whether it may be saved to
-void CGUIWindowSources::EditSource(const CStdString& type, const CMediaSource& source)
+bool CGUIWindowSources::ShowAndEditSource(const CStdString& type, const CMediaSource& source)
 {
 	CStdString path = source.strPath;
 	bool mediaRiffle = CMediaRiffle::IsMediaRiffle(path);
@@ -295,19 +295,19 @@ void CGUIWindowSources::EditSource(const CStdString& type, const CMediaSource& s
 	if (server)
 	{
 		if (!AskServer(mediaRiffle, path))
-			return;
+			return false;
 	}
 	else if (CURL(path).GetProtocol().Equals("smb"))
 	{
 		if (!AskShare(path))
-			return;
+			return false;
 	}
 	else if (!URIUtils::IsMultiPath(path) && !AskFolder(path))
-		return;
+		return false;
 
 	CStdString name = source.strName;
 	if (!AskName(name))
-		return;
+		return false;
 
 	std::vector<CStdString> paths;
 	paths.push_back(path);
@@ -315,7 +315,7 @@ void CGUIWindowSources::EditSource(const CStdString& type, const CMediaSource& s
 	CMediaSource changed = source;
 	changed.FromNameAndPaths(type, UniqueName(type, name, source.strName), paths);
 	changed.m_allowWrite = !server && CMediaSource::CanWriteTo(changed.strPath) && CGUIDialogYesNo::ShowAndGetInput(13196, 13197, 0, 0);
-	g_settings.UpdateShare(type, source.strName, changed);
+	return g_settings.UpdateShare(type, source.strName, changed);
 }
 
 bool CGUIWindowSources::ChooseType(bool allowGames, CStdString& type)
@@ -409,7 +409,7 @@ void CGUIWindowSources::OnSource(int item)
 			return;
 
 		case 1:
-			EditSource(type, source);
+			ShowAndEditSource(type, source);
 			break;
 
 		case 2:

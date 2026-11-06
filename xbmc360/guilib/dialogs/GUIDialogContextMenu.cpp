@@ -3,7 +3,6 @@
 #include "guilib\LocalizeStrings.h"
 #include "Settings.h"
 #include "guilib\GUIButtonControl.h"
-#include "GUIDialogMediaSource.h"
 #include "GUIDialogYesNo.h"
 #include "guilib\windows\GUIWindowSources.h"
 #include "network\MediaRiffle.h"
@@ -290,8 +289,9 @@ bool CGUIDialogContextMenu::OnContextButton(const CStdString &type, const CFileI
 			else if (!g_passwordManager.IsProfileLockUnlocked())
 				return false;
 */
-			return CGUIDialogMediaSource::ShowAndEditMediaSource(type, *share);
-    
+			// The same steps as Settings > Sources
+			return CGUIWindowSources::ShowAndEditSource(type, *share);
+
 		case CONTEXT_BUTTON_REMOVE_SOURCE:
 /*			if (g_settings.IsMasterUser()) // TODO: Lockng
 			{

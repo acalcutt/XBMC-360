@@ -25,6 +25,8 @@ public:
 	// Adding a source, as described above. Given a kind (from a media window's Add source), only the places that kind
 	// can be on are offered, and what's on it isn't asked. True once one's added.
 	static bool ShowAndAddSource(const CStdString& type = "");
+	// Changing a source: the same steps, each starting from what it is. True once it's changed.
+	static bool ShowAndEditSource(const CStdString& type, const CMediaSource& source);
 
 private:
 	void Refresh();
@@ -38,8 +40,6 @@ private:
 	static bool AskFolder(CStdString& path);
 	static bool AskName(CStdString& name);
 	static bool ChooseType(bool allowGames, CStdString& type);
-	// Changing a source: the same steps, each starting from what it is
-	static void EditSource(const CStdString& type, const CMediaSource& source);
 	static void AddSource(const CStdString& type, const CStdString& name, const CStdString& path, bool allowWrite);
 	static CStdString UniqueName(const CStdString& type, const CStdString& name, const CStdString& except);
 	static CMediaSource* Find(const CStdString& type, const CStdString& name, const CStdString& path);
