@@ -72,13 +72,15 @@ bool CXBLibSMB2::OpenDir(const CURL& url)
 	if(!m_pLibSMB2Context)
 		return false;
 
+	m_lastError.Empty();
 	SetCredentials(m_pLibSMB2Context, url);
-		
+
 	m_pLibSMB2Url = smb2_parse_url(m_pLibSMB2Context, "smb://"+url.GetHostName()+":445/"+url.GetShareName());
 
 	if(!m_pLibSMB2Url)
 	{
-		CLog::Log(LOGERROR, "Failed to parse url: %s\n", smb2_get_error(m_pLibSMB2Context));
+		m_lastError = smb2_get_error(m_pLibSMB2Context);
+		CLog::Log(LOGERROR, "Failed to parse url: %s\n", m_lastError.c_str());
 		return false;
 	}
 
@@ -98,7 +100,8 @@ bool CXBLibSMB2::OpenDir(const CURL& url)
 
 		if(smb2_connect_share(m_pLibSMB2Context, m_pLibSMB2Url->server, m_pLibSMB2Url->share, m_pLibSMB2Url->user) != 0)
 		{
-			CLog::Log(LOGERROR, "smb2_connect_share failed. %s", smb2_get_error(m_pLibSMB2Context));
+			m_lastError = smb2_get_error(m_pLibSMB2Context);
+			CLog::Log(LOGERROR, "smb2_connect_share failed. %s", m_lastError.c_str());
 			return false;
 		}
 		m_ConnectedServer = m_pLibSMB2Url->server;
@@ -108,7 +111,11 @@ bool CXBLibSMB2::OpenDir(const CURL& url)
 	m_pLibSMB2H = smb2_opendir(m_pLibSMB2Context, m_pLibSMB2Url->path);
 
 	if(!m_pLibSMB2H)
+	{
+		m_lastError = smb2_get_error(m_pLibSMB2Context);
+		CLog::Log(LOGERROR, "smb2_opendir failed. %s", m_lastError.c_str());
 		return false;
+	}
 	
 	return true;
 }
@@ -292,7 +299,8 @@ bool CXBLibSMB2::EnsureConnection(const CURL& url)
 
 	if(!pUrl)
 	{
-		CLog::Log(LOGERROR, "CXBLibSMB2::EnsureConnection - Failed to parse url: %s", smb2_get_error(m_pLibSMB2Context));
+		m_lastError = smb2_get_error(m_pLibSMB2Context);
+		CLog::Log(LOGERROR, "CXBLibSMB2::EnsureConnection - Failed to parse url: %s", m_lastError.c_str());
 		return false;
 	}
 
@@ -309,7 +317,8 @@ bool CXBLibSMB2::EnsureConnection(const CURL& url)
 
 		if(smb2_connect_share(m_pLibSMB2Context, pUrl->server, pUrl->share, pUrl->user) != 0)
 		{
-			CLog::Log(LOGERROR, "CXBLibSMB2::EnsureConnection - smb2_connect_share failed. %s", smb2_get_error(m_pLibSMB2Context));
+			m_lastError = smb2_get_error(m_pLibSMB2Context);
+			CLog::Log(LOGERROR, "CXBLibSMB2::EnsureConnection - smb2_connect_share failed. %s", m_lastError.c_str());
 			smb2_destroy_url(pUrl);
 			return false;
 		}

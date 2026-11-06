@@ -22,6 +22,9 @@ public:
 
 	int Open(const CURL &url);
 
+	// Why the last share or folder listed couldn't be opened, as libsmb2 put it; empty when it opened
+	static CStdString GetLastError();
+
 private:
 };
 }

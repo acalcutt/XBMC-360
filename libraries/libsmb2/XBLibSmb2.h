@@ -45,6 +45,10 @@ public:
 	bool CreateDir(const CURL& url);
 	bool RemoveDir(const CURL& url);
 
+	// Why the last folder couldn't be opened, or a connection made, as libsmb2 put it ("Session setup failed with
+	// (0xc000006d) STATUS_LOGON_FAILURE"); empty after one that opened
+	const CStdString& GetLastError() const { return m_lastError; }
+
 private:
 	bool EnsureConnection(const CURL& url);
 	struct smb2_url* ParseUrl(const CURL& url);
@@ -58,6 +62,7 @@ private:
 	CStdString m_ConnectedServer;
 	CStdString m_ConnectedShare;
 	UINT64 m_FileSize;
+	CStdString m_lastError;
 };
 
 #endif //H_CXBLIBSMB2

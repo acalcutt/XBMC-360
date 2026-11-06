@@ -95,6 +95,13 @@ bool CSMBDirectory::GetDirectory(const CStdString& strPath, CFileItemList &items
 	return true;
 }
 
+CStdString CSMBDirectory::GetLastError()
+{
+	CSingleLock lock(xbsmb);
+
+	return xbsmb.GetLastError();
+}
+
 bool CSMBDirectory::Create(const char* strPath)
 {
 	CSingleLock lock(xbsmb);
