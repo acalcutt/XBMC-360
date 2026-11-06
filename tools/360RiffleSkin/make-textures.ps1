@@ -1,14 +1,14 @@
-# Draws the flat shapes the MediaRiffle skin is built from into skins\MediaRiffle\media, as loose PNGs (the skin's
+# Draws the flat shapes the 360 Riffle skin is built from into skins\360 Riffle\media, as loose PNGs (the skin's
 # Textures.xpr is Confluence Lite's; a texture missing from it is loaded from media\ instead).
 #
 # White shapes are tinted in the skin with <colordiffuse> and the palette in colors\defaults.xml. Buttons can't be
 # tinted per state (one diffuse colour covers focused and unfocused), so those come in their colours here.
 #
-#   powershell -ExecutionPolicy Bypass -File tools\MediaRiffleSkin\make-textures.ps1
+#   powershell -ExecutionPolicy Bypass -File tools\360RiffleSkin\make-textures.ps1
 
 Add-Type -AssemblyName System.Drawing
 
-$media = Join-Path $PSScriptRoot '..\..\skins\MediaRiffle\media'
+$media = Join-Path $PSScriptRoot '..\..\skins\360 Riffle\media'
 
 # MediaRiffle's dark theme (src/MediaRiffle.Server/wwwroot/css/site.css)
 $accent  = [System.Drawing.ColorTranslator]::FromHtml('#4b9ef5')

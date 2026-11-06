@@ -8,7 +8,7 @@
 #include "ViewState.h"
 #include "guilib\GraphicContext.h"
 
-#define DEFAULT_SKIN "Project Mayhem III"
+#define DEFAULT_SKIN "360 Riffle"
 #define SETTINGS_FILE "D:\\settings.xml"
 #define SOURCES_FILE "D:\\sources.xml" //TODO: GetUserDataFolder()
 

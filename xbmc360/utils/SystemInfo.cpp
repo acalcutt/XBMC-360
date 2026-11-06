@@ -1,4 +1,5 @@
 #include "SystemInfo.h"
+#include "CompileInfo.h"
 
 CSysInfo g_sysinfo;
 
@@ -13,7 +14,7 @@ CSysInfo::~CSysInfo()
 CStdString CSysInfo::GetUserAgent()
 {
 	CStdString result;
-	result = "XBMC/360 (Xbox 360; http://www.xbmc.org)";
+	result = APP_USER_AGENT;
 	return result;
 }
 

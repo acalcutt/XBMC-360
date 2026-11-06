@@ -34,7 +34,7 @@
 				<font>font28_title</font>
 				<textcolor>mr_text</textcolor>
 				<aligny>center</aligny>
-				<label>MediaRiffle</label>
+				<label>360 Riffle</label>
 			</control>
 			<control type="list" id="9000">
 				<description>Tabs</description>

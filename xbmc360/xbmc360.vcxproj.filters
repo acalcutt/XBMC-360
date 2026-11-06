@@ -236,6 +236,9 @@
     <ClInclude Include="Application.h">
       <Filter>Header Files</Filter>
     </ClInclude>
+    <ClInclude Include="CompileInfo.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
     <ClInclude Include="XBApplicationEx.h">
       <Filter>Header Files</Filter>
     </ClInclude>

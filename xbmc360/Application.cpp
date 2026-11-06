@@ -1,4 +1,5 @@
 #include "Application.h"
+#include "CompileInfo.h"
 #include "GUILargeTextureManager.h"
 #include "guilib\GraphicContext.h"
 #include "utils\Log.h"
@@ -142,7 +143,7 @@ bool CApplication::Create()
 	::MoveFile(strLogFile.c_str(), strLogFileOld.c_str());
 
 	CLog::Log(LOGNOTICE, "-----------------------------------------------------------------------");
-	CLog::Log(LOGNOTICE, "Starting XBox Media Center 360.  Built on %s", __DATE__);
+	CLog::Log(LOGNOTICE, "Starting %s.  Built on %s", APP_NAME, __DATE__);
 	CLog::Log(LOGNOTICE, "-----------------------------------------------------------------------");
 
 	// rand() (shuffling a playlist, among others) differs from one start to the next

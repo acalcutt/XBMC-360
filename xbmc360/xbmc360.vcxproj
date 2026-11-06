@@ -318,6 +318,7 @@
   <ItemGroup>
     <ClInclude Include="AdvancedSettings.h" />
     <ClInclude Include="Application.h" />
+    <ClInclude Include="CompileInfo.h" />
     <ClInclude Include="ApplicationMessenger.h" />
     <ClInclude Include="ApplicationRenderer.h" />
     <ClInclude Include="BackgroundInfoLoader.h" />
