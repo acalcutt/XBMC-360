@@ -145,6 +145,11 @@ bool CApplication::Create()
 	CLog::Log(LOGNOTICE, "Starting XBox Media Center 360.  Built on %s", __DATE__);
 	CLog::Log(LOGNOTICE, "-----------------------------------------------------------------------");
 
+	// rand() (shuffling a playlist, among others) differs from one start to the next
+	FILETIME now;
+	GetSystemTimeAsFileTime(&now);
+	srand(now.dwLowDateTime ^ GetTickCount());
+
 	CLog::Log(LOGNOTICE, "Setup DirectX");
 
 	// Create the Direct3D object

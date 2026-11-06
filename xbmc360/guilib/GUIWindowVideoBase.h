@@ -22,7 +22,7 @@ protected:
 
 	virtual void OnQueueItem(int iItem);
 	void AddItemToPlayList(const CFileItemPtr &pItem, CFileItemList &queuedItems);
-	void PlayItem(int iItem);
+	void PlayItem(int iItem, bool shuffled = false);
 	void OnResumeItem(int iItem);
 	void OnRestartItem(int iItem);
 

@@ -59,6 +59,10 @@ void CGUIWindowVideoBase::GetContextButtons(int itemNumber, CContextButtons &but
 			{
 				buttons.Add(CONTEXT_BUTTON_PLAY_ITEM, 208);
 			}
+
+			// or played in a random order, with what's in its folders
+			if (item->m_bIsFolder)
+				buttons.Add(CONTEXT_BUTTON_SHUFFLE_ITEM, 191);
 /*			else
 			{ // get players - TODO: GetPlayers/SelectPlayerDialog not ported
 				VECPLAYERCORES vecCores;
@@ -124,6 +128,10 @@ bool CGUIWindowVideoBase::OnContextButton(int itemNumber, CONTEXT_BUTTON button)
 
 	case CONTEXT_BUTTON_PLAY_ITEM:
 		PlayItem(itemNumber);
+		return true;
+
+	case CONTEXT_BUTTON_SHUFFLE_ITEM:
+		PlayItem(itemNumber, true);
 		return true;
 
 /*	case CONTEXT_BUTTON_PLAY_WITH: // TODO: GetPlayers/SelectPlayerDialog not ported
@@ -303,7 +311,8 @@ void CGUIWindowVideoBase::AddItemToPlayList(const CFileItemPtr &pItem, CFileItem
 	}
 }
 
-void CGUIWindowVideoBase::PlayItem(int iItem)
+// A folder plays everything in it, and in its folders: in order, or shuffled
+void CGUIWindowVideoBase::PlayItem(int iItem, bool shuffled)
 {
 	// Restrictions should be placed in the appropriate window code
 	// only call the base code if the item passes since this clears
@@ -332,6 +341,8 @@ void CGUIWindowVideoBase::PlayItem(int iItem)
 		g_playlistPlayer.ClearPlaylist(PLAYLIST_VIDEO);
 		g_playlistPlayer.Reset();
 		g_playlistPlayer.Add(PLAYLIST_VIDEO, queuedItems);
+		if (shuffled)
+			g_playlistPlayer.GetPlaylist(PLAYLIST_VIDEO).Shuffle();
 		g_playlistPlayer.SetCurrentPlaylist(PLAYLIST_VIDEO);
 		g_playlistPlayer.Play();
 	}
