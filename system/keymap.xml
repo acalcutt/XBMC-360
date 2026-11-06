@@ -24,9 +24,11 @@
     <gamepad>
        <A>Pause</A>
        <B>Stop</B>
-       <Y>AspectRatio</Y>
-       <rightshoulder>CodecInfo</rightshoulder>    <!-- was black -->
-       <leftshoulder>Info</leftshoulder>           <!-- was white -->
+       <Y>Info</Y>
+       <leftshoulder>SkipPrevious</leftshoulder>   <!-- the playlist's previous video (Play all, Shuffle) -->
+       <rightshoulder>SkipNext</rightshoulder>     <!-- and its next -->
+       <leftthumbbutton>AspectRatio</leftthumbbutton>
+       <rightthumbbutton>CodecInfo</rightthumbbutton>
        <back>SmallStepBack</back>
        <start>OSD</start>
        <dpadleft>StepBack</dpadleft>
