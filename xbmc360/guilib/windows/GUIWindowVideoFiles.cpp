@@ -13,6 +13,7 @@
 //#include "settings/GUIDialogContentSettings.h"
 //#include "video/dialogs/GUIDialogVideoScan.h"
 #include "FileSystem/MultiPathDirectory.h"
+#include "filesystem\FlatDirectory.h"
 //#include "utils/RegExp.h"
 #include "guilib\GUIWindowManager.h"
 //#include "dialogs/GUIDialogOK.h"
@@ -73,6 +74,11 @@ void CGUIWindowVideoFiles::GetContextButtons(int itemNumber, CContextButtons &bu
 		{
 			// Get the usual shares, and anything for all media windows
 			CGUIDialogContextMenu::GetContextButtons("video", item, buttons);
+
+			// A source on the console's drives or a share: every video in it in one list
+			if (item->m_bIsFolder && !item->GetPath().Equals("add") && CFlatDirectory::CanFlatten(item->GetPath()))
+				buttons.Add(CONTEXT_BUTTON_SHOW_ALL_VIDEOS, 13187);
+
 			CGUIMediaWindow::GetContextButtons(itemNumber, buttons);
 		}
 		else

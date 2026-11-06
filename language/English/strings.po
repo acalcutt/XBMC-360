@@ -4254,7 +4254,11 @@ msgctxt "#13186"
 msgid "Allow saving"
 msgstr ""
 
-#empty strings from id 13187 to 13199
+msgctxt "#13187"
+msgid "Show all videos"
+msgstr ""
+
+#empty strings from id 13188 to 13199
 
 msgctxt "#13200"
 msgid "Profiles"

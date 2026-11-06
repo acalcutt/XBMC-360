@@ -3,6 +3,7 @@
 #include "HDDirectory.h"
 #include "SpecialProtocolDirectory.h"
 #include "MultiPathDirectory.h"
+#include "FlatDirectory.h"
 //#include "StackDirectory.h" // TODO
 #include "FileDirectoryFactory.h"
 //#include "PlaylistDirectory.h" // TODO
@@ -89,6 +90,7 @@ IDirectory* CFactoryDirectory::Create(const CStdString& strPath)
 	if (strProtocol == "zip") return new CZipDirectory();
 //	if (strProtocol == "rar") return new CRarDirectory();// TODO
 	if (strProtocol == "multipath") return new CMultiPathDirectory();
+	if (strProtocol == "flat") return new CFlatDirectory();
 //	if (strProtocol == "stack") return new CStackDirectory();// TODO
 //	if (strProtocol == "playlistmusic") return new CPlaylistDirectory();// TODO
 //	if (strProtocol == "playlistvideo") return new CPlaylistDirectory();// TODO
