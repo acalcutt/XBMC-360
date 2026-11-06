@@ -350,6 +350,7 @@ void CApplication::StopServices()
 	StopUPnP();
 #endif
 	g_mediaRiffle.Stop();
+	g_jellyfin.Stop();
 	StopIdleThread();
 }
 
@@ -701,9 +702,12 @@ void CApplication::ProcessSlow()
 	// Store our file state for use on close()
 	UpdateFileState();
 
-	// Where a MediaRiffle stream got to, for its server
+	// Where a MediaRiffle or Jellyfin stream got to, for its server
 	if (IsPlaying())
+	{
 		g_mediaRiffle.OnPlaying(CurrentFile(), GetTime(), IsPaused());
+		g_jellyfin.OnPlaying(CurrentFile(), GetTime(), IsPaused());
+	}
 
 	// Check for any idle curl connections
 	g_curlSessionPool.CheckIdle();
@@ -1829,6 +1833,7 @@ void CApplication::OnPlayBackEnded()
 
 	SaveFileState();
 	g_mediaRiffle.OnStopped(true);
+	g_jellyfin.OnStopped(true);
 
 	CGUIMessage msg(GUI_MSG_PLAYBACK_ENDED, 0, 0);
 	g_windowManager.SendThreadMessage(msg);
@@ -1874,6 +1879,7 @@ void CApplication::OnPlayBackStopped()
 
 	SaveFileState();
 	g_mediaRiffle.OnStopped(false);
+	g_jellyfin.OnStopped(false);
 
 	CGUIMessage msg( GUI_MSG_PLAYBACK_STOPPED, 0, 0 );
 	g_windowManager.SendThreadMessage(msg);

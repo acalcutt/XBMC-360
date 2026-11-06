@@ -28,6 +28,8 @@ CJellyfin g_jellyfin;
 #define QUICK_CONNECT_EVERY 3000
 // The most a stream is asked to be, in bits a second: plenty for 720p H.264 on the console's 100 Mb/s
 #define MAX_BITRATE         8000000
+// How often the server is told where a video has got to
+#define REPORT_EVERY        10000
 
 CJellyfin::CJellyfin()
 {
@@ -47,10 +49,18 @@ void CJellyfin::Start()
 		m_deviceId.Format("360riffle-%04x%04x%08x", rand() & 0xFFFF, rand() & 0xFFFF, GetTickCount());
 		SaveAccounts();
 	}
+	Create();
 
 	CSingleLock lock(m_section);
 	for (std::map<CStdString, Account>::const_iterator it = m_accounts.begin(); it != m_accounts.end(); ++it)
 		CLog::Log(LOGNOTICE, "Jellyfin: signed in to %s as %s", it->first.c_str(), it->second.user.c_str());
+}
+
+void CJellyfin::Stop()
+{
+	m_bStop = true;
+	m_wake.Set();
+	StopThread();
 }
 
 bool CJellyfin::IsJellyfin(const CStdString& path)
@@ -456,8 +466,121 @@ bool CJellyfin::StartPlayback(const CFileItem& item, CFileItem& stream)
 	stream.SetMimeType("application/vnd.apple.mpegurl");
 	stream.m_lStartOffset = (long)(resume * 75.0);
 
+	// Something else of Jellyfin's was playing: it's done (the player switches without saying it stopped)
+	OnStopped(false);
+
+	{
+		CSingleLock lock(m_section);
+		m_playing = Playing();
+		m_playing.server = server;
+		m_playing.itemId = id;
+		m_playing.mediaSourceId = answer["MediaSources"][0u]["Id"].asString();
+		m_playing.playSessionId = answer["PlaySessionId"].asString();
+		m_playing.stream = stream.GetPath();
+		m_playing.seconds = resume;
+		m_playing.lastReport = GetTickCount();
+
+		CVariant started = SessionReport(false);
+		Queue(server, "POST", "/Sessions/Playing", &started);
+	}
+
 	CLog::Log(LOGNOTICE, "Jellyfin: playing %s from %.0f s", id.c_str(), resume);
 	return true;
+}
+
+// What Jellyfin's session reports carry: the item, its stream (source and session), and where it's got to in ticks
+CVariant CJellyfin::SessionReport(bool paused) const
+{
+	CVariant report(CVariant::VariantTypeObject);
+	report["ItemId"] = m_playing.itemId.c_str();
+	report["MediaSourceId"] = m_playing.mediaSourceId.c_str();
+	report["PlaySessionId"] = m_playing.playSessionId.c_str();
+	report["PositionTicks"] = (int64_t)(m_playing.seconds * 10000000.0);
+	report["IsPaused"] = paused;
+	report["PlayMethod"] = "Transcode";
+	report["CanSeek"] = true;
+	return report;
+}
+
+void CJellyfin::OnPlaying(const CStdString& currentFile, double seconds, bool paused)
+{
+	CSingleLock lock(m_section);
+	if (m_playing.itemId.IsEmpty() || !currentFile.Equals(m_playing.stream))
+		return;
+
+	m_playing.seconds = seconds;
+
+	// Every few seconds, paused too: the server keeps a session that's reported, and its transcode with it
+	DWORD now = GetTickCount();
+	if (now - m_playing.lastReport >= REPORT_EVERY)
+	{
+		m_playing.lastReport = now;
+		CVariant progress = SessionReport(paused);
+		Queue(m_playing.server, "POST", "/Sessions/Playing/Progress", &progress);
+	}
+}
+
+void CJellyfin::OnStopped(bool ended)
+{
+	CSingleLock lock(m_section);
+	if (m_playing.itemId.IsEmpty())
+		return;
+
+	// Where it stopped; the server marks it watched when that's near enough the end
+	CVariant stopped = SessionReport(false);
+	Queue(m_playing.server, "POST", "/Sessions/Playing/Stopped", &stopped);
+
+	// And the transcode for it can stop
+	CStdString encodings;
+	encodings.Format("/Videos/ActiveEncodings?deviceId=%s&playSessionId=%s", m_deviceId.c_str(), m_playing.playSessionId.c_str());
+	Queue(m_playing.server, "DELETE", encodings, NULL);
+
+	CLog::Log(LOGNOTICE, "Jellyfin: %s %s at %.0f s", ended ? "finished" : "stopped", m_playing.itemId.c_str(), m_playing.seconds);
+	m_playing = Playing();
+}
+
+// Sent with the sign-in as it is now (a sign-out's request still carries the token it's dropping)
+void CJellyfin::Queue(const CStdString& server, const CStdString& method, const CStdString& path, const CVariant* body)
+{
+	Report report;
+	report.server = server;
+	report.token = TokenFor(server);
+	report.method = method;
+	report.path = path;
+	report.hasBody = body != NULL;
+	if (body)
+		report.body = *body;
+	if (report.token.IsEmpty())
+		return;
+
+	CSingleLock lock(m_section);
+	m_reports.push_back(report);
+	m_wake.Set();
+}
+
+void CJellyfin::Process()
+{
+	SetName("Jellyfin");
+	while (!m_bStop)
+	{
+		m_wake.WaitMSec(1000);
+
+		for (;;)
+		{
+			Report report;
+			{
+				CSingleLock lock(m_section);
+				if (m_reports.empty())
+					break;
+				report = m_reports.front();
+				m_reports.pop_front();
+			}
+
+			long status = 0;
+			CVariant answer;
+			CallServer(report.server, report.token, report.method, report.path, report.hasBody ? &report.body : NULL, status, answer, 15);
+		}
+	}
 }
 
 void CJellyfin::ShowError(const CStdString& line1, const CStdString& line2, const CStdString& line3)
