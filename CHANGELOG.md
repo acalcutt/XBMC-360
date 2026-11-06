@@ -5,6 +5,9 @@
 - _...Add new stuff here..._
 - **Home**: A on a tab goes down to its tiles, as Down does, instead of opening a list of its own (on the Disc tab,
   instead of starting the disc).
+- **Game names**: an Xbox 360 disc, its copy and its exported folder go by the game's name (GRID, The Orange Box)
+  instead of its title ID, as most discs have no label. 360 Riffle asks XboxUnity once for each game and keeps the
+  answer.
 
 ### 🐞 Bug fixes
 - _...Add new stuff here..._

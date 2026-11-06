@@ -9,7 +9,8 @@ What it adds:
 
 - **The 360 Riffle skin** (`skins/360 Riffle`): a home screen like MediaRiffle's web app (top bar with tabs, cards),
   on Confluence Lite. Videos, Games, Music and Pictures show your sources as tiles; with a disc in, a Disc tab plays
-  it, copies its files to a folder, saves an ISO image of it or ejects it.
+  it, copies its files to a folder, saves an ISO image of it or ejects it. Most Xbox 360 discs have no label, so a
+  game's name comes from [XboxUnity](http://xboxunity.net), asked once by its title ID and kept on the console.
 - **Settings > Sources**: every source in one place, added by saying where it is (a MediaRiffle or Jellyfin server, a
   Windows share, a folder on the console) and then only what that needs. A share or folder can allow saving, for disc
   copies and diagnostics.

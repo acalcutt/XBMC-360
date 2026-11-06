@@ -18,6 +18,7 @@
 #include "utils\XEXUtils.h"
 #include "xbox\Emulators.h"
 #include "xbox\GameMove.h"
+#include "xbox\TitleNames.h"
 #include <algorithm>
 
 using namespace XFILE;
@@ -325,7 +326,8 @@ void CGameCopy::GetPlayable(CFileItemList& items)
 		if (!IsPlayable(strFolder, strXex))
 			continue;
 
-		CFileItemPtr item(new CFileItem(strName));
+		// Named for its title ID (a disc without a label, or a share's folder named so): its game's name once known
+		CFileItemPtr item(new CFileItem(CTitleNames::NameFor(strName)));
 		item->SetPath(strFolder + strXex);
 		item->SetLabel2("Xbox 360");
 		item->SetLabelPreformated(true);
@@ -394,6 +396,8 @@ bool CGameCopy::ReadCopy(const CStdString& strFolder, Copy& copy)
 		if (iMark > 0)
 			copy.strName = copy.strName.Left(iMark);
 	}
+
+	copy.strName = CTitleNames::NameFor(copy.strName);
 	return true;
 }
 

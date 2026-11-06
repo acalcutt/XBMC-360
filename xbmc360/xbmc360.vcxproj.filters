@@ -602,6 +602,9 @@
     <ClInclude Include="xbox\GameMove.h">
       <Filter>Header Files\xbox</Filter>
     </ClInclude>
+    <ClInclude Include="xbox\TitleNames.h">
+      <Filter>Header Files\xbox</Filter>
+    </ClInclude>
     <ClInclude Include="xbox\IoSupport.h">
       <Filter>Header Files\xbox</Filter>
     </ClInclude>
@@ -1736,6 +1739,9 @@
       <Filter>Source Files\xbox</Filter>
     </ClCompile>
     <ClCompile Include="xbox\GameMove.cpp">
+      <Filter>Source Files\xbox</Filter>
+    </ClCompile>
+    <ClCompile Include="xbox\TitleNames.cpp">
       <Filter>Source Files\xbox</Filter>
     </ClCompile>
     <ClCompile Include="xbox\IoSupport.cpp">

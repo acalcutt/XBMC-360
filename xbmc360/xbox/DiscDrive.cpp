@@ -10,6 +10,7 @@
 #include "utils\Util.h"
 #include "xbox\GameCopy.h"
 #include "xbox\IoSupport.h"
+#include "xbox\TitleNames.h"
 #include "xbox\XBKernalExports.h"
 
 using namespace XFILE;
@@ -114,11 +115,15 @@ CStdString CDiscDrive::GetTypeName(DiscType type)
 	}
 }
 
-// What to call the disc: its label or, for an Xbox 360 game without one,
-// its title ID, with which disc it is for games on more than one
+// What to call the disc: for an Xbox 360 game, its game's name once that's
+// known (most of their discs have no label); else its label or, for a game
+// without one, its title ID. With which disc it is for games on more than one
 CStdString CDiscDrive::GetName(const Info& info)
 {
-	CStdString strName = info.strLabel;
+	CStdString strName = info.type == DISC_XBOX360_GAME ? CTitleNames::Get(info.dwTitleId) : "";
+
+	if (strName.IsEmpty())
+		strName = info.strLabel;
 
 	if (strName.IsEmpty() && info.dwTitleId)
 		strName.Format("%08X", info.dwTitleId);

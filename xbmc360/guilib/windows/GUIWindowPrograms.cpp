@@ -10,6 +10,7 @@
 #include "utils\TimeUtils.h"
 #include "xbox\Emulators.h"
 #include "xbox\GameCopy.h"
+#include "xbox\TitleNames.h"
 
 using namespace XFILE;
 
@@ -175,6 +176,9 @@ bool CGUIWindowPrograms::GetDirectory(const CStdString &strDirectory, CFileItemL
 			{
 				item->SetPath(defaultXEX);
 				item->m_bIsFolder = false;
+				// A folder named for its game's title ID (as Copy disc to a folder names a disc without a label): the
+				// game's name once known
+				item->SetLabel(CTitleNames::NameFor(item->GetLabel()));
 			}
 			else if (CFile::Exists(defaultXBE))
 			{
