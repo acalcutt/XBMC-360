@@ -2,3 +2,31 @@
 Release/
 Debug/
 Xbox 360/
+*.log
+
+# Visual Studio per-user settings and caches
+*.suo
+*.sdf
+*.opensdf
+*.ncb
+*.aps
+ipch/
+.vs/
+
+# Editor and local tool settings
+.vscode/
+.claude/settings.local.json
+
+# Python bytecode
+*.pyc
+*.pyo
+
+# Patch and merge leftovers
+*.orig
+*.rej
+*.bak
+
+# Operating system files
+Thumbs.db
+desktop.ini
+.DS_Store
