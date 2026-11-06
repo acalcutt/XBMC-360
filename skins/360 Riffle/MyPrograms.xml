@@ -92,15 +92,7 @@
 					<include>ButtonCommonValues</include>
 					<label>587</label>
 				</control>
-				
-				<control type="button" id="98">
-					<description>Gamesaves Button</description>
-					<textwidth>230</textwidth>
-					<include>ButtonCommonValues</include>
-					<label>20323</label>
-					<onclick>ActivateWindow(35)</onclick>
-				</control>
-				
+
 				<include>CommonNowPlaying_Controls</include>
 			</control>
 		</control>

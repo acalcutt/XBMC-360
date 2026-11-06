@@ -51,7 +51,6 @@
     <gamepad>
        <A>Pause</A>
        <B>Stop</B>
-       <Y>XBMC.ActivateWindow(VisualisationPresetList)</Y>
        <rightshoulder>ShowPreset</rightshoulder>
        <leftshoulder>Info</leftshoulder>
        <start>XBMC.ActivateWindow(MusicOSD)</start>

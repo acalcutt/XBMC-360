@@ -32,8 +32,8 @@
 			<posy>72r</posy>
 			<width>720</width>
 			<height>16</height>
-			<onup>702</onup>
-			<ondown>26</ondown>
+			<onup>602</onup>
+			<ondown>602</ondown>
 			<action>seek</action>
 			<texturesliderbar>seekslider2.png</texturesliderbar>
 			<textureslidernib>osd_slider_nibNF.png</textureslidernib>
@@ -55,7 +55,7 @@
 				<font>-</font>
 				<texturefocus>OSDPrevTrackFO.png</texturefocus>
 				<texturenofocus>OSDPrevTrackNF.png</texturenofocus>
-				<onleft>706</onleft>
+				<onleft>607</onleft>
 				<onright>601</onright>
 				<onup>1000</onup>
 				<ondown>1000</ondown>
@@ -223,150 +223,10 @@
 				<alttexturenofocus>OSDRandomOnNF.png</alttexturenofocus>
 				<onclick>XBMC.PlayerControl(Random)</onclick>
 				<onleft>606</onleft>
-				<onright>701</onright>
-				<onup>1000</onup>
-				<ondown>1000</ondown>
-			</control>
-		</control>
-		<control type="group">
-			<posx>250r</posx>
-			<posy>50r</posy>
-			<animation effect="fade" time="200">VisibleChange</animation>
-			<animation effect="slide" start="0,0" end="-100,0" delay="0" time="0" condition="LastFM.RadioPlaying">conditional</animation>
-			<visible>![Window.IsVisible(PluginSettings) | Window.IsVisible(SelectDialog) | Window.IsVisible(VisualisationPresetList)]</visible>
-			<control type="togglebutton" id="701">
-				<posx>0</posx>
-				<posy>0</posy>
-				<width>45</width>
-				<height>45</height>
-				<label>31128</label>
-				<font>-</font>
-				<texturefocus>OSDLyricsFO.png</texturefocus>
-				<texturenofocus>OSDLyricsNF.png</texturenofocus>
-				<alttexturefocus>OSDLyricsFO.png</alttexturefocus>
-				<alttexturenofocus>OSDLyricsNF.png</alttexturenofocus>
-				<onleft>607</onleft>
-				<onright>500</onright>
-				<onup>1000</onup>
-				<ondown>1000</ondown>
-				<onclick>Close</onclick>
-				<onclick>XBMC.RunScript($INFO[Skin.String(LyricScript_Path)])</onclick>
-				<altclick>Skin.SetFile(LyricScript_Path,.py)</altclick>
-				<altclick>Close</altclick>
-				<altclick>XBMC.RunScript($INFO[Skin.String(LyricScript_Path)])</altclick>
-				<usealttexture>IsEmpty(Skin.String(LyricScript_Path))</usealttexture>
-			</control>
-			<control type="button" id="500">
-				<posx>45</posx>
-				<posy>0</posy>
-				<width>45</width>
-				<height>45</height>
-				<label>12006</label>
-				<font>-</font>
-				<texturefocus>OSDVizFO.png</texturefocus>
-				<texturenofocus>OSDVizNF.png</texturenofocus>
-				<onleft>701</onleft>
-				<onright>702</onright>
-				<onup>1000</onup>
-				<ondown>1000</ondown>
-			</control>
-			<control type="button" id="702">
-				<posx>90</posx>
-				<posy>0</posy>
-				<width>45</width>
-				<height>45</height>
-				<label>$LOCALIZE[250] $LOCALIZE[21417]</label>
-				<font>-</font>
-				<texturefocus>OSDPresetSettingsFO.png</texturefocus>
-				<texturenofocus>OSDPresetSettingsNF.png</texturenofocus>
-				<onleft>500</onleft>
-				<onright>703</onright>
-				<onup>1000</onup>
-				<ondown>1000</ondown>
-				<onclick>ActivateWindow(121)</onclick>
-			</control>
-			<control type="button" id="703">
-				<posx>135</posx>
-				<posy>0</posy>
-				<width>45</width>
-				<height>45</height>
-				<label>31048</label>
-				<font>-</font>
-				<texturefocus>OSDPreFO.png</texturefocus>
-				<texturenofocus>OSDPreNF.png</texturenofocus>
-				<onleft>702</onleft>
-				<onright>704</onright>
-				<onup>1000</onup>
-				<ondown>1000</ondown>
-				<onclick>ActivateWindow(122)</onclick>
-			</control>
-			<control type="button" id="704">
-				<posx>180</posx>
-				<posy>0</posy>
-				<width>45</width>
-				<height>45</height>
-				<label>264</label>
-				<font>-</font>
-				<texturefocus>OSDRecordFO.png</texturefocus>
-				<texturenofocus>OSDRecordNF.png</texturenofocus>
-				<onleft>703</onleft>
-				<onright>705</onright>
-				<onup>1000</onup>
-				<ondown>1000</ondown>
-				<onclick>XBMC.PlayerControl(record)</onclick>
-				<enable>Player.CanRecord</enable>
-				<animation effect="fade" start="100" end="50" time="100" condition="!Player.CanRecord">Conditional</animation>
-			</control>
-			<control type="button" id="705">
-				<posx>230</posx>
-				<posy>5</posy>
-				<width>35</width>
-				<height>35</height>
-				<label>31001</label>
-				<font>-</font>
-				<texturefocus>lastfm-love-focus.png</texturefocus>
-				<texturenofocus>lastfm-love-nofocus.png</texturenofocus>
-				<onleft>704</onleft>
-				<onright>706</onright>
-				<onup>1000</onup>
-				<ondown>1000</ondown>
-				<onclick>XBMC.LastFM.Love(false)</onclick>
-				<enable>LastFM.CanLove</enable>
-				<animation effect="fade" start="100" end="50" time="100" condition="!LastFM.CanLove">Conditional</animation>
-				<visible>LastFM.RadioPlaying</visible>
-			</control>
-			<control type="button" id="706">
-				<posx>275</posx>
-				<posy>5</posy>
-				<width>35</width>
-				<height>35</height>
-				<label>31002</label>
-				<font>-</font>
-				<texturefocus>lastfm-hate-focus.png</texturefocus>
-				<texturenofocus>lastfm-hate-nofocus.png</texturenofocus>
-				<onleft>705</onleft>
 				<onright>600</onright>
 				<onup>1000</onup>
 				<ondown>1000</ondown>
-				<onclick>XBMC.LastFM.Ban(false)</onclick>
-				<enable>LastFM.CanBan</enable>
-				<animation effect="fade" start="100" end="50" time="100" condition="!LastFM.CanBan">Conditional</animation>
-				<visible>LastFM.RadioPlaying</visible>
 			</control>
-		</control>
-		<control type="selectbutton" id="503">
-			<description>Visualisation Select Button</description>
-			<posx>440</posx>
-			<posy>100</posy>
-			<width>400</width>
-			<height>100</height>
-			<font>font13</font>
-			<texturebg border="20">OverlayDialogBackground.png</texturebg>
-			<onleft>503</onleft>
-			<onright>503</onright>
-			<onup>500</onup>
-			<ondown>500</ondown>
-			<include>VisibleFadeEffect</include>
 		</control>
 	</controls>
 </window>
