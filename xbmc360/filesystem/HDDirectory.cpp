@@ -108,8 +108,9 @@ bool CHDDirectory::Exists(const char* strPath)
 	URIUtils::AddSlashAtEnd(strReplaced);
 
 	DWORD attributes = GetFileAttributes(strReplaced.c_str());
-		
-	if (FILE_ATTRIBUTE_DIRECTORY & attributes)
+
+	// A missing path gives INVALID_FILE_ATTRIBUTES, which has every bit set
+	if (attributes != INVALID_FILE_ATTRIBUTES && (FILE_ATTRIBUTE_DIRECTORY & attributes))
 		return true;
 		
 	return false;
