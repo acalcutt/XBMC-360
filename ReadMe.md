@@ -65,3 +65,10 @@ Usable but many features still need reimplementation or improvements.
 
 ### Notes:
 Special thanks to XBMC4XBOX and Kodi.
+
+## Licence
+
+360 Riffle is free software under the GNU General Public License, version 2 or (at your option) any later version,
+like the XBMC and XBMC4Xbox code it comes from: see [COPYING](COPYING). The libraries in `libraries\` keep their own
+licences, each with its licence file there. Building needs the Microsoft Xbox 360 SDK, which isn't part of this
+repository.
