@@ -6,6 +6,7 @@
 #include "guilib\GUIWindowManager.h"
 #include "utils\URIUtils.h"
 #include "filesystem\File.h"
+#include "utils\DiscExport.h"
 #include "utils\TimeUtils.h"
 #include "xbox\DiscDrive.h"
 
@@ -267,6 +268,7 @@ void CGUIWindowPrograms::GetContextButtons(int itemNumber, CContextButtons &butt
 		if (item->GetPropertyInt("disctype") != CDiscDrive::DISC_DATA)
 			buttons.Add(CONTEXT_BUTTON_PLAY_DISC, 341); // Play disc
 
+		buttons.Add(CONTEXT_BUTTON_COPY_DISC, 13218); // Copy disc to a folder
 		buttons.Add(CONTEXT_BUTTON_EJECT_DISC, 13391); // Eject/Load
 		return;
 	}
@@ -418,6 +420,10 @@ bool CGUIWindowPrograms::OnContextButton(int itemNumber, CONTEXT_BUTTON button)
 		case CONTEXT_BUTTON_EJECT_DISC:
 		CDiscDrive::Eject();
 		Update("");
+		return true;
+
+		case CONTEXT_BUTTON_COPY_DISC:
+		CDiscExport::CopyFiles();
 		return true;
 
 /*		case CONTEXT_BUTTON_GAMESAVES: // TODO

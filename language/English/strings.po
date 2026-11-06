@@ -4320,7 +4320,41 @@ msgctxt "#13217"
 msgid "disc %d of %d"
 msgstr ""
 
-#empty strings from id 13218 to 13248
+msgctxt "#13218"
+msgid "Copy disc to a folder"
+msgstr ""
+
+#empty string with id 13219
+
+msgctxt "#13220"
+msgid "Copying the disc"
+msgstr ""
+
+#empty string with id 13221
+
+msgctxt "#13222"
+msgid "Name for the copy"
+msgstr ""
+
+msgctxt "#13223"
+msgid "There's no disc in the drive."
+msgstr ""
+
+msgctxt "#13224"
+msgid "Couldn't copy %s"
+msgstr ""
+
+msgctxt "#13225"
+msgid "Stopped. What was copied is in %s"
+msgstr ""
+
+#empty string with id 13226
+
+msgctxt "#13227"
+msgid "%s of %s"
+msgstr ""
+
+#empty strings from id 13228 to 13248
 
 msgctxt "#13249"
 msgid "Search for subtitles in RARs"

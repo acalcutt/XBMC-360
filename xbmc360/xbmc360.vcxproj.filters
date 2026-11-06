@@ -1205,6 +1205,9 @@
     <ClInclude Include="utils\Diagnostics.h">
       <Filter>Header Files\utils</Filter>
     </ClInclude>
+    <ClInclude Include="utils\DiscExport.h">
+      <Filter>Header Files\utils</Filter>
+    </ClInclude>
     <ClInclude Include="utils\Weather.h">
       <Filter>Header Files\utils</Filter>
     </ClInclude>
@@ -2273,6 +2276,9 @@
       <Filter>Source Files\utils</Filter>
     </ClCompile>
     <ClCompile Include="utils\Diagnostics.cpp">
+      <Filter>Source Files\utils</Filter>
+    </ClCompile>
+    <ClCompile Include="utils\DiscExport.cpp">
       <Filter>Source Files\utils</Filter>
     </ClCompile>
     <ClCompile Include="utils\Weather.cpp">
