@@ -32,8 +32,8 @@ public:
 	static CStdString GetName(const Info& info);
 	static void Play(const Info& info);
 	// Once Home is up after a start: when that start came straight after Play started the disc's game (so the game
-	// didn't start: the console fell back to its dashboard, which a softmod makes us), offers the Xbox dashboard,
-	// where the disc plays
+	// didn't start: the console fell back to its dashboard, which a softmod makes us), offers to copy an Xbox 360 game
+	// to the hard drive and play it from there, which Peer Pressure allows
 	static void CheckPlayed();
 	// Plays a game or a DVD; opens a data disc in Videos
 	static void Open(const Info& info);

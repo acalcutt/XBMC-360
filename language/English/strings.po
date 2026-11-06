@@ -9232,15 +9232,11 @@ msgid "The game on the disc didn't start from 360 Riffle."
 msgstr ""
 
 msgctxt "#33589"
-msgid "Open the Xbox dashboard to play it from there?"
+msgid "Copy it to the hard drive and play it from there?"
 msgstr ""
 
 msgctxt "#33590"
 msgid "Copy it to the hard drive and play"
-msgstr ""
-
-msgctxt "#33591"
-msgid "Play it from the Xbox dashboard"
 msgstr ""
 
 msgctxt "#33592"

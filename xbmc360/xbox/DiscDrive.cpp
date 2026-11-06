@@ -153,11 +153,10 @@ void CDiscDrive::Play(const Info& info)
 			return;
 
 		// The copy says how big it is as it goes: the disc's size isn't its game's, and adding up its files takes a
-		// while on a disc
+		// while on a disc. Not Microsoft's dashboard: Peer Pressure starts its homebrew dashboard, us, in its place
 		select->Reset();
 		select->SetHeading(GetName(info));
 		select->Add(g_localizeStrings.Get(33590));
-		select->Add(g_localizeStrings.Get(33591));
 		select->Add(g_localizeStrings.Get(33592));
 		select->DoModal();
 
@@ -167,15 +166,7 @@ void CDiscDrive::Play(const Info& info)
 				CGameCopy::PlayDisc(GetName(info), info.dwTitleId, info.iDiscNumber);
 				return;
 
-			case 1: // Microsoft's dashboard, which starts discs itself
-				CLog::Log(LOGNOTICE, "Opening the Xbox dashboard, to play the disc from there");
-				g_application.Stop();
-				XLaunchNewImage(XLAUNCH_KEYWORD_DASH, 0);
-				CLog::Log(LOGERROR, "%s - couldn't open the Xbox dashboard", __FUNCTION__);
-				XLaunchNewImage(GetLoadedImageName(), 0);
-				return;
-
-			case 2: // From the disc, as other softmods allow
+			case 1: // From the disc, as other softmods allow
 				break;
 
 			default:
@@ -234,17 +225,13 @@ void CDiscDrive::CheckPlayed()
 		return;
 
 	CLog::Log(LOGNOTICE, "Back %u seconds after starting the disc's game: it didn't start", (unsigned int)((iNow - iThen) / 10000000));
-	if (!CGUIDialogYesNo::ShowAndGetInput(13238, 33588, 33589, 0))
+
+	// An Xbox 360 game runs from a copy on the hard drive
+	Info info;
+	if (!Detect(info) || info.type != DISC_XBOX360_GAME || !CGUIDialogYesNo::ShowAndGetInput(13238, 33588, 33589, 0))
 		return;
 
-	// Microsoft's dashboard, which starts discs itself (as the Guide's Xbox Home opens it)
-	CLog::Log(LOGNOTICE, "Opening the Xbox dashboard, to play the disc from there");
-	g_application.Stop();
-	XLaunchNewImage(XLAUNCH_KEYWORD_DASH, 0);
-
-	// Only back here when it couldn't be started
-	CLog::Log(LOGERROR, "%s - couldn't open the Xbox dashboard", __FUNCTION__);
-	XLaunchNewImage(GetLoadedImageName(), 0);
+	CGameCopy::PlayDisc(GetName(info), info.dwTitleId, info.iDiscNumber);
 }
 
 void CDiscDrive::Open(const Info& info)

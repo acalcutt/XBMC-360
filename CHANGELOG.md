@@ -24,8 +24,8 @@ The first version of 360 Riffle, from [XBMC-360](https://github.com/brentdc-nz/X
 - **Windows shares** can be written to and signed in to with a domain account, and list files with their sizes and
   dates.
 - **Discs**: play the disc, copy its files to a folder, save an ISO image of it, or eject it. An Xbox 360 game disc is
-  copied to the hard drive and played from there (Peer Pressure doesn't start games from the disc), or opened in the
-  Xbox dashboard.
+  copied to the hard drive and played from there, as Peer Pressure doesn't start games from the disc, and starts at
+  once the next time.
 - **Games for other consoles** (NES to PlayStation) play in [Salvia](https://github.com/danibiker/Salvia)'s emulators,
   copied to the console from a share first. Zipped games unzip on the console.
 - **Xbox 360 games and homebrew on a share** are copied to the console to play, and kept with their saves. The games
