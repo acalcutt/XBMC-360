@@ -9113,7 +9113,33 @@ msgctxt "#33558"
 msgid "The server didn't offer a stream this console can play."
 msgstr ""
 
-#empty strings from id 33559 to 34004
+#empty string with id 33559
+
+msgctxt "#33560"
+msgid "Play game"
+msgstr ""
+
+msgctxt "#33561"
+msgid "No emulator for %s games runs on the Xbox 360 yet."
+msgstr ""
+
+msgctxt "#33562"
+msgid "To play %s games, put Salvia (github.com/danibiker/Salvia) on the console's hard drive or a USB drive."
+msgstr ""
+
+msgctxt "#33563"
+msgid "Copying the game to the console"
+msgstr ""
+
+msgctxt "#33564"
+msgid "Couldn't copy %s to the console."
+msgstr ""
+
+msgctxt "#33565"
+msgid "There isn't room on the console for this game: it needs %s."
+msgstr ""
+
+#empty strings from id 33566 to 34004
 
 msgctxt "#34005"
 msgid "Flac"

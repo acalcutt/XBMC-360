@@ -7,6 +7,7 @@
 #include "utils\URIUtils.h"
 #include "filesystem\File.h"
 #include "utils\TimeUtils.h"
+#include "xbox\Emulators.h"
 
 using namespace XFILE;
 
@@ -164,6 +165,19 @@ bool CGUIWindowPrograms::GetDirectory(const CStdString &strDirectory, CFileItemL
 				// Yes, format the item up
 				item->SetPath(defaultXBE);
 				item->m_bIsFolder = false;
+			}
+		}
+		else if (!item->m_bIsFolder)
+		{
+			// A game for another console. The mask also lets through files
+			// many systems' games use, such as .zip and .bin, that aren't
+			// games where they are: those go
+			if (CEmulators::GetSystem(item->GetPath()) >= 0)
+				CEmulators::SetLabels(*item);
+			else if (!item->IsXEX() && !URIUtils::GetExtension(item->GetPath()).Equals(".cut"))
+			{
+				items.Remove(i--);
+				continue;
 			}
 		}
 /*		else if (item->IsShortCut())
@@ -419,6 +433,13 @@ bool CGUIWindowPrograms::OnPlayMedia(int iItem) // TODO - Get more info from the
 	CFileItemPtr pItem = m_vecItems->Get(iItem);
 
 	if (pItem->m_bIsFolder) return false;
+
+	// A game for another console, in its emulator
+	if (CEmulators::GetSystem(pItem->GetPath()) >= 0)
+	{
+		CEmulators::Play(*pItem);
+		return true;
+	}
 
 	// Launch xex...
 	char szPath[1024];

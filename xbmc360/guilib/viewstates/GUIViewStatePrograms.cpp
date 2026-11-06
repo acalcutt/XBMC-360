@@ -3,6 +3,7 @@
 #include "ViewState.h"
 #include "Settings.h"
 #include "guilib\key.h"
+#include "xbox\Emulators.h"
 
 CGUIViewStateWindowPrograms::CGUIViewStateWindowPrograms(const CFileItemList& items) : CGUIViewState(items)
 {
@@ -35,7 +36,8 @@ CStdString CGUIViewStateWindowPrograms::GetLockType()
 
 CStdString CGUIViewStateWindowPrograms::GetExtensions()
 {
-	return ".xex|.cut";
+	// Xbox 360 games, and games for other consoles
+	return ".xex|.cut|" + CEmulators::GetExtensions();
 }
 
 VECSOURCES& CGUIViewStateWindowPrograms::GetSources() // TODO - Plugin share
