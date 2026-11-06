@@ -7,7 +7,8 @@ namespace XFILE
 {
 
 // localgames://: On this console, the games copied to the console from shares and discs that start as they are, without
-// their share or disc, by their names. It's listed afresh each time, so it shows what's there now.
+// their share or disc, by their names: Xbox 360 games and the emulators' games. It's listed afresh each time, so it
+// shows what's there now.
 class CLocalGamesDirectory : public IDirectory
 {
 public:

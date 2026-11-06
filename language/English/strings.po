@@ -9255,7 +9255,15 @@ msgctxt "#33594"
 msgid "%d games"
 msgstr ""
 
-#empty strings from id 33595 to 34004
+msgctxt "#33595"
+msgid "Remove %s from the console? It's copied again when it's played from its share."
+msgstr ""
+
+msgctxt "#33596"
+msgid "Remove it from the console"
+msgstr ""
+
+#empty strings from id 33597 to 34004
 
 msgctxt "#34005"
 msgid "Flac"

@@ -303,6 +303,9 @@ void CGUIWindowPrograms::GetContextButtons(int itemNumber, CContextButtons &butt
 			// removed
 			if (item->IsXEX() && (CGameCopy::IsCopy(item->GetPath()) || (!URIUtils::IsHD(item->GetPath()) && CGameCopy::HasCopy(item->GetPath()))))
 				buttons.Add(CONTEXT_BUTTON_DELETE, 33587);
+			// An emulator's game copied to the console: it can be removed
+			else if (CEmulators::IsCopy(item->GetPath()))
+				buttons.Add(CONTEXT_BUTTON_DELETE, 33596);
 #if 0 // TODO: OG Xbox stuff to be modded to suit 360
 			if (item->IsXBE() || item->IsShortCut())
 			{
@@ -436,7 +439,7 @@ bool CGUIWindowPrograms::OnContextButton(int itemNumber, CONTEXT_BUTTON button)
 		return true;
 
 		case CONTEXT_BUTTON_DELETE: // The console's copy of a game
-		if (item && CGameCopy::ManageCopy(item->GetPath()))
+		if (item && (CEmulators::IsCopy(item->GetPath()) ? CEmulators::RemoveCopy(*item) : CGameCopy::ManageCopy(item->GetPath())))
 			Update(m_vecItems->GetPath());
 		return true;
 

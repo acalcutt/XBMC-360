@@ -9,6 +9,7 @@
 #include "guilib\LocalizeStrings.h"
 #include "guilib\dialogs\GUIDialogOK.h"
 #include "guilib\dialogs\GUIDialogProgress.h"
+#include "guilib\dialogs\GUIDialogYesNo.h"
 #include "utils\Log.h"
 #include "utils\StringUtils.h"
 #include "utils\TimeUtils.h"
@@ -616,6 +617,36 @@ bool CEmulators::AddFile(const CStdString& strFrom, const CStdString& strFolder,
 	return true;
 }
 
+// The file a line of a .cue (FILE "Game (Track 1).bin" BINARY) or an .m3u (a
+// disc's file) names, and for a .cue what follows the name. False for a line
+// that names none
+static bool NamedFile(const CStdString& strLine, bool bCue, CStdString& strFile, CStdString& strRest)
+{
+	CStdString strTrimmed = strLine;
+	strTrimmed.Trim();
+
+	if (bCue && strTrimmed.Left(5).Equals("FILE ", false))
+	{
+		strFile = strTrimmed.Mid(5);
+		strFile.TrimLeft();
+		int iEnd = strFile[0] == '"' ? strFile.Find('"', 1) : strFile.Find(' ');
+		if (strFile[0] == '"' && iEnd > 0)
+		{
+			strRest = strFile.Mid(iEnd + 1);
+			strFile = strFile.Mid(1, iEnd - 1);
+		}
+		else if (iEnd > 0)
+		{
+			strRest = strFile.Mid(iEnd);
+			strFile = strFile.Left(iEnd);
+		}
+	}
+	else if (!bCue && !strTrimmed.IsEmpty() && strTrimmed[0] != '#')
+		strFile = strTrimmed;
+
+	return !strFile.IsEmpty();
+}
+
 // A .cue (a disc's tracks) or an .m3u (a game's discs): the files it names
 // are added, and it's kept to be written out naming them as they're named
 // on the console
@@ -652,31 +683,8 @@ bool CEmulators::AddList(const CStdString& strFrom, const CStdString& strFolder,
 	for (unsigned int i = 0; i < lines.size(); i++)
 	{
 		CStdString strLine = lines[i];
-		CStdString strTrimmed = strLine;
-		strTrimmed.Trim();
-
 		CStdString strFile, strRest;
-		if (bCue && strTrimmed.Left(5).Equals("FILE ", false))
-		{
-			// FILE "Game (Track 1).bin" BINARY
-			strFile = strTrimmed.Mid(5);
-			strFile.TrimLeft();
-			int iEnd = strFile[0] == '"' ? strFile.Find('"', 1) : strFile.Find(' ');
-			if (strFile[0] == '"' && iEnd > 0)
-			{
-				strRest = strFile.Mid(iEnd + 1);
-				strFile = strFile.Mid(1, iEnd - 1);
-			}
-			else if (iEnd > 0)
-			{
-				strRest = strFile.Mid(iEnd);
-				strFile = strFile.Left(iEnd);
-			}
-		}
-		else if (!bCue && !strTrimmed.IsEmpty() && strTrimmed[0] != '#')
-			strFile = strTrimmed;
-
-		if (!strFile.IsEmpty())
+		if (NamedFile(strLine, bCue, strFile, strRest))
 		{
 			CStdString strNew;
 			if (!AddFile(URIUtils::AddFileToFolder(strDir, strFile), strFolder, strNew, iDepth + 1))
@@ -860,6 +868,148 @@ void CEmulators::MakeRoom(const CStdString& strCache, __int64 iNeeded)
 			iTotal -= games[i].iSize;
 		}
 	}
+}
+
+// Where games are copied to: D:\cache\games\, with a folder for each system (and Xbox 360 games')
+static CStdString CacheFolder()
+{
+	return URIUtils::AddFileToFolder(CSpecialProtocol::TranslatePath("special://temp/"), "games") + "\\";
+}
+
+// The files a .cue or .m3u on the console names
+static void ReadNamedFiles(const CStdString& strList, CStdStringArray& files)
+{
+	FILE* f = fopen(strList.c_str(), "r");
+	if (!f)
+		return;
+
+	bool bCue = URIUtils::GetExtension(strList).Equals(".cue", false);
+	char line[1024];
+	while (fgets(line, sizeof(line), f))
+	{
+		CStdString strLine = line;
+		strLine.TrimRight("\r\n");
+
+		CStdString strFile, strRest;
+		if (NamedFile(strLine, bCue, strFile, strRest))
+			files.push_back(strFile);
+	}
+	fclose(f);
+}
+
+static bool IsList(const CStdString& strFile)
+{
+	CStdString strExt = URIUtils::GetExtension(strFile);
+	strExt.ToLower();
+	return strExt.Equals(".cue") || strExt.Equals(".m3u");
+}
+
+bool CEmulators::IsCopy(const CStdString& strPath)
+{
+	CStdString strCache = CacheFolder();
+	return strPath.size() > strCache.size() && strPath.Left(strCache.size()).Equals(strCache) &&
+		!strPath.Mid(strCache.size(), 9).Equals("Xbox 360\\");
+}
+
+void CEmulators::GetCopied(CFileItemList& items)
+{
+	CStdString strCache = CacheFolder();
+
+	for (int iSystem = 0; iSystem < NUM_SYSTEMS; iSystem++)
+	{
+		CStdString strFolder = strCache + SYSTEMS[iSystem].name + "\\";
+
+		std::vector<WIN32_FIND_DATA> files;
+		WIN32_FIND_DATA find;
+		HANDLE hFind = FindFirstFile((strFolder + "*").c_str(), &find);
+		if (hFind == INVALID_HANDLE_VALUE)
+			continue;
+
+		do
+		{
+			if (!(find.dwFileAttributes & FILE_ATTRIBUTE_DIRECTORY))
+				files.push_back(find);
+		}
+		while (FindNextFile(hFind, &find));
+		FindClose(hFind);
+
+		// A file a .cue or .m3u names is part of that game (a disc's track, a game's disc), not one of its own
+		CStdString strNamed = "|";
+		for (unsigned int i = 0; i < files.size(); i++)
+		{
+			if (!IsList(files[i].cFileName))
+				continue;
+
+			CStdStringArray named;
+			ReadNamedFiles(strFolder + files[i].cFileName, named);
+			for (unsigned int j = 0; j < named.size(); j++)
+				strNamed += named[j].ToLower() + "|";
+		}
+
+		for (unsigned int i = 0; i < files.size(); i++)
+		{
+			CStdString strName = files[i].cFileName;
+			CStdString strPath = strFolder + strName;
+			if (InList(strNamed.c_str(), CStdString(strName).ToLower()) || GetSystem(strPath) != iSystem)
+				continue;
+
+			// Its name: the file's, less its extension and the mark a name that was too long gets
+			CStdString strLabel = strName;
+			int iDot = strLabel.ReverseFind('.');
+			if (iDot > 0)
+				strLabel = strLabel.Left(iDot);
+			int iMark = strLabel.ReverseFind('~');
+			if (iMark > 0 && (int)strLabel.size() - iMark == 9)
+				strLabel = strLabel.Left(iMark);
+
+			CFileItemPtr item(new CFileItem(strLabel));
+			item->SetPath(strPath);
+			item->SetLabel2(SYSTEMS[iSystem].name);
+			item->SetLabelPreformated(true);
+			item->SetIconImage("DefaultProgram.png");
+			item->m_dwSize = ((__int64)files[i].nFileSizeHigh << 32) | files[i].nFileSizeLow;
+			item->m_dateTime = files[i].ftLastWriteTime;
+			items.Add(item);
+		}
+	}
+}
+
+// A game's file in the cache, and for a .cue or .m3u the files it names
+static void DeleteGame(const CStdString& strFile, int iDepth)
+{
+	if (IsList(strFile) && iDepth < 2)
+	{
+		CStdString strFolder;
+		URIUtils::GetDirectory(strFile, strFolder);
+
+		CStdStringArray named;
+		ReadNamedFiles(strFile, named);
+		for (unsigned int i = 0; i < named.size(); i++)
+			DeleteGame(URIUtils::AddFileToFolder(strFolder, named[i]), iDepth + 1);
+	}
+
+	::DeleteFile(strFile.c_str());
+}
+
+bool CEmulators::RemoveCopy(const CFileItem& item)
+{
+	CGUIDialogYesNo* dialog = (CGUIDialogYesNo*)g_windowManager.GetWindow(WINDOW_DIALOG_YES_NO);
+	if (!dialog)
+		return false;
+
+	CStdString strQuestion;
+	strQuestion.Format(g_localizeStrings.Get(33595).c_str(), item.GetLabel().c_str());
+	dialog->SetHeading(33580);
+	dialog->SetLine(0, strQuestion);
+	dialog->SetLine(1, "");
+	dialog->SetLine(2, "");
+	dialog->DoModal();
+	if (!dialog->IsConfirmed())
+		return false;
+
+	CLog::Log(LOGNOTICE, "Removing the %s game %s from the console", item.GetLabel2().c_str(), item.GetPath().c_str());
+	DeleteGame(item.GetPath(), 0);
+	return true;
 }
 
 // Shows how far the copy's got. False once it's been cancelled

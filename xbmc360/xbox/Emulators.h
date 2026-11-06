@@ -5,6 +5,7 @@
 #include <vector>
 
 class CFileItem;
+class CFileItemList;
 class CGUIDialogProgress;
 
 // Games for other consoles, played in emulators that run on the Xbox 360.
@@ -38,6 +39,14 @@ public:
 	// A path of ours as it is on the console's drives, for another program: D:\ (and game:\) is where 360 Riffle
 	// is, which another program would take for its own folder
 	static CStdString ConsolePath(const CStdString& strPath);
+
+	// The games copied to the console, a file each by its name (the files a .cue or .m3u names are part of it), for On
+	// this console. They play from there without their share
+	static void GetCopied(CFileItemList& items);
+	// Whether a path is a game copied to the console
+	static bool IsCopy(const CStdString& strPath);
+	// Asks, and deletes a game copied to the console, with the files it names. True when it's gone
+	static bool RemoveCopy(const CFileItem& item);
 
 	virtual bool OnFileCallback(void* pContext, int ipercent, float avgSpeed);
 
