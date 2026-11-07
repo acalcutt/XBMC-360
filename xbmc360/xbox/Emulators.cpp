@@ -55,11 +55,14 @@ static const GameSystem SYSTEMS[] =
 	{ "Atari Lynx", "|.lnx|.lyx|", "|.zip|", "|lynx|atarilynx|", "|beetle-lynx|" },
 	{ "Virtual Boy", "|.vboy|", "|.zip|.vb|", "|virtualboy|vb|", "|beetle-vb|" },
 
+	// PPSSPP-360 (techidiots-llc/ppsspp-360, a fork of zzikozz's), not Salvia's: an XEX of its own, found as Salvia's
+	// cores are, which takes the game's path as launch data
+	{ "PSP", "|.cso|", "|.iso|.zip|", "|psp|playstationportable|", "|PPSSPP360|" },
+
 	// No emulator for these runs on the 360 yet. Their games are listed all
 	// the same, so that playing one can say so
 	{ "Nintendo DS", "|.nds|", "|.zip|", "|ds|nds|nintendods|", "" },
 	{ "Nintendo 3DS", "|.3ds|.cia|", "|.zip|", "|3ds|nintendo3ds|", "" },
-	{ "PSP", "|.cso|", "|.iso|.zip|", "|psp|playstationportable|", "" },
 	{ "PlayStation 2", "", "|.iso|.bin|.cue|.chd|", "|ps2|playstation2|", "" },
 	{ "GameCube", "|.gcm|.rvz|", "|.iso|", "|gamecube|nintendogamecube|gc|ngc|", "" },
 	{ "Wii", "|.wbfs|", "|.iso|", "|wii|nintendowii|", "" },
@@ -367,8 +370,10 @@ void CEmulators::Play(const CFileItem& item)
 	CStdString strCore = FindCore(iSystem);
 	if (strCore.IsEmpty())
 	{
-		CLog::Log(LOGNOTICE, "No emulator for %s games: Salvia wasn't found on the console's drives", name);
-		ShowMessage(33562, name);
+		// Which emulator to say: PSP games play in PPSSPP-360, the rest in Salvia
+		bool bPpsspp = InList(SYSTEMS[iSystem].cores, "PPSSPP360");
+		CLog::Log(LOGNOTICE, "No emulator for %s games: %s wasn't found on the console's drives", name, bPpsspp ? "PPSSPP-360" : "Salvia");
+		ShowMessage(bPpsspp ? 33613 : 33562, name);
 		return;
 	}
 

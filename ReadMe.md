@@ -52,8 +52,10 @@ with the BIOS files its readme lists in its `system` folder (PlayStation games n
 Pressure, a SoftmodExtras entry of its own (Category `Apps`, Source `Salvia`, Destination `Hdd1:\PeerPressure\Salvia`)
 installs it to the hard drive, apart from 360 Riffle, so updating 360 Riffle leaves Salvia's settings alone. Then add
 the folder with your games as a Games source. Leaving Salvia goes to the console's default dashboard, so set 360 Riffle as
-that (`DashXex` in SoftmodExtras.ini with Peer Pressure) to come back to it. DS, 3DS, PSP, PS2, GameCube, Wii,
-Dreamcast and Saturn games are listed too, but no emulator for them runs on the 360 yet.
+that (`DashXex` in SoftmodExtras.ini with Peer Pressure) to come back to it. PSP games play in PPSSPP-360 (our fork of
+[zzikozz's port](https://github.com/zzikozz/ppsspp-360), a beta), found like Salvia: its folder, with
+`PPSSPP360.xex` in it, at the top of a drive or one folder down. DS, 3DS, PS2, GameCube, Wii, Dreamcast and Saturn
+games are listed too, but no emulator for them runs on the 360 yet.
 
 [docs/usb-stick.md](docs/usb-stick.md) sets up the USB stick that installs 360 Riffle and Salvia with the Peer
 Pressure softmod, from an empty stick.

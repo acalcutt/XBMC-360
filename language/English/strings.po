@@ -9323,7 +9323,11 @@ msgctxt "#33612"
 msgid "Play all with subfolders"
 msgstr ""
 
-#empty strings from id 33613 to 34004
+msgctxt "#33613"
+msgid "To play %s games, put PPSSPP-360 (PPSSPP360.xex in its folder) on the console's hard drive or a USB drive."
+msgstr ""
+
+#empty strings from id 33614 to 34004
 
 msgctxt "#34005"
 msgid "Flac"

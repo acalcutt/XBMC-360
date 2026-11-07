@@ -13,6 +13,8 @@
 - **Play all** and **Shuffle**, and both **with subfolders**, at the top of a folder in Videos, Music and Pictures, on
   the console's drives or a share: its files, or its folders' too, played in order (folder by folder, by name) or in a
   random order, opening Now playing (pictures as a slideshow).
+- **PSP games** play in PPSSPP-360, our fork of zzikozz's port (a beta), when its folder with `PPSSPP360.xex` is on the
+  hard drive or a USB drive: found and started with the game as Salvia's emulators are.
 - **Game names**: an Xbox 360 disc, its copy and its exported folder go by the game's name (GRID, The Orange Box)
   instead of its title ID, as most discs have no label. 360 Riffle asks XboxUnity once for each game and keeps the
   answer.
