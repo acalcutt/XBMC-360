@@ -37,6 +37,8 @@
 - **Downloads and streaming over HTTP and HTTPS** (MediaRiffle, Jellyfin, game names, UPnP) use curl 8.15.0 instead
   of 7.37.1 from 2014, with eleven years of security and connection fixes. Two lookups of a server's name at the same
   time can no longer mix up their answers.
+- **Text** is drawn with FreeType 2.15.0 instead of 2.4.10 from 2012: thirteen years of font-reading fixes, many of
+  them for security.
 
 ## 0.1.0
 The first version of 360 Riffle, from [XBMC-360](https://github.com/brentdc-nz/XBMC-360).
