@@ -84,8 +84,8 @@
   <ItemDefinitionGroup Condition="'$(Configuration)'=='Debug'">
     <ClCompile>
       <PrecompiledHeader>NotUsing</PrecompiledHeader>
-      <AdditionalIncludeDirectories>$(ProjectDir)lib;$(ProjectDir)include;$(ProjectDir)mbedTLS\include;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
-      <PreprocessorDefinitions>BUILDING_LIBCURL;CURL_STATICLIB;_XBOX;%(PreprocessorDefinitions)</PreprocessorDefinitions>
+      <AdditionalIncludeDirectories>$(ProjectDir)xbox360;$(ProjectDir)lib;$(ProjectDir)include;$(ProjectDir)mbedTLS\include;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <PreprocessorDefinitions>HAVE_CONFIG_H;BUILDING_LIBCURL;CURL_STATICLIB;_XBOX;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <DebugInformationFormat>ProgramDatabase</DebugInformationFormat>
       <Optimization>Disabled</Optimization>
       <RuntimeLibrary>MultiThreadedDebug</RuntimeLibrary>
@@ -101,8 +101,8 @@
   <ItemDefinitionGroup Condition="'$(Configuration)'=='Release' or '$(Configuration)'=='Release_New' or '$(Configuration)'=='Release_LTCG'">
     <ClCompile>
       <PrecompiledHeader>NotUsing</PrecompiledHeader>
-      <AdditionalIncludeDirectories>$(ProjectDir)lib;$(ProjectDir)include;$(ProjectDir)mbedTLS\include;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
-      <PreprocessorDefinitions>BUILDING_LIBCURL;CURL_STATICLIB;_XBOX;NDEBUG;%(PreprocessorDefinitions)</PreprocessorDefinitions>
+      <AdditionalIncludeDirectories>$(ProjectDir)xbox360;$(ProjectDir)lib;$(ProjectDir)include;$(ProjectDir)mbedTLS\include;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <PreprocessorDefinitions>HAVE_CONFIG_H;BUILDING_LIBCURL;CURL_STATICLIB;_XBOX;NDEBUG;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <Optimization>MaxSpeed</Optimization>
       <RuntimeLibrary>MultiThreaded</RuntimeLibrary>
       <WarningLevel>Level3</WarningLevel>
@@ -117,8 +117,8 @@
   <ItemDefinitionGroup Condition="'$(Configuration)'=='CodeAnalysis'">
     <ClCompile>
       <PrecompiledHeader>NotUsing</PrecompiledHeader>
-      <AdditionalIncludeDirectories>$(ProjectDir)lib;$(ProjectDir)include;$(ProjectDir)mbedTLS\include;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
-      <PreprocessorDefinitions>BUILDING_LIBCURL;CURL_STATICLIB;_XBOX;NDEBUG;%(PreprocessorDefinitions)</PreprocessorDefinitions>
+      <AdditionalIncludeDirectories>$(ProjectDir)xbox360;$(ProjectDir)lib;$(ProjectDir)include;$(ProjectDir)mbedTLS\include;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <PreprocessorDefinitions>HAVE_CONFIG_H;BUILDING_LIBCURL;CURL_STATICLIB;_XBOX;NDEBUG;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <Optimization>MaxSpeed</Optimization>
       <RuntimeLibrary>MultiThreaded</RuntimeLibrary>
       <WarningLevel>Level3</WarningLevel>
@@ -133,8 +133,8 @@
   <ItemDefinitionGroup Condition="'$(Configuration)'=='Profile' or '$(Configuration)'=='Profile_FastCap'">
     <ClCompile>
       <PrecompiledHeader>NotUsing</PrecompiledHeader>
-      <AdditionalIncludeDirectories>$(ProjectDir)lib;$(ProjectDir)include;$(ProjectDir)mbedTLS\include;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
-      <PreprocessorDefinitions>BUILDING_LIBCURL;CURL_STATICLIB;_XBOX;NDEBUG;PROFILE;%(PreprocessorDefinitions)</PreprocessorDefinitions>
+      <AdditionalIncludeDirectories>$(ProjectDir)xbox360;$(ProjectDir)lib;$(ProjectDir)include;$(ProjectDir)mbedTLS\include;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <PreprocessorDefinitions>HAVE_CONFIG_H;BUILDING_LIBCURL;CURL_STATICLIB;_XBOX;NDEBUG;PROFILE;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <Optimization>MaxSpeed</Optimization>
       <RuntimeLibrary>MultiThreaded</RuntimeLibrary>
       <WarningLevel>Level3</WarningLevel>
@@ -147,80 +147,188 @@
     </Lib>
   </ItemDefinitionGroup>
   <ItemGroup>
-    <!-- Core -->
-    <ClCompile Include="lib\base64.c" />
-    <ClCompile Include="lib\bundles.c" />
+    <!-- curl 8.15.0: every source in lib, each built only when its feature is on (xbox360\curl_config.h) -->
+    <ClCompile Include="lib\altsvc.c" />
+    <ClCompile Include="lib\amigaos.c" />
+    <ClCompile Include="lib\asyn-ares.c" />
+    <ClCompile Include="lib\asyn-base.c" />
+    <ClCompile Include="lib\asyn-thrdd.c" />
+    <ClCompile Include="lib\bufq.c" />
+    <ClCompile Include="lib\bufref.c" />
+    <ClCompile Include="lib\cf-h1-proxy.c" />
+    <ClCompile Include="lib\cf-h2-proxy.c" />
+    <ClCompile Include="lib\cf-haproxy.c" />
+    <ClCompile Include="lib\cf-https-connect.c" />
+    <ClCompile Include="lib\cf-socket.c" />
+    <ClCompile Include="lib\cfilters.c" />
     <ClCompile Include="lib\conncache.c" />
     <ClCompile Include="lib\connect.c" />
     <ClCompile Include="lib\content_encoding.c" />
     <ClCompile Include="lib\cookie.c" />
+    <ClCompile Include="lib\cshutdn.c" />
     <ClCompile Include="lib\curl_addrinfo.c" />
+    <ClCompile Include="lib\curl_des.c" />
+    <ClCompile Include="lib\curl_endian.c" />
     <ClCompile Include="lib\curl_fnmatch.c" />
+    <ClCompile Include="lib\curl_get_line.c" />
     <ClCompile Include="lib\curl_gethostname.c" />
+    <ClCompile Include="lib\curl_gssapi.c" />
     <ClCompile Include="lib\curl_memrchr.c" />
-    <ClCompile Include="lib\curl_multibyte.c" />
+    <ClCompile Include="lib\curl_ntlm_core.c" />
+    <ClCompile Include="lib\curl_range.c" />
+    <ClCompile Include="lib\curl_rtmp.c" />
     <ClCompile Include="lib\curl_sasl.c" />
+    <ClCompile Include="lib\curl_sha512_256.c" />
+    <ClCompile Include="lib\curl_sspi.c" />
     <ClCompile Include="lib\curl_threads.c" />
-    <ClCompile Include="lib\dotdot.c" />
+    <ClCompile Include="lib\curl_trc.c" />
+    <ClCompile Include="lib\curlx\base64.c" />
+    <ClCompile Include="lib\curlx\dynbuf.c" />
+    <ClCompile Include="lib\curlx\inet_ntop.c" />
+    <ClCompile Include="lib\curlx\inet_pton.c" />
+    <ClCompile Include="lib\curlx\multibyte.c" />
+    <ClCompile Include="lib\curlx\nonblock.c" />
+    <ClCompile Include="lib\curlx\strparse.c" />
+    <ClCompile Include="lib\curlx\timediff.c" />
+    <ClCompile Include="lib\curlx\timeval.c" />
+    <ClCompile Include="lib\curlx\version_win32.c" />
+    <ClCompile Include="lib\curlx\wait.c" />
+    <ClCompile Include="lib\curlx\warnless.c" />
+    <ClCompile Include="lib\curlx\winapi.c" />
+    <ClCompile Include="lib\cw-out.c" />
+    <ClCompile Include="lib\cw-pause.c" />
+    <ClCompile Include="lib\dict.c" />
+    <ClCompile Include="lib\dllmain.c" />
+    <ClCompile Include="lib\doh.c" />
+    <ClCompile Include="lib\dynhds.c" />
     <ClCompile Include="lib\easy.c" />
+    <ClCompile Include="lib\easygetopt.c" />
+    <ClCompile Include="lib\easyoptions.c" />
     <ClCompile Include="lib\escape.c" />
+    <ClCompile Include="lib\fake_addrinfo.c" />
+    <ClCompile Include="lib\file.c" />
     <ClCompile Include="lib\fileinfo.c" />
+    <ClCompile Include="lib\fopen.c" />
     <ClCompile Include="lib\formdata.c" />
+    <ClCompile Include="lib\ftp.c" />
+    <ClCompile Include="lib\ftplistparser.c" />
     <ClCompile Include="lib\getenv.c" />
     <ClCompile Include="lib\getinfo.c" />
+    <ClCompile Include="lib\gopher.c" />
     <ClCompile Include="lib\hash.c" />
+    <ClCompile Include="lib\headers.c" />
     <ClCompile Include="lib\hmac.c" />
-    <ClCompile Include="lib\hostasyn.c" />
-    <ClCompile Include="lib\hostcheck.c" />
     <ClCompile Include="lib\hostip.c" />
     <ClCompile Include="lib\hostip4.c" />
     <ClCompile Include="lib\hostip6.c" />
-    <ClCompile Include="lib\hostsyn.c" />
-    <ClCompile Include="lib\if2ip.c" />
-    <ClCompile Include="lib\inet_ntop.c" />
-    <ClCompile Include="lib\inet_pton.c" />
-    <ClCompile Include="lib\llist.c" />
-    <ClCompile Include="lib\md5.c" />
-    <ClCompile Include="lib\mprintf.c" />
-    <ClCompile Include="lib\multi.c" />
-    <ClCompile Include="lib\netrc.c" />
-    <ClCompile Include="lib\non-ascii.c" />
-    <ClCompile Include="lib\nonblock.c" />
-    <ClCompile Include="lib\parsedate.c" />
-    <ClCompile Include="lib\pipeline.c" />
-    <ClCompile Include="lib\progress.c" />
-    <ClCompile Include="lib\rawstr.c" />
-    <ClCompile Include="lib\select.c" />
-    <ClCompile Include="lib\sendf.c" />
-    <ClCompile Include="lib\share.c" />
-    <ClCompile Include="lib\slist.c" />
-    <ClCompile Include="lib\speedcheck.c" />
-    <ClCompile Include="lib\splay.c" />
-    <ClCompile Include="lib\strdup.c" />
-    <ClCompile Include="lib\strequal.c" />
-    <ClCompile Include="lib\strerror.c" />
-    <ClCompile Include="lib\strtok.c" />
-    <ClCompile Include="lib\strtoofft.c" />
-    <ClCompile Include="lib\timeval.c" />
-    <ClCompile Include="lib\transfer.c" />
-    <ClCompile Include="lib\url.c" />
-    <ClCompile Include="lib\version.c" />
-    <ClCompile Include="lib\warnless.c" />
-    <ClCompile Include="lib\wildcard.c" />
-    <!-- HTTP -->
+    <ClCompile Include="lib\hsts.c" />
     <ClCompile Include="lib\http.c" />
+    <ClCompile Include="lib\http1.c" />
+    <ClCompile Include="lib\http2.c" />
+    <ClCompile Include="lib\http_aws_sigv4.c" />
     <ClCompile Include="lib\http_chunks.c" />
     <ClCompile Include="lib\http_digest.c" />
     <ClCompile Include="lib\http_negotiate.c" />
+    <ClCompile Include="lib\http_ntlm.c" />
     <ClCompile Include="lib\http_proxy.c" />
-    <!-- DNS -->
-    <ClCompile Include="lib\asyn-thread.c" />
-    <!-- SSL (mbedTLS) + SOCKS -->
-    <ClCompile Include="lib\vtls\vtls.c" />
-    <ClCompile Include="lib\vtls\mbedtls.c" />
+    <ClCompile Include="lib\httpsrr.c" />
+    <ClCompile Include="lib\idn.c" />
+    <ClCompile Include="lib\if2ip.c" />
+    <ClCompile Include="lib\imap.c" />
+    <ClCompile Include="lib\krb5.c" />
+    <ClCompile Include="lib\ldap.c" />
+    <ClCompile Include="lib\llist.c" />
+    <ClCompile Include="lib\macos.c" />
+    <ClCompile Include="lib\md4.c" />
+    <ClCompile Include="lib\md5.c" />
+    <ClCompile Include="lib\memdebug.c" />
+    <ClCompile Include="lib\mime.c" />
+    <ClCompile Include="lib\mprintf.c" />
+    <ClCompile Include="lib\mqtt.c" />
+    <ClCompile Include="lib\multi.c" />
+    <ClCompile Include="lib\multi_ev.c" />
+    <ClCompile Include="lib\netrc.c" />
+    <ClCompile Include="lib\noproxy.c" />
+    <ClCompile Include="lib\openldap.c" />
+    <ClCompile Include="lib\parsedate.c" />
+    <ClCompile Include="lib\pingpong.c" />
+    <ClCompile Include="lib\pop3.c" />
+    <ClCompile Include="lib\progress.c" />
+    <ClCompile Include="lib\psl.c" />
+    <ClCompile Include="lib\rand.c" />
+    <ClCompile Include="lib\rename.c" />
+    <ClCompile Include="lib\request.c" />
+    <ClCompile Include="lib\rtsp.c" />
+    <ClCompile Include="lib\select.c" />
+    <ClCompile Include="lib\sendf.c" />
+    <ClCompile Include="lib\setopt.c" />
+    <ClCompile Include="lib\sha256.c" />
+    <ClCompile Include="lib\share.c" />
+    <ClCompile Include="lib\slist.c" />
+    <ClCompile Include="lib\smb.c" />
+    <ClCompile Include="lib\smtp.c" />
+    <ClCompile Include="lib\socketpair.c" />
     <ClCompile Include="lib\socks.c" />
-    <!-- Xbox 360 stubs -->
-    <ClCompile Include="lib\xbox360_stubs.c" />
+    <ClCompile Include="lib\socks_gssapi.c" />
+    <ClCompile Include="lib\socks_sspi.c" />
+    <ClCompile Include="lib\speedcheck.c" />
+    <ClCompile Include="lib\splay.c" />
+    <ClCompile Include="lib\strcase.c" />
+    <ClCompile Include="lib\strdup.c" />
+    <ClCompile Include="lib\strequal.c" />
+    <ClCompile Include="lib\strerror.c" />
+    <ClCompile Include="lib\system_win32.c" />
+    <ClCompile Include="lib\telnet.c" />
+    <ClCompile Include="lib\tftp.c" />
+    <ClCompile Include="lib\transfer.c" />
+    <ClCompile Include="lib\uint-bset.c" />
+    <ClCompile Include="lib\uint-hash.c" />
+    <ClCompile Include="lib\uint-spbset.c" />
+    <ClCompile Include="lib\uint-table.c" />
+    <ClCompile Include="lib\url.c" />
+    <ClCompile Include="lib\urlapi.c" />
+    <ClCompile Include="lib\vauth\cleartext.c" />
+    <ClCompile Include="lib\vauth\cram.c" />
+    <ClCompile Include="lib\vauth\digest.c" />
+    <ClCompile Include="lib\vauth\digest_sspi.c" />
+    <ClCompile Include="lib\vauth\gsasl.c" />
+    <ClCompile Include="lib\vauth\krb5_gssapi.c" />
+    <ClCompile Include="lib\vauth\krb5_sspi.c" />
+    <ClCompile Include="lib\vauth\ntlm.c" />
+    <ClCompile Include="lib\vauth\ntlm_sspi.c" />
+    <ClCompile Include="lib\vauth\oauth2.c" />
+    <ClCompile Include="lib\vauth\spnego_gssapi.c" />
+    <ClCompile Include="lib\vauth\spnego_sspi.c" />
+    <ClCompile Include="lib\vauth\vauth.c" />
+    <ClCompile Include="lib\version.c" />
+    <ClCompile Include="lib\vquic\curl_msh3.c" />
+    <ClCompile Include="lib\vquic\curl_ngtcp2.c" />
+    <ClCompile Include="lib\vquic\curl_osslq.c" />
+    <ClCompile Include="lib\vquic\curl_quiche.c" />
+    <ClCompile Include="lib\vquic\vquic-tls.c" />
+    <ClCompile Include="lib\vquic\vquic.c" />
+    <ClCompile Include="lib\vssh\curl_path.c" />
+    <ClCompile Include="lib\vssh\libssh.c" />
+    <ClCompile Include="lib\vssh\libssh2.c" />
+    <ClCompile Include="lib\vssh\wolfssh.c" />
+    <ClCompile Include="lib\vtls\cipher_suite.c" />
+    <ClCompile Include="lib\vtls\gtls.c" />
+    <ClCompile Include="lib\vtls\hostcheck.c" />
+    <ClCompile Include="lib\vtls\keylog.c" />
+    <ClCompile Include="lib\vtls\mbedtls.c" />
+    <ClCompile Include="lib\vtls\mbedtls_threadlock.c" />
+    <ClCompile Include="lib\vtls\openssl.c" />
+    <ClCompile Include="lib\vtls\rustls.c" />
+    <ClCompile Include="lib\vtls\schannel.c" />
+    <ClCompile Include="lib\vtls\schannel_verify.c" />
+    <ClCompile Include="lib\vtls\vtls.c" />
+    <ClCompile Include="lib\vtls\vtls_scache.c" />
+    <ClCompile Include="lib\vtls\vtls_spack.c" />
+    <ClCompile Include="lib\vtls\wolfssl.c" />
+    <ClCompile Include="lib\vtls\x509asn1.c" />
+    <ClCompile Include="lib\ws.c" />
+    <!-- Xbox 360: gethostbyname through XNet, and what the XDK lacks -->
+    <ClCompile Include="xbox360\xbox360_stubs.c" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
 </Project>

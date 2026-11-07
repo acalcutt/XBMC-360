@@ -34,6 +34,9 @@
   playing while you browse Games, Pictures or folders on another, and the file manager copies from one share to
   another. Before, using a second share took the first one's connection away. A share that stopped answering (the PC
   restarted or slept) is connected to again; before, its files could fail to open until 360 Riffle restarted.
+- **Downloads and streaming over HTTP and HTTPS** (MediaRiffle, Jellyfin, game names, UPnP) use curl 8.15.0 instead
+  of 7.37.1 from 2014, with eleven years of security and connection fixes. Two lookups of a server's name at the same
+  time can no longer mix up their answers.
 
 ## 0.1.0
 The first version of 360 Riffle, from [XBMC-360](https://github.com/brentdc-nz/XBMC-360).

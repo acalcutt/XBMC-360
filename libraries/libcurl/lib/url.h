@@ -7,11 +7,11 @@
  *                            | (__| |_| |  _ <| |___
  *                             \___|\___/|_| \_\_____|
  *
- * Copyright (C) 1998 - 2013, Daniel Stenberg, <daniel@haxx.se>, et al.
+ * Copyright (C) Daniel Stenberg, <daniel@haxx.se>, et al.
  *
  * This software is licensed as described in the file COPYING, which
  * you should have received as part of this distribution. The terms
- * are also available at http://curl.haxx.se/docs/copyright.html.
+ * are also available at https://curl.se/docs/copyright.html.
  *
  * You may opt to use, copy, modify, merge, publish, distribute and/or sell
  * copies of the Software, and permit persons to whom the Software is
@@ -20,6 +20,8 @@
  * This software is distributed on an "AS IS" basis, WITHOUT WARRANTY OF ANY
  * KIND, either express or implied.
  *
+ * SPDX-License-Identifier: curl
+ *
  ***************************************************************************/
 #include "curl_setup.h"
 
@@ -27,56 +29,103 @@
  * Prototypes for library-wide functions provided by url.c
  */
 
-CURLcode Curl_open(struct SessionHandle **curl);
-CURLcode Curl_init_userdefined(struct UserDefined *set);
-CURLcode Curl_setopt(struct SessionHandle *data, CURLoption option,
-                     va_list arg);
-CURLcode Curl_dupset(struct SessionHandle * dst, struct SessionHandle * src);
-void Curl_freeset(struct SessionHandle * data);
-CURLcode Curl_close(struct SessionHandle *data); /* opposite of curl_open() */
-CURLcode Curl_connect(struct SessionHandle *, struct connectdata **,
-                      bool *async, bool *protocol_connect);
-CURLcode Curl_do(struct connectdata **, bool *done);
-CURLcode Curl_do_more(struct connectdata *, int *completed);
-CURLcode Curl_done(struct connectdata **, CURLcode, bool premature);
-CURLcode Curl_disconnect(struct connectdata *, bool dead_connection);
-CURLcode Curl_protocol_connect(struct connectdata *conn, bool *done);
-CURLcode Curl_protocol_connecting(struct connectdata *conn, bool *done);
-CURLcode Curl_protocol_doing(struct connectdata *conn, bool *done);
-CURLcode Curl_setup_conn(struct connectdata *conn,
+CURLcode Curl_init_do(struct Curl_easy *data, struct connectdata *conn);
+CURLcode Curl_open(struct Curl_easy **curl);
+CURLcode Curl_init_userdefined(struct Curl_easy *data);
+
+void Curl_freeset(struct Curl_easy *data);
+CURLcode Curl_uc_to_curlcode(CURLUcode uc);
+CURLcode Curl_close(struct Curl_easy **datap); /* opposite of curl_open() */
+CURLcode Curl_connect(struct Curl_easy *, bool *async, bool *protocol_connect);
+CURLcode Curl_setup_conn(struct Curl_easy *data,
+                         struct Curl_dns_entry *dns,
                          bool *protocol_done);
-void Curl_free_request_state(struct SessionHandle *data);
+void Curl_conn_free(struct Curl_easy *data, struct connectdata *conn);
+CURLcode Curl_parse_login_details(const char *login, const size_t len,
+                                  char **userptr, char **passwdptr,
+                                  char **optionsptr);
 
-int Curl_protocol_getsock(struct connectdata *conn,
-                          curl_socket_t *socks,
-                          int numsocks);
-int Curl_doing_getsock(struct connectdata *conn,
-                       curl_socket_t *socks,
-                       int numsocks);
+/* Attach/Clear/Get meta data for an easy handle. Needs to provide
+ * a destructor, will be automatically called when the easy handle
+ * is reset or closed. */
+typedef void Curl_meta_dtor(void *key, size_t key_len, void *meta_data);
 
-bool Curl_isPipeliningEnabled(const struct SessionHandle *handle);
-CURLcode Curl_addHandleToPipeline(struct SessionHandle *handle,
-                                  struct curl_llist *pipeline);
-int Curl_removeHandleFromPipeline(struct SessionHandle *handle,
-                                  struct curl_llist *pipeline);
-/* remove the specified connection from all (possible) pipelines and related
-   queues */
-void Curl_getoff_all_pipelines(struct SessionHandle *data,
-                               struct connectdata *conn);
+/* Set the transfer meta data for the key. Any existing entry for that
+ * key will be destroyed.
+ * Takes ownership of `meta_data` and destroys it when the call fails. */
+CURLcode Curl_meta_set(struct Curl_easy *data, const char *key,
+                       void *meta_data, Curl_meta_dtor *meta_dtor);
+void Curl_meta_remove(struct Curl_easy *data, const char *key);
+void *Curl_meta_get(struct Curl_easy *data, const char *key);
+void Curl_meta_reset(struct Curl_easy *data);
 
-void Curl_close_connections(struct SessionHandle *data);
+/* Set connection meta data for the key. Any existing entry for that
+ * key will be destroyed.
+ * Takes ownership of `meta_data` and destroys it when the call fails. */
+CURLcode Curl_conn_meta_set(struct connectdata *conn, const char *key,
+                            void *meta_data, Curl_meta_dtor *meta_dtor);
+void Curl_conn_meta_remove(struct connectdata *conn, const char *key);
+void *Curl_conn_meta_get(struct connectdata *conn, const char *key);
+
+/* Get protocol handler for a URI scheme
+ * @param scheme URI scheme, case-insensitive
+ * @return NULL of handler not found
+ */
+const struct Curl_handler *Curl_get_scheme_handler(const char *scheme);
+const struct Curl_handler *Curl_getn_scheme_handler(const char *scheme,
+                                                    size_t len);
 
 #define CURL_DEFAULT_PROXY_PORT 1080 /* default proxy port unless specified */
-#define CURL_DEFAULT_SOCKS5_GSSAPI_SERVICE "rcmd" /* default socks5 gssapi
-                                                     service */
-
-CURLcode Curl_connected_proxy(struct connectdata *conn, int sockindex);
+#define CURL_DEFAULT_HTTPS_PROXY_PORT 443 /* default https proxy port unless
+                                             specified */
 
 #ifdef CURL_DISABLE_VERBOSE_STRINGS
-#define Curl_verboseconnect(x)  Curl_nop_stmt
+#define Curl_verboseconnect(x,y,z)  Curl_nop_stmt
 #else
-void Curl_verboseconnect(struct connectdata *conn);
+void Curl_verboseconnect(struct Curl_easy *data, struct connectdata *conn,
+                         int sockindex);
 #endif
 
+/**
+ * Return TRUE iff the given connection is considered dead.
+ * @param nowp      NULL or pointer to time being checked against.
+ */
+bool Curl_conn_seems_dead(struct connectdata *conn,
+                          struct Curl_easy *data,
+                          struct curltime *nowp);
+
+/**
+ * Perform upkeep operations on the connection.
+ */
+CURLcode Curl_conn_upkeep(struct Curl_easy *data,
+                          struct connectdata *conn,
+                          struct curltime *now);
+
+/**
+ * Always eval all arguments, return the first result != CURLE_OK.
+ * A non-short-circuit evaluation.
+ */
+CURLcode Curl_1st_err(CURLcode r1, CURLcode r2);
+
+/**
+ * Always eval all arguments, return the first
+ * result != (CURLE_OK|CURLE_AGAIN) or `r1`.
+ * A non-short-circuit evaluation.
+ */
+CURLcode Curl_1st_fatal(CURLcode r1, CURLcode r2);
+
+#if defined(USE_HTTP2) || defined(USE_HTTP3)
+void Curl_data_priority_clear_state(struct Curl_easy *data);
+#else
+#define Curl_data_priority_clear_state(x)
+#endif /* !(defined(USE_HTTP2) || defined(USE_HTTP3)) */
+
+#ifdef USE_NGHTTP2
+CURLcode Curl_data_priority_add_child(struct Curl_easy *parent,
+                                      struct Curl_easy *child,
+                                      bool exclusive);
+#else
+#define Curl_data_priority_add_child(x, y, z) CURLE_NOT_BUILT_IN
+#endif
 
 #endif /* HEADER_CURL_URL_H */
