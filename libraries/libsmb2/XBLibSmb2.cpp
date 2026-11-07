@@ -1,6 +1,28 @@
 #include "XBLibSmb2.h"
 #include "utils\Log.h"
+#include "utils\SingleLock.h"
 #include <fcntl.h>
+#include <map>
+#include <vector>
+
+// A connection nothing has used for this long is closed
+#define SMB_IDLE_CLOSE    (5 * 60 * 1000)
+// A connection left idle for this long is checked with an echo before it's used again: a server drops idle
+// sessions (Windows after 15 minutes), and one that restarted has forgotten them
+#define SMB_IDLE_CHECK    (30 * 1000)
+// How long, in seconds, the echo (and signing off) waits for a server: one that's gone away doesn't answer at all
+#define SMB_SHORT_TIMEOUT 5
+
+// The connections by KeyOf, and why the last one couldn't be made or folder opened
+static CCriticalSection s_poolLock;
+static std::map<CStdString, CXBLibSMB2*> s_pool;
+static CStdString s_strLastError;
+
+static void KeepError(const CStdString& strError)
+{
+	CSingleLock lock(s_poolLock);
+	s_strLastError = strError;
+}
 
 // Who to sign in as. A plain name is an account on the server itself, as before (domain "workgroup"); a domain
 // account can be DOMAIN\name, or name@domain, whose domain is in the name, so NTLM is sent none beside it; and an
@@ -24,320 +46,230 @@ static void SetCredentials(struct smb2_context* smb2, const CURL& url)
 	smb2_set_domain(smb2, domain.c_str());
 }
 
+// Which connection a URL uses: one per server, share and sign-in, and whether it's for listing folders. The password
+// is in it too, so a source whose password was changed signs in again; the key is never logged.
+static CStdString KeyOf(const CURL& url, bool bForFolders)
+{
+	CStdString strHost = url.GetHostName();
+	CStdString strShare = url.GetShareName();
+	strHost.ToLower();
+	strShare.ToLower();
+
+	CStdString strKey;
+	strKey.Format("%s/%s|%s;%s:%s|%s", strHost.c_str(), strShare.c_str(), url.GetDomain().c_str(),
+		url.GetUserName().c_str(), url.GetPassWord().c_str(), bForFolders ? "folders" : "files");
+	return strKey;
+}
+
 CXBLibSMB2::CXBLibSMB2()
 {
-	m_pLibSMB2Context = NULL;
-	m_pLibSMB2H = NULL;
-	m_pLibSMB2Url = NULL;
-	m_FileSize = 0;
-	m_pLibSMB2FH = NULL;
+	m_pContext = NULL;
+	m_bConnected = false;
+	m_iUsers = 0;
+	m_dwLastUsed = GetTickCount();
+	m_bRetired = false;
 }
 
 CXBLibSMB2::~CXBLibSMB2()
 {
-	Close(); // Ensure cleanup on destruction
+	if(m_pContext)
+	{
+		// Signing off waits on the server, so not for long: it not answering may be why this one's going
+		smb2_set_timeout(m_pContext, SMB_SHORT_TIMEOUT);
+		if(m_bConnected && smb2_get_fd(m_pContext) != (t_socket)-1)
+			smb2_disconnect_share(m_pContext);
+		smb2_destroy_context(m_pContext);
+	}
 }
 
-bool CXBLibSMB2::Init()
+CXBLibSMB2* CXBLibSMB2::Get(const CURL& url, bool bForFolders)
 {
-	// Close any open file/directory handles, but keep connection alive
-	CloseHandle();
+	CStdString strKey = KeyOf(url, bForFolders);
 
-	// Only create context if we don't have one
-	if(!m_pLibSMB2Context)
+	// A connection kept for the share that has gone dead (the server restarted, or dropped it) is retired and a new
+	// one made
+	for(int iTry = 0; iTry < 2; iTry++)
 	{
-		m_pLibSMB2Context = smb2_init_context();
+		CloseIdle();
 
-		if(m_pLibSMB2Context == NULL)
+		CXBLibSMB2* pConnection;
+		bool bAsk;
 		{
-			CLog::Log(LOGERROR, "Failed to init context\n");
-			return false;
+			CSingleLock lock(s_poolLock);
+
+			std::map<CStdString, CXBLibSMB2*>::iterator it = s_pool.find(strKey);
+			if(it != s_pool.end())
+				pConnection = it->second;
+			else
+			{
+				pConnection = new CXBLibSMB2();
+				pConnection->m_strKey = strKey;
+				s_pool[strKey] = pConnection;
+			}
+
+			// One in use by another file just now is known to work; one left idle a while is asked
+			bAsk = pConnection->m_iUsers == 0 && GetTickCount() - pConnection->m_dwLastUsed > SMB_IDLE_CHECK;
+			pConnection->m_iUsers++;
+		}
+
+		bool bWasConnected, bReady;
+		{
+			CSingleLock lock(*pConnection);
+			bWasConnected = pConnection->m_bConnected;
+			bReady = bWasConnected ? pConnection->IsAlive(bAsk) : pConnection->Connect(url);
+		}
+
+		if(bReady)
+			return pConnection;
+
+		Retire(pConnection);
+		Release(pConnection);
+
+		// It couldn't connect: why is kept for GetLastError
+		if(!bWasConnected)
+			return NULL;
+	}
+
+	return NULL;
+}
+
+void CXBLibSMB2::Release(CXBLibSMB2* pConnection)
+{
+	if(!pConnection)
+		return;
+
+	bool bDelete;
+	{
+		CSingleLock lock(s_poolLock);
+		pConnection->m_iUsers--;
+		pConnection->m_dwLastUsed = GetTickCount();
+		bDelete = pConnection->m_bRetired && pConnection->m_iUsers == 0;
+	}
+
+	if(bDelete)
+		delete pConnection;
+}
+
+CStdString CXBLibSMB2::GetLastError()
+{
+	CSingleLock lock(s_poolLock);
+	return s_strLastError;
+}
+
+// Out of the pool, so the next Get makes a new connection; deleted when its last user releases it
+void CXBLibSMB2::Retire(CXBLibSMB2* pConnection)
+{
+	CSingleLock lock(s_poolLock);
+
+	if(pConnection->m_bRetired)
+		return;
+
+	pConnection->m_bRetired = true;
+	std::map<CStdString, CXBLibSMB2*>::iterator it = s_pool.find(pConnection->m_strKey);
+	if(it != s_pool.end() && it->second == pConnection)
+		s_pool.erase(it);
+}
+
+// Connections nothing has used for a while are closed
+void CXBLibSMB2::CloseIdle()
+{
+	std::vector<CXBLibSMB2*> idle;
+	{
+		CSingleLock lock(s_poolLock);
+
+		DWORD dwNow = GetTickCount();
+		std::map<CStdString, CXBLibSMB2*>::iterator it = s_pool.begin();
+		while(it != s_pool.end())
+		{
+			CXBLibSMB2* pConnection = it->second;
+			if(pConnection->m_iUsers == 0 && dwNow - pConnection->m_dwLastUsed > SMB_IDLE_CLOSE)
+			{
+				pConnection->m_bRetired = true;
+				idle.push_back(pConnection);
+				s_pool.erase(it++);
+			}
+			else
+				++it;
 		}
 	}
 
-	return true;
+	// Not under the pool's lock: signing off waits on the server
+	for(unsigned int i = 0; i < idle.size(); i++)
+		delete idle[i];
 }
 
-bool CXBLibSMB2::IsConnectedToShare(const char* server, const char* share)
+// Signs in to the server and connects to the share, on a context of its own (a new one after a failed try)
+bool CXBLibSMB2::Connect(const CURL& url)
 {
-	if(!m_pLibSMB2Context || m_ConnectedServer.IsEmpty() || m_ConnectedShare.IsEmpty())
-		return false;
-	
-	return (m_ConnectedServer.CompareNoCase(server) == 0 && 
-	        m_ConnectedShare.CompareNoCase(share) == 0);
-}
+	if(m_pContext)
+		smb2_destroy_context(m_pContext);
 
-bool CXBLibSMB2::OpenDir(const CURL& url)
-{
-	if(!m_pLibSMB2Context)
-		return false;
+	m_pContext = smb2_init_context();
 
-	m_lastError.Empty();
-	SetCredentials(m_pLibSMB2Context, url);
-
-	m_pLibSMB2Url = smb2_parse_url(m_pLibSMB2Context, "smb://"+url.GetHostName()+":445/"+url.GetShareName());
-
-	if(!m_pLibSMB2Url)
+	if(m_pContext == NULL)
 	{
-		m_lastError = smb2_get_error(m_pLibSMB2Context);
-		CLog::Log(LOGERROR, "Failed to parse url: %s\n", m_lastError.c_str());
+		KeepError("Failed to init context");
+		CLog::Log(LOGERROR, "CXBLibSMB2::Connect - Failed to init context");
 		return false;
 	}
 
-	smb2_set_security_mode(m_pLibSMB2Context, SMB2_NEGOTIATE_SIGNING_ENABLED);
+	SetCredentials(m_pContext, url);
+	smb2_set_security_mode(m_pContext, SMB2_NEGOTIATE_SIGNING_ENABLED);
 
-	// Only connect if not already connected to this share
-	if(!IsConnectedToShare(m_pLibSMB2Url->server, m_pLibSMB2Url->share))
-	{
-		// If we were previously connected to a different share, tear down
-		// the old connection first so the context is in a clean state
-		if(!m_ConnectedServer.IsEmpty())
-		{
-			smb2_disconnect_share(m_pLibSMB2Context);
-			m_ConnectedServer.Empty();
-			m_ConnectedShare.Empty();
-		}
-
-		if(smb2_connect_share(m_pLibSMB2Context, m_pLibSMB2Url->server, m_pLibSMB2Url->share, m_pLibSMB2Url->user) != 0)
-		{
-			m_lastError = smb2_get_error(m_pLibSMB2Context);
-			CLog::Log(LOGERROR, "smb2_connect_share failed. %s", m_lastError.c_str());
-			return false;
-		}
-		m_ConnectedServer = m_pLibSMB2Url->server;
-		m_ConnectedShare = m_pLibSMB2Url->share;
-	}
-
-	m_pLibSMB2H = smb2_opendir(m_pLibSMB2Context, m_pLibSMB2Url->path);
-
-	if(!m_pLibSMB2H)
-	{
-		m_lastError = smb2_get_error(m_pLibSMB2Context);
-		CLog::Log(LOGERROR, "smb2_opendir failed. %s", m_lastError.c_str());
-		return false;
-	}
-	
-	return true;
-}
-
-smb2dirent* CXBLibSMB2::ReadDir()
-{
-	return smb2_readdir(m_pLibSMB2Context, m_pLibSMB2H);
-}
-
-bool CXBLibSMB2::OpenFile(const CURL& url)
-{
-	if(!m_pLibSMB2Context)
-		return false;
-
-	SetCredentials(m_pLibSMB2Context, url);
-		
-	m_pLibSMB2Url = smb2_parse_url(m_pLibSMB2Context, "smb://"+url.GetHostName()+":445/"+url.GetShareName());
-
-	if(!m_pLibSMB2Url)
-	{
-		CLog::Log(LOGERROR, "Failed to parse url: %s\n", smb2_get_error(m_pLibSMB2Context));
-		return false;
-	}
-
-	smb2_set_security_mode(m_pLibSMB2Context, SMB2_NEGOTIATE_SIGNING_ENABLED);
-
-	// Only connect if not already connected to this share
-	if(!IsConnectedToShare(m_pLibSMB2Url->server, m_pLibSMB2Url->share))
-	{
-		// If we were previously connected to a different share, tear down
-		// the old connection first so the context is in a clean state
-		if(!m_ConnectedServer.IsEmpty())
-		{
-			smb2_disconnect_share(m_pLibSMB2Context);
-			m_ConnectedServer.Empty();
-			m_ConnectedShare.Empty();
-		}
-
-		if(smb2_connect_share(m_pLibSMB2Context, m_pLibSMB2Url->server, m_pLibSMB2Url->share, m_pLibSMB2Url->user) != 0)
-		{
-			CLog::Log(LOGERROR, "smb2_connect_share failed. %s", smb2_get_error(m_pLibSMB2Context));
-			return false;
-		}
-		m_ConnectedServer = m_pLibSMB2Url->server;
-		m_ConnectedShare = m_pLibSMB2Url->share;
-	}
-
-	m_pLibSMB2FH = smb2_open(m_pLibSMB2Context, m_pLibSMB2Url->path, O_RDONLY | O_BINARY);
-
-	if(m_pLibSMB2FH == NULL)
-		return false;
-
-	m_FileSize = smb2_lseek(m_pLibSMB2Context, m_pLibSMB2FH, 0, SEEK_END, NULL);
-
-	// Seek back to the beginning so reads start from position 0
-	smb2_lseek(m_pLibSMB2Context, m_pLibSMB2FH, 0, SEEK_SET, NULL);
-
-	// We've opened the file!
-	return true;
-}
-
-__int64 CXBLibSMB2::Seek(__int64 iFilePosition, int iWhence)
-{
-	if(m_pLibSMB2FH == NULL || m_pLibSMB2Context == NULL)
-		return -1;
-
-	INT64 iPos = smb2_lseek(m_pLibSMB2Context, m_pLibSMB2FH, iFilePosition, iWhence, NULL);
-
-	if(iPos < 0)
-		return -1;
-
-	return(__int64)iPos;
-}
-
-unsigned int CXBLibSMB2::Read(void *lpBuf, __int64 uiBufSize)
-{
-	if(m_pLibSMB2FH == NULL || m_pLibSMB2Context == NULL)
-		return 0;
-
-	int bytesRead = smb2_read(m_pLibSMB2Context, m_pLibSMB2FH,static_cast<uint8_t *>(lpBuf)/* (unsigned __int8*)lpBuf*/, (unsigned int)uiBufSize);
-
-	if(bytesRead < 0)
-	{
-		CLog::Log(LOGERROR, __FUNCTION__" - smbc_read returned error %i", errno);
-		return 0;
-	}
-
-	return (unsigned int)bytesRead;
-}
-
-__int64 CXBLibSMB2::GetLength()
-{
-	if(m_pLibSMB2FH == NULL || m_pLibSMB2Context == NULL)
-		return 0;
-
-	return m_FileSize;
-}
-
-__int64 CXBLibSMB2::GetPosition()
-{
-	if(m_pLibSMB2FH == NULL || m_pLibSMB2Context == NULL)
-		return 0;
-
-	__int64 iPos = smb2_lseek(m_pLibSMB2Context, m_pLibSMB2FH, 0, SEEK_CUR, NULL);
-	
-	if(iPos < 0)
-		return 0;
-	
-	return iPos;
-}
-
-void CXBLibSMB2::CloseHandle()
-{
-	// Close directory handle
-	if(m_pLibSMB2H)
-	{
-		smb2_closedir(m_pLibSMB2Context, m_pLibSMB2H);
-		m_pLibSMB2H = NULL;
-	}
-
-	// Close file handle
-	if(m_pLibSMB2FH)
-	{
-		smb2_close(m_pLibSMB2Context, m_pLibSMB2FH);
-		m_pLibSMB2FH = NULL;
-	}
-
-	// Destroy URL
-	if(m_pLibSMB2Url)
-	{
-		smb2_destroy_url(m_pLibSMB2Url);
-		m_pLibSMB2Url = NULL;
-	}
-
-	m_FileSize = 0;
-	// Note: Connection stays alive for reuse
-}
-
-void CXBLibSMB2::Close()
-{
-	// First close any open handles
-	CloseHandle();
-
-	// Then disconnect and destroy context
-	if(m_pLibSMB2Context)
-	{
-		smb2_disconnect_share(m_pLibSMB2Context);
-		smb2_destroy_context(m_pLibSMB2Context);
-		m_pLibSMB2Context = NULL;
-	}
-
-	m_ConnectedServer.Empty();
-	m_ConnectedShare.Empty();
-}
-
-// ---------------------------------------------------------------------------
-// Per-instance file handle API
-// These methods allow multiple files to be open concurrently on the shared
-// SMB connection.  Each CFileSMB instance owns its own smb2fh* and calls
-// these through the global CXBLibSMB2 (which serializes access via its
-// CCriticalSection base class).
-// ---------------------------------------------------------------------------
-
-bool CXBLibSMB2::EnsureConnection(const CURL& url)
-{
-	// Create context if needed
-	if(!m_pLibSMB2Context)
-	{
-		m_pLibSMB2Context = smb2_init_context();
-
-		if(m_pLibSMB2Context == NULL)
-		{
-			CLog::Log(LOGERROR, "CXBLibSMB2::EnsureConnection - Failed to init context");
-			return false;
-		}
-	}
-
-	SetCredentials(m_pLibSMB2Context, url);
-
-	struct smb2_url* pUrl = smb2_parse_url(m_pLibSMB2Context, "smb://"+url.GetHostName()+":445/"+url.GetShareName());
+	struct smb2_url* pUrl = ParseUrl(url);
 
 	if(!pUrl)
 	{
-		m_lastError = smb2_get_error(m_pLibSMB2Context);
-		CLog::Log(LOGERROR, "CXBLibSMB2::EnsureConnection - Failed to parse url: %s", m_lastError.c_str());
+		KeepError(smb2_get_error(m_pContext));
 		return false;
 	}
 
-	smb2_set_security_mode(m_pLibSMB2Context, SMB2_NEGOTIATE_SIGNING_ENABLED);
+	int rc = smb2_connect_share(m_pContext, pUrl->server, pUrl->share, pUrl->user);
+	smb2_destroy_url(pUrl);
 
-	if(!IsConnectedToShare(pUrl->server, pUrl->share))
+	if(rc != 0)
 	{
-		if(!m_ConnectedServer.IsEmpty())
-		{
-			smb2_disconnect_share(m_pLibSMB2Context);
-			m_ConnectedServer.Empty();
-			m_ConnectedShare.Empty();
-		}
-
-		if(smb2_connect_share(m_pLibSMB2Context, pUrl->server, pUrl->share, pUrl->user) != 0)
-		{
-			m_lastError = smb2_get_error(m_pLibSMB2Context);
-			CLog::Log(LOGERROR, "CXBLibSMB2::EnsureConnection - smb2_connect_share failed. %s", m_lastError.c_str());
-			smb2_destroy_url(pUrl);
-			return false;
-		}
-		m_ConnectedServer = pUrl->server;
-		m_ConnectedShare = pUrl->share;
+		CStdString strError = smb2_get_error(m_pContext);
+		KeepError(strError);
+		CLog::Log(LOGERROR, "CXBLibSMB2::Connect - smb2_connect_share failed. %s", strError.c_str());
+		return false;
 	}
 
-	smb2_destroy_url(pUrl);
+	m_bConnected = true;
 	return true;
+}
+
+// Whether a connection kept from before still works: its socket is still open and, when asked to, the server answers
+// an echo
+bool CXBLibSMB2::IsAlive(bool bAsk)
+{
+	if(smb2_get_fd(m_pContext) == (t_socket)-1)
+	{
+		CLog::Log(LOGNOTICE, "CXBLibSMB2 - A share's connection was closed, making a new one");
+		return false;
+	}
+
+	if(!bAsk)
+		return true;
+
+	smb2_set_timeout(m_pContext, SMB_SHORT_TIMEOUT);
+	bool bAlive = smb2_echo(m_pContext) == 0;
+	smb2_set_timeout(m_pContext, 0);
+
+	if(!bAlive)
+		CLog::Log(LOGNOTICE, "CXBLibSMB2 - A share's connection stopped answering (%s), making a new one", smb2_get_error(m_pContext));
+
+	return bAlive;
 }
 
 // The URL as libsmb2 sees it: server, share and the path within the share.
 // The caller frees it with smb2_destroy_url().
 struct smb2_url* CXBLibSMB2::ParseUrl(const CURL& url)
 {
-	struct smb2_url* pUrl = smb2_parse_url(m_pLibSMB2Context, "smb://"+url.GetHostName()+":445/"+url.GetShareName());
+	struct smb2_url* pUrl = smb2_parse_url(m_pContext, "smb://"+url.GetHostName()+":445/"+url.GetShareName());
 
 	if(!pUrl)
-		CLog::Log(LOGERROR, "CXBLibSMB2::ParseUrl - Failed to parse url: %s", smb2_get_error(m_pLibSMB2Context));
+		CLog::Log(LOGERROR, "CXBLibSMB2::ParseUrl - Failed to parse url: %s", smb2_get_error(m_pContext));
 
 	return pUrl;
 }
@@ -351,39 +283,66 @@ static CStdString PathInShare(const struct smb2_url* pUrl)
 	return strPath;
 }
 
+smb2dir* CXBLibSMB2::OpenDir(const CURL& url)
+{
+	struct smb2_url* pUrl = ParseUrl(url);
+
+	if(!pUrl)
+		return NULL;
+
+	struct smb2dir* pDir = smb2_opendir(m_pContext, pUrl->path);
+	smb2_destroy_url(pUrl);
+
+	if(!pDir)
+	{
+		CStdString strError = smb2_get_error(m_pContext);
+		KeepError(strError);
+		CLog::Log(LOGERROR, "smb2_opendir failed. %s", strError.c_str());
+		return NULL;
+	}
+
+	KeepError("");
+	return pDir;
+}
+
+smb2dirent* CXBLibSMB2::ReadDir(smb2dir* pDir)
+{
+	return smb2_readdir(m_pContext, pDir);
+}
+
+void CXBLibSMB2::CloseDir(smb2dir* pDir)
+{
+	if(pDir)
+		smb2_closedir(m_pContext, pDir);
+}
+
 smb2fh* CXBLibSMB2::FileOpen(const CURL& url, UINT64& outFileSize)
 {
 	outFileSize = 0;
 
-	if(!EnsureConnection(url))
-		return NULL;
-
-	struct smb2_url* pUrl = smb2_parse_url(m_pLibSMB2Context, "smb://"+url.GetHostName()+":445/"+url.GetShareName());
+	struct smb2_url* pUrl = ParseUrl(url);
 
 	if(!pUrl)
-	{
-		CLog::Log(LOGERROR, "CXBLibSMB2::FileOpen - Failed to parse url: %s", smb2_get_error(m_pLibSMB2Context));
 		return NULL;
-	}
 
-	struct smb2fh* fh = smb2_open(m_pLibSMB2Context, pUrl->path, O_RDONLY | O_BINARY);
+	struct smb2fh* fh = smb2_open(m_pContext, pUrl->path, O_RDONLY | O_BINARY);
 	smb2_destroy_url(pUrl);
 
 	if(fh == NULL)
 		return NULL;
 
-	outFileSize = smb2_lseek(m_pLibSMB2Context, fh, 0, SEEK_END, NULL);
-	smb2_lseek(m_pLibSMB2Context, fh, 0, SEEK_SET, NULL);
+	outFileSize = smb2_lseek(m_pContext, fh, 0, SEEK_END, NULL);
+	smb2_lseek(m_pContext, fh, 0, SEEK_SET, NULL);
 
 	return fh;
 }
 
 unsigned int CXBLibSMB2::FileRead(smb2fh* fh, void* lpBuf, __int64 uiBufSize)
 {
-	if(fh == NULL || m_pLibSMB2Context == NULL)
+	if(fh == NULL || m_pContext == NULL)
 		return 0;
 
-	int bytesRead = smb2_read(m_pLibSMB2Context, fh, static_cast<uint8_t*>(lpBuf), (unsigned int)uiBufSize);
+	int bytesRead = smb2_read(m_pContext, fh, static_cast<uint8_t*>(lpBuf), (unsigned int)uiBufSize);
 
 	if(bytesRead < 0)
 	{
@@ -396,10 +355,10 @@ unsigned int CXBLibSMB2::FileRead(smb2fh* fh, void* lpBuf, __int64 uiBufSize)
 
 __int64 CXBLibSMB2::FileSeek(smb2fh* fh, __int64 iFilePosition, int iWhence)
 {
-	if(fh == NULL || m_pLibSMB2Context == NULL)
+	if(fh == NULL || m_pContext == NULL)
 		return -1;
 
-	INT64 iPos = smb2_lseek(m_pLibSMB2Context, fh, iFilePosition, iWhence, NULL);
+	INT64 iPos = smb2_lseek(m_pContext, fh, iFilePosition, iWhence, NULL);
 
 	if(iPos < 0)
 		return -1;
@@ -409,10 +368,10 @@ __int64 CXBLibSMB2::FileSeek(smb2fh* fh, __int64 iFilePosition, int iWhence)
 
 __int64 CXBLibSMB2::FileGetPosition(smb2fh* fh)
 {
-	if(fh == NULL || m_pLibSMB2Context == NULL)
+	if(fh == NULL || m_pContext == NULL)
 		return 0;
 
-	__int64 iPos = smb2_lseek(m_pLibSMB2Context, fh, 0, SEEK_CUR, NULL);
+	__int64 iPos = smb2_lseek(m_pContext, fh, 0, SEEK_CUR, NULL);
 
 	if(iPos < 0)
 		return 0;
@@ -422,16 +381,13 @@ __int64 CXBLibSMB2::FileGetPosition(smb2fh* fh)
 
 void CXBLibSMB2::FileClose(smb2fh* fh)
 {
-	if(fh != NULL && m_pLibSMB2Context != NULL)
-		smb2_close(m_pLibSMB2Context, fh);
+	if(fh != NULL && m_pContext != NULL)
+		smb2_close(m_pContext, fh);
 }
 
 smb2fh* CXBLibSMB2::FileOpenForWrite(const CURL& url, bool bOverWrite, UINT64& outFileSize)
 {
 	outFileSize = 0;
-
-	if(!EnsureConnection(url))
-		return NULL;
 
 	struct smb2_url* pUrl = ParseUrl(url);
 
@@ -443,24 +399,24 @@ smb2fh* CXBLibSMB2::FileOpenForWrite(const CURL& url, bool bOverWrite, UINT64& o
 	if(bOverWrite)
 		flags |= O_TRUNC;
 
-	struct smb2fh* fh = smb2_open(m_pLibSMB2Context, pUrl->path, flags);
+	struct smb2fh* fh = smb2_open(m_pContext, pUrl->path, flags);
 	smb2_destroy_url(pUrl);
 
 	if(fh == NULL)
 	{
-		CLog::Log(LOGERROR, "CXBLibSMB2::FileOpenForWrite - smb2_open failed: %s", smb2_get_error(m_pLibSMB2Context));
+		CLog::Log(LOGERROR, "CXBLibSMB2::FileOpenForWrite - smb2_open failed: %s", smb2_get_error(m_pContext));
 		return NULL;
 	}
 
-	outFileSize = smb2_lseek(m_pLibSMB2Context, fh, 0, SEEK_END, NULL);
-	smb2_lseek(m_pLibSMB2Context, fh, 0, SEEK_SET, NULL);
+	outFileSize = smb2_lseek(m_pContext, fh, 0, SEEK_END, NULL);
+	smb2_lseek(m_pContext, fh, 0, SEEK_SET, NULL);
 
 	return fh;
 }
 
 int CXBLibSMB2::FileWrite(smb2fh* fh, const void* lpBuf, __int64 uiBufSize)
 {
-	if(fh == NULL || m_pLibSMB2Context == NULL)
+	if(fh == NULL || m_pContext == NULL)
 		return 0;
 
 	// A request carries no more than the server's max write size, so
@@ -470,11 +426,11 @@ int CXBLibSMB2::FileWrite(smb2fh* fh, const void* lpBuf, __int64 uiBufSize)
 
 	while(iWritten < uiBufSize)
 	{
-		int bytesWritten = smb2_write(m_pLibSMB2Context, fh, pBuf + iWritten, (uint32_t)(uiBufSize - iWritten));
+		int bytesWritten = smb2_write(m_pContext, fh, pBuf + iWritten, (uint32_t)(uiBufSize - iWritten));
 
 		if(bytesWritten <= 0)
 		{
-			CLog::Log(LOGERROR, __FUNCTION__" - smb2_write failed: %s", smb2_get_error(m_pLibSMB2Context));
+			CLog::Log(LOGERROR, __FUNCTION__" - smb2_write failed: %s", smb2_get_error(m_pContext));
 			break;
 		}
 
@@ -486,16 +442,13 @@ int CXBLibSMB2::FileWrite(smb2fh* fh, const void* lpBuf, __int64 uiBufSize)
 
 bool CXBLibSMB2::Stat(const CURL& url, struct smb2_stat_64& st)
 {
-	if(!EnsureConnection(url))
-		return false;
-
 	struct smb2_url* pUrl = ParseUrl(url);
 
 	if(!pUrl)
 		return false;
 
 	// Not logged when it fails: asking whether something exists is often expected to
-	int rc = smb2_stat(m_pLibSMB2Context, PathInShare(pUrl).c_str(), &st);
+	int rc = smb2_stat(m_pContext, PathInShare(pUrl).c_str(), &st);
 	smb2_destroy_url(pUrl);
 
 	return rc == 0;
@@ -503,20 +456,17 @@ bool CXBLibSMB2::Stat(const CURL& url, struct smb2_stat_64& st)
 
 bool CXBLibSMB2::Delete(const CURL& url)
 {
-	if(!EnsureConnection(url))
-		return false;
-
 	struct smb2_url* pUrl = ParseUrl(url);
 
 	if(!pUrl)
 		return false;
 
-	int rc = smb2_unlink(m_pLibSMB2Context, PathInShare(pUrl).c_str());
+	int rc = smb2_unlink(m_pContext, PathInShare(pUrl).c_str());
 	smb2_destroy_url(pUrl);
 
 	if(rc != 0)
 	{
-		CLog::Log(LOGERROR, "CXBLibSMB2::Delete - smb2_unlink failed: %s", smb2_get_error(m_pLibSMB2Context));
+		CLog::Log(LOGERROR, "CXBLibSMB2::Delete - smb2_unlink failed: %s", smb2_get_error(m_pContext));
 		return false;
 	}
 
@@ -525,9 +475,6 @@ bool CXBLibSMB2::Delete(const CURL& url)
 
 bool CXBLibSMB2::Rename(const CURL& url, const CURL& urlNew)
 {
-	if(!EnsureConnection(url))
-		return false;
-
 	struct smb2_url* pUrl = ParseUrl(url);
 	struct smb2_url* pUrlNew = ParseUrl(urlNew);
 	bool bRenamed = false;
@@ -537,8 +484,8 @@ bool CXBLibSMB2::Rename(const CURL& url, const CURL& urlNew)
 		// SMB renames within a share; moving elsewhere is a copy
 		if(CStdString(pUrl->server).CompareNoCase(pUrlNew->server) != 0 || CStdString(pUrl->share).CompareNoCase(pUrlNew->share) != 0)
 			CLog::Log(LOGERROR, "CXBLibSMB2::Rename - Can't rename across shares");
-		else if(smb2_rename(m_pLibSMB2Context, PathInShare(pUrl).c_str(), PathInShare(pUrlNew).c_str()) != 0)
-			CLog::Log(LOGERROR, "CXBLibSMB2::Rename - smb2_rename failed: %s", smb2_get_error(m_pLibSMB2Context));
+		else if(smb2_rename(m_pContext, PathInShare(pUrl).c_str(), PathInShare(pUrlNew).c_str()) != 0)
+			CLog::Log(LOGERROR, "CXBLibSMB2::Rename - smb2_rename failed: %s", smb2_get_error(m_pContext));
 		else
 			bRenamed = true;
 	}
@@ -553,20 +500,17 @@ bool CXBLibSMB2::Rename(const CURL& url, const CURL& urlNew)
 
 bool CXBLibSMB2::CreateDir(const CURL& url)
 {
-	if(!EnsureConnection(url))
-		return false;
-
 	struct smb2_url* pUrl = ParseUrl(url);
 
 	if(!pUrl)
 		return false;
 
-	int rc = smb2_mkdir(m_pLibSMB2Context, PathInShare(pUrl).c_str());
+	int rc = smb2_mkdir(m_pContext, PathInShare(pUrl).c_str());
 	smb2_destroy_url(pUrl);
 
 	if(rc != 0)
 	{
-		CLog::Log(LOGERROR, "CXBLibSMB2::CreateDir - smb2_mkdir failed: %s", smb2_get_error(m_pLibSMB2Context));
+		CLog::Log(LOGERROR, "CXBLibSMB2::CreateDir - smb2_mkdir failed: %s", smb2_get_error(m_pContext));
 		return false;
 	}
 
@@ -575,22 +519,35 @@ bool CXBLibSMB2::CreateDir(const CURL& url)
 
 bool CXBLibSMB2::RemoveDir(const CURL& url)
 {
-	if(!EnsureConnection(url))
-		return false;
-
 	struct smb2_url* pUrl = ParseUrl(url);
 
 	if(!pUrl)
 		return false;
 
-	int rc = smb2_rmdir(m_pLibSMB2Context, PathInShare(pUrl).c_str());
+	int rc = smb2_rmdir(m_pContext, PathInShare(pUrl).c_str());
 	smb2_destroy_url(pUrl);
 
 	if(rc != 0)
 	{
-		CLog::Log(LOGERROR, "CXBLibSMB2::RemoveDir - smb2_rmdir failed: %s", smb2_get_error(m_pLibSMB2Context));
+		CLog::Log(LOGERROR, "CXBLibSMB2::RemoveDir - smb2_rmdir failed: %s", smb2_get_error(m_pContext));
 		return false;
 	}
 
 	return true;
+}
+
+CSMBConnectionLock::CSMBConnectionLock(const CURL& url, bool bForFolders)
+{
+	m_pConnection = CXBLibSMB2::Get(url, bForFolders);
+	if(m_pConnection)
+		::EnterCriticalSection(*m_pConnection);
+}
+
+CSMBConnectionLock::~CSMBConnectionLock()
+{
+	if(m_pConnection)
+	{
+		::LeaveCriticalSection(*m_pConnection);
+		CXBLibSMB2::Release(m_pConnection);
+	}
 }

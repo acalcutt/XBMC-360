@@ -7,8 +7,6 @@
 
 using namespace XFILE;
 
-CXBLibSMB2 xbsmb;
-
 CSMBDirectory::CSMBDirectory(void)
 {
 } 
@@ -21,18 +19,22 @@ bool CSMBDirectory::GetDirectory(const CStdString& strPath, CFileItemList &items
 {
 	// We accept smb://[[[domain;]user[:password@]]server[/share[/path[/file]]]]
 
-	// LibSMB2 isn't thread safe, always lock
-	CSingleLock lock(xbsmb);
-
 	// We need an url to do proper escaping
 	CURL url(strPath);
 
-	xbsmb.Init();
+	// The share's connection for folders, locked as LibSMB2 isn't thread safe
+	CSMBConnectionLock connection(url, true);
+	CXBLibSMB2* pConnection = connection.Get();
+
+	if(!pConnection)
+		return false;
 
 	// Separate roots for the authentication and the containing items to allow browsing to work correctly
 	CStdString strRoot = strPath;
 
-	if(!xbsmb.OpenDir(url))
+	struct smb2dir* pDir = pConnection->OpenDir(url);
+
+	if(!pDir)
 		return false;
 
 	struct smb2dirent* dirEnt = NULL;
@@ -40,7 +42,7 @@ bool CSMBDirectory::GetDirectory(const CStdString& strPath, CFileItemList &items
 
 	if(!CUtil::HasSlashAtEnd(strRoot)) strRoot += "/";
 
-	while(dirEnt = xbsmb.ReadDir())
+	while(dirEnt = pConnection->ReadDir(pDir))
 	{
 		strFile = dirEnt->name;
 
@@ -90,36 +92,37 @@ bool CSMBDirectory::GetDirectory(const CStdString& strPath, CFileItemList &items
 		}
 	}
 
-	xbsmb.Close();
+	pConnection->CloseDir(pDir);
 
 	return true;
 }
 
 CStdString CSMBDirectory::GetLastError()
 {
-	CSingleLock lock(xbsmb);
-
-	return xbsmb.GetLastError();
+	return CXBLibSMB2::GetLastError();
 }
 
 bool CSMBDirectory::Create(const char* strPath)
 {
-	CSingleLock lock(xbsmb);
+	CURL url(strPath);
+	CSMBConnectionLock connection(url, true);
 
-	return xbsmb.CreateDir(CURL(strPath));
+	return connection.Get() && connection.Get()->CreateDir(url);
 }
 
 bool CSMBDirectory::Remove(const char* strPath)
 {
-	CSingleLock lock(xbsmb);
+	CURL url(strPath);
+	CSMBConnectionLock connection(url, true);
 
-	return xbsmb.RemoveDir(CURL(strPath));
+	return connection.Get() && connection.Get()->RemoveDir(url);
 }
 
 bool CSMBDirectory::Exists(const char* strPath)
 {
-	CSingleLock lock(xbsmb);
+	CURL url(strPath);
+	CSMBConnectionLock connection(url, true);
 
 	struct smb2_stat_64 st;
-	return xbsmb.Stat(CURL(strPath), st) && st.smb2_type == SMB2_TYPE_DIRECTORY;
+	return connection.Get() && connection.Get()->Stat(url, st) && st.smb2_type == SMB2_TYPE_DIRECTORY;
 }

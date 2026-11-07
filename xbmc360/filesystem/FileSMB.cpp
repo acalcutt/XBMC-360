@@ -6,12 +6,9 @@
 
 using namespace XFILE;
 
-// Shared connection manager - serializes all SMB operations via its
-// CCriticalSection base class, but no longer owns individual file handles.
-CXBLibSMB2 xbsmb_f;
-
 CFileSMB::CFileSMB()
 {
+	m_pConnection = NULL;
 	m_pFileHandle = NULL;
 	m_fileSize = 0;
 }
@@ -25,13 +22,19 @@ bool CFileSMB::Open(const CURL& strURL)
 {
 	Close(); // Ensure any previous handle is released
 
-	CSingleLock lock(xbsmb_f);
+	// The share's own connection, so a file open on another share doesn't take it away
+	m_pConnection = CXBLibSMB2::Get(strURL);
 
-	m_pFileHandle = xbsmb_f.FileOpen(strURL, m_fileSize);
+	if(m_pConnection)
+	{
+		CSingleLock lock(*m_pConnection);
+		m_pFileHandle = m_pConnection->FileOpen(strURL, m_fileSize);
+	}
 
 	if(!m_pFileHandle)
 	{
 		CLog::Log(LOGERROR, "CFileSMB::Open - Failed to open file");
+		Close();
 		return false;
 	}
 
@@ -42,13 +45,18 @@ bool CFileSMB::OpenForWrite(const CURL& strURL, bool bOverWrite)
 {
 	Close(); // Ensure any previous handle is released
 
-	CSingleLock lock(xbsmb_f);
+	m_pConnection = CXBLibSMB2::Get(strURL);
 
-	m_pFileHandle = xbsmb_f.FileOpenForWrite(strURL, bOverWrite, m_fileSize);
+	if(m_pConnection)
+	{
+		CSingleLock lock(*m_pConnection);
+		m_pFileHandle = m_pConnection->FileOpenForWrite(strURL, bOverWrite, m_fileSize);
+	}
 
 	if(!m_pFileHandle)
 	{
 		CLog::Log(LOGERROR, "CFileSMB::OpenForWrite - Failed to open file");
+		Close();
 		return false;
 	}
 
@@ -62,44 +70,62 @@ __int64 CFileSMB::GetLength()
 
 __int64 CFileSMB::GetPosition()
 {
-	CSingleLock lock(xbsmb_f);
+	if(!m_pConnection)
+		return 0;
 
-	return xbsmb_f.FileGetPosition(m_pFileHandle);
+	CSingleLock lock(*m_pConnection);
+
+	return m_pConnection->FileGetPosition(m_pFileHandle);
 }
 
 void CFileSMB::Close()
 {
-	if(m_pFileHandle)
+	if(m_pConnection)
 	{
-		CSingleLock lock(xbsmb_f);
-		xbsmb_f.FileClose(m_pFileHandle);
-		m_pFileHandle = NULL;
+		if(m_pFileHandle)
+		{
+			CSingleLock lock(*m_pConnection);
+			m_pConnection->FileClose(m_pFileHandle);
+		}
+
+		CXBLibSMB2::Release(m_pConnection);
+		m_pConnection = NULL;
 	}
+	m_pFileHandle = NULL;
 	m_fileSize = 0;
 }
 
 unsigned int CFileSMB::Read(void *lpBuf, __int64 uiBufSize)
 {
-	CSingleLock lock(xbsmb_f);
+	if(!m_pConnection)
+		return 0;
 
-	return xbsmb_f.FileRead(m_pFileHandle, lpBuf, uiBufSize);
+	CSingleLock lock(*m_pConnection);
+
+	return m_pConnection->FileRead(m_pFileHandle, lpBuf, uiBufSize);
 }
-	
+
 __int64 CFileSMB::Seek(__int64 iFilePosition, int iWhence)
 {
-	CSingleLock lock(xbsmb_f);
+	if(!m_pConnection)
+		return -1;
 
-	return xbsmb_f.FileSeek(m_pFileHandle, iFilePosition, iWhence);
+	CSingleLock lock(*m_pConnection);
+
+	return m_pConnection->FileSeek(m_pFileHandle, iFilePosition, iWhence);
 }
 
 int CFileSMB::Write(const void* lpBuf, __int64 uiBufSize)
 {
-	CSingleLock lock(xbsmb_f);
+	if(!m_pConnection)
+		return 0;
 
-	int iWritten = xbsmb_f.FileWrite(m_pFileHandle, lpBuf, uiBufSize);
+	CSingleLock lock(*m_pConnection);
+
+	int iWritten = m_pConnection->FileWrite(m_pFileHandle, lpBuf, uiBufSize);
 
 	// The length was read when opening: keep it up as the file grows
-	__int64 iPos = xbsmb_f.FileGetPosition(m_pFileHandle);
+	__int64 iPos = m_pConnection->FileGetPosition(m_pFileHandle);
 	if(iPos > (__int64)m_fileSize)
 		m_fileSize = iPos;
 
@@ -108,10 +134,10 @@ int CFileSMB::Write(const void* lpBuf, __int64 uiBufSize)
 
 int CFileSMB::Stat(const CURL& url, struct __stat64* buffer)
 {
-	CSingleLock lock(xbsmb_f);
+	CSMBConnectionLock connection(url);
 
 	struct smb2_stat_64 st;
-	if(!xbsmb_f.Stat(url, st))
+	if(!connection.Get() || !connection.Get()->Stat(url, st))
 		return -1;
 
 	if(buffer)
@@ -130,22 +156,22 @@ int CFileSMB::Stat(const CURL& url, struct __stat64* buffer)
 
 bool CFileSMB::Exists(const CURL& url)
 {
-	CSingleLock lock(xbsmb_f);
+	CSMBConnectionLock connection(url);
 
 	struct smb2_stat_64 st;
-	return xbsmb_f.Stat(url, st);
+	return connection.Get() && connection.Get()->Stat(url, st);
 }
 
 bool CFileSMB::Delete(const CURL& url)
 {
-	CSingleLock lock(xbsmb_f);
+	CSMBConnectionLock connection(url);
 
-	return xbsmb_f.Delete(url);
+	return connection.Get() && connection.Get()->Delete(url);
 }
 
 bool CFileSMB::Rename(const CURL& url, const CURL& urlnew)
 {
-	CSingleLock lock(xbsmb_f);
+	CSMBConnectionLock connection(url);
 
-	return xbsmb_f.Rename(url, urlnew);
+	return connection.Get() && connection.Get()->Rename(url, urlnew);
 }

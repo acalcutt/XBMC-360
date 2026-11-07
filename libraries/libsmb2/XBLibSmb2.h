@@ -9,60 +9,82 @@ extern "C" {
 #include "smb2.h"
 }
 
+// A connection to one share: a libsmb2 context signed in to the server and connected to the share. There's one per
+// server, share and user, from Get(), so a file open on one share keeps working while another share is read. A
+// connection is kept while something uses it and for a few minutes after, for the next file or folder.
+//
+// libsmb2 isn't thread safe: lock the connection (it's a CCriticalSection) around each call, as CSMBConnectionLock
+// does.
 class CXBLibSMB2 : public CCriticalSection
 {
 public:
-	CXBLibSMB2();
-	~CXBLibSMB2();
+	// The connection to the URL's share, signed in and connected; NULL when it can't be made (why is in
+	// GetLastError). Give each one back with Release. Folders are listed on a connection of their own, so a long
+	// listing doesn't hold up a file playing from the same share.
+	static CXBLibSMB2* Get(const CURL& url, bool bForFolders = false);
+	static void Release(CXBLibSMB2* pConnection);
 
-	bool Init();
+	// Why the last connection couldn't be made, or folder opened, as libsmb2 put it ("Session setup failed with
+	// (0xc000006d) STATUS_LOGON_FAILURE"); empty after a folder that opened
+	static CStdString GetLastError();
 
-	bool OpenDir(const CURL& url);
-	smb2dirent* ReadDir();
+	// A folder's entries (smb2_opendir reads them all); close it with CloseDir
+	smb2dir* OpenDir(const CURL& url);
+	smb2dirent* ReadDir(smb2dir* pDir);
+	void CloseDir(smb2dir* pDir);
 
-	bool OpenFile(const CURL& url);
-	__int64 Seek(__int64 iFilePosition, int iWhence);
-	unsigned int Read(void *lpBuf, __int64 uiBufSize);
-	__int64 GetLength();
-	__int64 GetPosition();
-	void Close();
-	void CloseHandle(); // Close file/dir handle but keep connection alive
-
-	// Per-instance file handle API — allows multiple concurrent open files
-	// Caller owns the returned smb2fh* and must close it via FileClose()
+	// Files: the caller owns the handle, and closes it with FileClose on this connection
 	smb2fh* FileOpen(const CURL& url, UINT64& outFileSize);
+	smb2fh* FileOpenForWrite(const CURL& url, bool bOverWrite, UINT64& outFileSize);
 	unsigned int FileRead(smb2fh* fh, void* lpBuf, __int64 uiBufSize);
+	int FileWrite(smb2fh* fh, const void* lpBuf, __int64 uiBufSize);
 	__int64 FileSeek(smb2fh* fh, __int64 iFilePosition, int iWhence);
 	__int64 FileGetPosition(smb2fh* fh);
 	void FileClose(smb2fh* fh);
-	smb2fh* FileOpenForWrite(const CURL& url, bool bOverWrite, UINT64& outFileSize);
-	int FileWrite(smb2fh* fh, const void* lpBuf, __int64 uiBufSize);
 
-	// Operations on a path in the share the URL names
+	// Operations on a path in the share
 	bool Stat(const CURL& url, struct smb2_stat_64& st);
 	bool Delete(const CURL& url);
 	bool Rename(const CURL& url, const CURL& urlNew);
 	bool CreateDir(const CURL& url);
 	bool RemoveDir(const CURL& url);
 
-	// Why the last folder couldn't be opened, or a connection made, as libsmb2 put it ("Session setup failed with
-	// (0xc000006d) STATUS_LOGON_FAILURE"); empty after one that opened
-	const CStdString& GetLastError() const { return m_lastError; }
+private:
+	CXBLibSMB2();
+	~CXBLibSMB2();
+
+	bool Connect(const CURL& url);
+	bool IsAlive(bool bAsk);
+	struct smb2_url* ParseUrl(const CURL& url);
+
+	static void Retire(CXBLibSMB2* pConnection);
+	static void CloseIdle();
+
+	struct smb2_context* m_pContext;
+	CStdString m_strKey;
+	bool m_bConnected;
+
+	// Guarded by the pool's lock
+	int m_iUsers;          // Gets not yet released
+	DWORD m_dwLastUsed;    // When it was last got or released
+	bool m_bRetired;       // Out of the pool (gone dead): deleted when its last user releases it
+};
+
+// A share's connection, got and locked for as long as this lasts: for one call, or a few in a row
+class CSMBConnectionLock
+{
+public:
+	CSMBConnectionLock(const CURL& url, bool bForFolders = false);
+	~CSMBConnectionLock();
+
+	// NULL when the connection couldn't be made
+	CXBLibSMB2* Get() const { return m_pConnection; }
 
 private:
-	bool EnsureConnection(const CURL& url);
-	struct smb2_url* ParseUrl(const CURL& url);
-	bool IsConnectedToShare(const char* server, const char* share);
-	
-	struct smb2_context*	m_pLibSMB2Context;
-	struct smb2dir*			m_pLibSMB2H;
-	struct smb2_url*		m_pLibSMB2Url;
-	struct smb2fh*			m_pLibSMB2FH;
+	CSMBConnectionLock(const CSMBConnectionLock&);
+	CSMBConnectionLock& operator=(const CSMBConnectionLock&);
 
-	CStdString m_ConnectedServer;
-	CStdString m_ConnectedShare;
-	UINT64 m_FileSize;
-	CStdString m_lastError;
+	CXBLibSMB2* m_pConnection;
 };
 
 #endif //H_CXBLIBSMB2

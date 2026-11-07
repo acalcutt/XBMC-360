@@ -33,6 +33,7 @@ public:
 	virtual bool Rename(const CURL& url, const CURL& urlnew);
 
 protected:
+	CXBLibSMB2*		m_pConnection;	// The share's connection, kept while the file is open
 	struct smb2fh*	m_pFileHandle;
 	UINT64			m_fileSize;
 };

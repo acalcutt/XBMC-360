@@ -30,6 +30,10 @@
 - **Web server**: `/vfs/` only hands out files in your Videos, Music, Pictures and Games sources. Before, anyone on the
   network could fetch any file the console can read through it, 360 Riffle's settings with share passwords and server
   sign-ins too, as the web server is on by default without a password. Its setting says 360 Riffle, not XBMC.
+- **Windows shares**: each share has a connection of its own, so music or a video playing from one share keeps
+  playing while you browse Games, Pictures or folders on another, and the file manager copies from one share to
+  another. Before, using a second share took the first one's connection away. A share that stopped answering (the PC
+  restarted or slept) is connected to again; before, its files could fail to open until 360 Riffle restarted.
 
 ## 0.1.0
 The first version of 360 Riffle, from [XBMC-360](https://github.com/brentdc-nz/XBMC-360).
